@@ -19,32 +19,53 @@ export default async function BaiVietPage() {
 
   return (
     <main className="min-h-screen">
-      <section className="bg-gradient-to-b from-[#1d4ed8] to-[#1e3a8a] pb-16 pt-32 text-white">
-        <div className="mx-auto max-w-6xl px-6 text-center">
+      {/* Header nhỏ gọn với ảnh trường nền */}
+      <section className="relative overflow-hidden pb-14 pt-32 text-white">
+        {/* Background ảnh trường */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: "url('/bg/hero-3.webp')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/70 to-slate-950/90" />
+
+        <div className="relative mx-auto max-w-6xl px-6 text-center">
           <Reveal>
-            <span className="btn-pop-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#1d4ed8]">
-              📖 BÀI VIẾT
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-xs font-extrabold uppercase tracking-widest text-white backdrop-blur-sm">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5"
+                width={14}
+                height={14}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.396 0 2.703.432 3.75 1.17A7.97 7.97 0 0112.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0012.5 4c-1.396 0-2.703.432-3.75 1.17A7.97 7.97 0 009 4.804z" />
+              </svg>
+              Bài viết
             </span>
           </Reveal>
           <Reveal delay={100}>
-            <h1 className="mt-6 text-3xl font-extrabold sm:text-5xl">
+            <h1 className="mt-4 text-3xl font-extrabold sm:text-5xl">
               Câu chuyện từ mái trường Trứ
             </h1>
           </Reveal>
           <Reveal delay={180}>
-            <p className="mx-auto mt-4 max-w-2xl text-slate-100 sm:text-lg">
+            <p className="mx-auto mt-3 max-w-2xl text-slate-200 sm:text-lg">
               Những bài viết, ký ức và lời nhắn của các thế hệ Thầy trò Nguyễn
-              Công Trứ - được lưu giữ và viết tiếp mỗi ngày.
+              Công Trứ — được lưu giữ và viết tiếp mỗi ngày.
             </p>
           </Reveal>
           <Reveal delay={260}>
-            <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm font-bold">
-              <span className="rounded-full bg-white/15 px-4 py-2">
+            <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm font-bold">
+              <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm">
                 ✍️ {posts.length} bài viết
               </span>
-              <span className="rounded-full bg-white/15 px-4 py-2">
-                📌 {pinnedCount} bài được ghim
-              </span>
+              {pinnedCount > 0 && (
+                <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm">
+                  📌 {pinnedCount} bài được ghim
+                </span>
+              )}
             </div>
           </Reveal>
         </div>

@@ -1,9 +1,31 @@
 import HeroSlideshow from "@/components/HeroSlideshow";
 import MediaUploader from "@/components/MediaUploader";
 import MemoryGallery from "@/components/MemoryGallery";
+import PostCard from "@/components/PostCard";
 import Reveal from "@/components/Reveal";
+import CountdownBadge from "@/components/CountdownBadge";
+import ContributionCounter from "@/components/ContributionCounter";
+import { listPublished } from "@/lib/posts";
+import { listTickets } from "@/lib/members";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const allPosts = await listPublished();
+  const pinnedPosts = allPosts.filter((p) => p.pinned);
+  const nonPinnedPosts = allPosts.filter((p) => !p.pinned).slice(0, 4);
+  const homePosts = [...pinnedPosts, ...nonPinnedPosts];
+
+  // Sổ sao kê đóng góp: chỉ tính các đơn vé ĐÃ DUYỆT (giống AdminRegistrations)
+  const tickets = await listTickets();
+  const confirmedTickets = tickets.filter((t) => t.status === "confirmed");
+  const totalAmount = confirmedTickets.reduce((sum, t) => sum + t.amount, 0);
+  const attendeeCount = confirmedTickets.reduce(
+    (sum, t) => sum + (t.quantity || 1),
+    0,
+  );
+  const memberCount = new Set(confirmedTickets.map((t) => t.memberId)).size;
+
   return (
     <main>
       <HeroSlideshow />
@@ -14,12 +36,14 @@ export default function Home() {
         className="mx-auto max-w-4xl px-6 py-24 text-center"
       >
         <Reveal>
-          <span className="btn-pop-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#1d4ed8]">
-            🌿 40 NĂM - MỘT MÁI TRƯỜNG, MUÔN VẠN YÊU THƯƠNG
-          </span>
+          <div className="inline-flex items-center gap-3 text-xs sm:text-sm font-extrabold tracking-widest text-[#1d4ed8]">
+            <span className="h-0.5 w-6 rounded-full bg-[#1d4ed8]" />
+            <span>🌿 40 NĂM · MỘT MÁI TRƯỜNG, MUÔN VẠN YÊU THƯƠNG</span>
+            <span className="h-0.5 w-6 rounded-full bg-[#1d4ed8]" />
+          </div>
         </Reveal>
         <Reveal delay={100}>
-          <h2 className="mt-6 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+          <h2 className="mt-6 text-3xl font-extrabold text-slate-900 sm:text-4xl leading-snug">
             &ldquo;Có một nơi để trở về - nơi ấy gọi tên THPT Nguyễn Công
             Trứ.&rdquo;
           </h2>
@@ -53,43 +77,27 @@ export default function Home() {
             bản sắc Nguyễn Công Trứ.
           </p>
         </Reveal>
-
-        <div className="mt-12 flex flex-wrap justify-center gap-5">
-          <Reveal variant="zoom" delay={0} className="btn-pop-soft bg-white px-7 py-5">
-            <span className="block text-2xl">🎓</span>
-            <span className="mt-2 block text-sm font-bold text-slate-900">
-              Truyền thống hiếu học
-            </span>
-          </Reveal>
-          <Reveal variant="zoom" delay={120} className="btn-pop-soft bg-white px-7 py-5">
-            <span className="block text-2xl">🤝</span>
-            <span className="mt-2 block text-sm font-bold text-slate-900">
-              Cộng đồng gắn kết
-            </span>
-          </Reveal>
-          <Reveal variant="zoom" delay={240} className="btn-pop-soft bg-white px-7 py-5">
-            <span className="block text-2xl">🌱</span>
-            <span className="mt-2 block text-sm font-bold text-slate-900">
-              Đổi mới & sáng tạo
-            </span>
-          </Reveal>
-        </div>
       </section>
 
       {/* Lễ kỷ niệm 40 năm - Ngày trở về */}
       <section
         id="le-ky-niem"
-        className="mx-auto max-w-4xl px-6 py-20 text-center"
+        className="mx-auto max-w-4xl px-6 py-16 text-center"
       >
         <Reveal>
-          <span className="btn-pop-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#16a34a]">
-            🎓 LỄ KỶ NIỆM 40 NĂM THÀNH LẬP TRƯỜNG (1986 - 2026)
-          </span>
+          <div className="inline-flex items-center gap-3 text-xs sm:text-sm font-extrabold tracking-widest text-[#16a34a]">
+            <span className="h-0.5 w-6 rounded-full bg-[#16a34a]" />
+            <span>🎓 LỄ KỶ NIỆM 40 NĂM THÀNH LẬP TRƯỜNG (1986 - 2026)</span>
+            <span className="h-0.5 w-6 rounded-full bg-[#16a34a]" />
+          </div>
         </Reveal>
         <Reveal delay={100}>
-          <h2 className="mt-6 text-3xl font-extrabold text-slate-900 sm:text-4xl">
-            15/11/2026 - &ldquo;NGÀY TRỞ VỀ&rdquo; mái trường Nguyễn Công Trứ
+          <h2 className="mt-5 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+            15/11/2026 &mdash; &ldquo;NGÀY TRỞ VỀ&rdquo; mái trường Nguyễn Công Trứ
           </h2>
+          <div className="mt-3">
+            <CountdownBadge />
+          </div>
         </Reveal>
         <Reveal delay={180}>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
@@ -115,30 +123,18 @@ export default function Home() {
             mái trường.
           </p>
         </Reveal>
+
         <Reveal delay={300}>
-          <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm font-bold text-slate-700">
-            <span className="btn-pop-soft rounded-full bg-white px-5 py-2.5">
-              📅 15/11/2026
-            </span>
-            <span className="btn-pop-soft rounded-full bg-white px-5 py-2.5">
-              📍 97 Quang Trung, TP. Hồ Chí Minh
-            </span>
-            <span className="btn-pop-soft rounded-full bg-white px-5 py-2.5">
-              🎫 Vé cá nhân miễn phí · vé tập thể 200.000đ/suất
-            </span>
-          </div>
-        </Reveal>
-        <Reveal delay={360}>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <div className="mt-9 flex flex-wrap justify-center gap-4">
             <a
               href="/dang-ky"
-              className="btn-pop bg-[#16a34a] px-7 py-3.5 text-base font-bold text-white"
+              className="btn-pop bg-[#16a34a] px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-950/20"
             >
-              🎟 Đăng ký tham dự ngay
+              🎟 Đăng ký tham gia ngay
             </a>
             <a
               href="/timeline"
-              className="btn-pop-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"
+              className="btn-pop-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900 shadow-md shadow-slate-900/5"
             >
               🚀 Khám phá hành trình 40 năm
             </a>
@@ -149,42 +145,63 @@ export default function Home() {
       {/* Câu chuyện & bài viết */}
       <section
         id="bai-viet"
-        className="mx-auto max-w-5xl px-6 pb-8 pt-4 text-center"
+        className="mx-auto max-w-6xl px-6 py-20 text-center"
       >
         <Reveal>
-          <span className="btn-pop-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#16a34a]">
-            📖 CÂU CHUYỆN &amp; BÀI VIẾT
-          </span>
+          <div className="inline-flex items-center gap-3 text-xs sm:text-sm font-extrabold tracking-widest text-[#16a34a]">
+            <span className="h-0.5 w-6 rounded-full bg-[#16a34a]" />
+            <span>📖 CÂU CHUYỆN &amp; BÀI VIẾT MỚI NHẤT</span>
+            <span className="h-0.5 w-6 rounded-full bg-[#16a34a]" />
+          </div>
         </Reveal>
         <Reveal delay={100}>
-          <h2 className="mt-6 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+          <h2 className="mt-5 text-3xl font-extrabold text-slate-900 sm:text-4xl">
             Những câu chuyện viết tiếp hành trình 40 năm
           </h2>
         </Reveal>
         <Reveal delay={180}>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
             Đọc những bài viết, ký ức của các thế hệ Thầy trò Nguyễn Công Trứ -
-            hoặc kể lại câu chuyện riêng của bạn với Trứ. Mỗi chia sẻ sau khi
-            được duyệt sẽ trở thành một mảnh ghép của Triển lãm 40 năm.
+            hoặc kể lại câu chuyện riêng của bạn với Trứ.
           </p>
         </Reveal>
+
+        {/* Danh sách bài viết: bài ghim + 4 bài mới nhất */}
+        {homePosts.length > 0 && (
+          <div className="mt-12 grid gap-6 text-left sm:grid-cols-2 lg:grid-cols-3">
+            {homePosts.map((post, i) => (
+              <Reveal key={post.id} delay={(i % 3) * 80} className="h-full">
+                <PostCard post={post} />
+              </Reveal>
+            ))}
+          </div>
+        )}
+
         <Reveal delay={260}>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
             <a
               href="/bai-viet"
-              className="btn-pop bg-[#1d4ed8] px-7 py-3.5 text-base font-bold text-white"
+              className="btn-pop bg-[#1d4ed8] px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-blue-950/20"
             >
-              📖 Đọc bài viết
+              📖 Xem tất cả bài viết ({allPosts.length})
             </a>
             <a
               href="/bai-viet/chia-se"
-              className="btn-pop-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"
+              className="btn-pop-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900 shadow-md shadow-slate-900/5"
             >
               ✍️ Chia sẻ câu chuyện của bạn
             </a>
           </div>
         </Reveal>
       </section>
+
+      {/* Sổ sao kê đóng góp - tổng số tiền đã xác nhận */}
+      <ContributionCounter
+        totalAmount={totalAmount}
+        orderCount={confirmedTickets.length}
+        attendeeCount={attendeeCount}
+        memberCount={memberCount}
+      />
 
       {/* Đóng góp Media / CTA */}
       <section
@@ -193,59 +210,37 @@ export default function Home() {
       >
         <div className="mx-auto max-w-4xl px-6 text-center">
           <Reveal variant="up">
-            <span className="btn-pop-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#1d4ed8]">
-              📸 GÓP MỘT KỶ NIỆM - LƯU GIỮ MỘT THỜI
-            </span>
+            <div className="inline-flex items-center gap-3 text-xs sm:text-sm font-extrabold tracking-widest text-blue-200">
+              <span className="h-0.5 w-6 rounded-full bg-blue-300" />
+              <span>📸 GÓP MỘT KỶ NIỆM - LƯU GIỮ MỘT THỜI</span>
+              <span className="h-0.5 w-6 rounded-full bg-blue-300" />
+            </div>
           </Reveal>
           <Reveal variant="up" delay={100}>
-            <h2 className="mt-6 text-3xl font-extrabold sm:text-4xl">
+            <h2 className="mt-5 text-3xl font-extrabold sm:text-4xl">
               Đóng góp hình ảnh, tư liệu
-              <br />
-              cho Triển lãm 40 năm thành lập trường
             </h2>
           </Reveal>
           <Reveal variant="up" delay={180}>
-            <p className="mt-5 text-base leading-relaxed text-slate-100 sm:text-lg">
-              Bạn đang giữ một tấm ảnh cũ? Một cuốn học bạ? Một sổ liên lạc? Một
-              chiếc phù hiệu? Một kỷ vật của những năm tháng dưới mái trường
-              Nguyễn Công Trứ? Hay đơn giản chỉ là một câu chuyện, một ký ức mà
-              mỗi lần nhớ lại, lòng vẫn thấy bồi hồi?
-            </p>
-          </Reveal>
-          <Reveal variant="up" delay={260}>
-            <p className="mt-4 text-base leading-relaxed text-slate-100 sm:text-lg">
-              Xin hãy chia sẻ cùng nhà trường. Mỗi hình ảnh, mỗi kỷ vật, mỗi câu
-              chuyện được gửi về sẽ góp phần tạo nên{" "}
-              <strong className="font-extrabold text-white">
-                Triển lãm 40 năm
-              </strong>
-              , để những ký ức tưởng như đã ngủ quên có cơ hội sống lại và được
-              trao truyền cho các thế hệ mai sau.
+            <p className="mx-auto mt-4 max-w-2xl text-base text-blue-100 sm:text-lg">
+              Mỗi bức ảnh cũ, kỷ vật hay câu chuyện là một mảnh ghép quý giá làm
+              nên bức tranh 40 năm của mái trường Nguyễn Công Trứ.
             </p>
           </Reveal>
 
-          {/* Upload media trực tiếp */}
-          <Reveal variant="zoom" delay={320} className="mt-9">
-            <MediaUploader />
-          </Reveal>
-          <Reveal variant="up" delay={380}>
-            <p className="mt-4 text-sm font-semibold text-slate-200">
-              📧 Hộp thư tiếp nhận tư liệu:{" "}
-              <a
-                href="mailto:thptnguyencongtru@hcm.edu.vn"
-                className="underline decoration-2 underline-offset-4 hover:text-white"
-              >
-                thptnguyencongtru@hcm.edu.vn
-              </a>
-            </p>
+          {/* Form tải ảnh / tư liệu */}
+          <Reveal variant="up" delay={240}>
+            <div className="mt-10 rounded-3xl bg-white p-8 text-slate-900 shadow-2xl sm:p-10">
+              <MediaUploader />
+            </div>
           </Reveal>
 
-          {/* Tường ký ức - gallery từ cộng đồng */}
-          <Reveal variant="up" delay={420}>
-            <div className="mt-14 text-left">
-              <h3 className="text-center text-xl font-extrabold text-white sm:text-2xl">
-                🖼 Tường ký ức - những gì cộng đồng đã gửi
-              </h3>
+          {/* Triển lãm ký ức trực tiếp */}
+          <Reveal variant="up" delay={300}>
+            <div className="mt-16">
+              <span className="text-xs font-bold uppercase tracking-widest text-blue-200">
+                Góc kỷ niệm được gửi về gần đây
+              </span>
               <div className="mt-6">
                 <MemoryGallery />
               </div>

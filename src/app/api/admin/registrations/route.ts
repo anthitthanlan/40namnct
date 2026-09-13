@@ -55,7 +55,14 @@ export async function GET(req: NextRequest) {
 }
 
 type Body = Record<string, unknown>;
-const ALLOWED: TicketStatus[] = ["pending", "confirmed", "cancelled"];
+const ALLOWED: TicketStatus[] = [
+  "pending",
+  "pending_payment",
+  "pending_approval",
+  "confirmed",
+  "rejected",
+  "cancelled",
+];
 
 /** Admin: đổi trạng thái vé - xác nhận đã nhận tiền / hủy */
 export async function PATCH(req: NextRequest) {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import DynamicNavbar from "@/components/DynamicNavbar";
+import SiteFooter from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
   title: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
@@ -20,26 +21,7 @@ export default function RootLayout({
       <body className="antialiased">
         <DynamicNavbar />
         {children}
-        <footer className="mt-20 pb-10 text-center text-sm text-slate-500">
-          © 1986 - 2026 Trường THPT Nguyễn Công Trứ · 40 năm trồng người
-          <span className="mt-2 block text-xs text-slate-400">
-            <a href="/dang-ky" className="hover:text-[#1d4ed8]">
-              Đăng ký tham dự
-            </a>
-            {" · "}
-            <a href="/bai-viet" className="hover:text-[#1d4ed8]">
-              Bài viết
-            </a>
-            {" · "}
-            <a href="/bai-viet/chia-se" className="hover:text-[#1d4ed8]">
-              Chia sẻ câu chuyện
-            </a>
-            {" · "}
-            <a href="/admin" className="hover:text-[#1d4ed8]">
-              Quản trị
-            </a>
-          </span>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

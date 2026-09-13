@@ -151,7 +151,11 @@ export default function MemberAccount() {
           🎫 Vé của tôi ({tickets.length})
         </h2>
         <div className="mt-5">
-          <TicketList tickets={tickets} memberCode={me.code} />
+          <TicketList
+            tickets={tickets}
+            memberCode={me.code}
+            onRefresh={loadTickets}
+          />
         </div>
       </div>
     </div>

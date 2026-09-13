@@ -62,10 +62,14 @@ const aInput =
 const aLabel =
   "mt-5 block text-xs font-extrabold uppercase tracking-wider text-slate-500";
 
-export default function AdminApp() {
+export default function AdminApp({
+  initialTab = "all",
+}: {
+  initialTab?: Tab;
+}) {
   const [view, setView] = useState<View>("checking");
   const [posts, setPosts] = useState<Post[]>([]);
-  const [tab, setTab] = useState<Tab>("pending");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [banner, setBanner] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -489,11 +493,11 @@ export default function AdminApp() {
       <div className="mt-8 flex flex-wrap gap-2">
         {(
           [
-            ["pending", `⏳ Chờ duyệt (${pendingCount})`],
-            ["published", `✅ Đã đăng (${publishedCount})`],
-            ["all", "📦 Tất cả"],
-            ["tickets", "🎟 Đăng ký & Vé"],
-            ["media", "🖼 Media"],
+            ["pending", `⏳ Bài viết chờ duyệt (${pendingCount})`],
+            ["published", `✅ Bài viết đã đăng (${publishedCount})`],
+            ["all", `📰 Tất cả bài viết (${posts.length})`],
+            ["tickets", "🎟 Vé & Sao kê tự động (Camera)"],
+            ["media", "📸 Đóng góp Media"],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -502,7 +506,7 @@ export default function AdminApp() {
             onClick={() => setTab(key)}
             className={`rounded-full px-5 py-2.5 text-sm font-extrabold transition ${
               tab === key
-                ? "bg-slate-900 text-white"
+                ? "bg-slate-900 text-white shadow-md"
                 : "bg-white text-slate-600 hover:bg-slate-200"
             }`}
           >

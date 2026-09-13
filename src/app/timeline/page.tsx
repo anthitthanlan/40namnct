@@ -1,63 +1,66 @@
 import type { Metadata } from "next";
 import fs from "fs";
 import path from "path";
-import TimelineMap from "@/components/TimelineMap";
 import MusicPlayer from "@/components/MusicPlayer";
+import TimelineWall, { type WallMemory } from "@/components/TimelineWall";
+import { listApprovedMediaChronological, mediaFileUrl } from "@/lib/media";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Timeline 2026 · THPT Nguyễn Công Trứ",
+  title: "Timeline 40 Năm · Tường ký ức THPT Nguyễn Công Trứ",
   description:
-    "Lộ trình 4 chặng của năm học 2026 - Khai giảng, Giỗ Tổ Hùng Vương, Tri ân & trưởng thành, Tổng kết.",
+    "Tường ký ức tự động cuộn luôn - kỷ niệm trường và đóng góp cộng đồng, sắp theo năm & tháng trên Timeline 40 năm.",
 };
 
-type Milestone = {
-  id: string;
-  index: number;
+type OfficialInfo = {
   title: string;
   desc: string;
   icon: string;
-  color: string;
-  images: string[];
+  year: number;
+  month: number;
 };
 
-/** Thông tin 4 chặng 2026 - icon + màu node như mockup squircle */
-const MILESTONE_INFO: Record<
-  string,
-  { title: string; desc: string; icon: string; color: string }
-> = {
+/** 4 chặng năm học 2026 - năm/tháng dùng để sắp trên Timeline cùng media cộng đồn */
+const OFFICIALS: Record<string, OfficialInfo> = {
   khaigiang: {
     title: "Khai Giảng",
     desc: "Buổi lễ khai giảng năm học 2026 - cờ bay, áo trắng và những ánh mắt đầy hy vọng cho một năm học mới tràn đầy năng lượng.",
     icon: "🎒",
-    color: "bg-[#16a34a]",
+    year: 2025,
+    month: 9,
   },
   giotohungvuong: {
     title: "Giỗ Tổ Hùng Vương",
-    desc: "Lễ hội Giỗ Tổ Hùng Vương 10/3 - tri ân cội nguồn, giáo dục truyền thống yêu nước cho các thế hệ học trò.",
+    desc: "Lễ hội Giỗ Tổ Hùng Vương 10/3 - tri ân cội nguồn, giáo dục truyền thống yêu nước cho các thế hé học trò.",
     icon: "🇻🇳",
-    color: "bg-[#1d4ed8]",
+    year: 2026,
+    month: 3,
   },
   trianvatruongthanh: {
     title: "Tri Ân & Trưởng Thành",
     desc: "Chương trình tri ân thầy cô, người lớn và học sinh - khoác lên hành trang trưởng thành cùng ngôi trường thân yêu.",
     icon: "🎓",
-    color: "bg-[#0ea5e9]",
+    year: 2026,
+    month: 5,
   },
   tongket: {
     title: "Tổng Kết Năm Học",
     desc: "Lễ tổng kết - vinh danh học sinh giỏi, các tập thể xuất sắc và khép lại một năm học 2026 rực rỡ thành công.",
     icon: "🏆",
-    color: "bg-[#f59e0b]",
+    year: 2026,
+    month: 6,
   },
 };
 
 const ORDER = ["khaigiang", "giotohungvuong", "trianvatruongthanh", "tongket"];
 
-function readMilestones(): Milestone[] {
+async function readMemories(): Promise<WallMemory[]> {
+  const memories: WallMemory[] = [];
   const base = path.join(process.cwd(), "public", "roadmap");
-  const milestones: Milestone[] = [];
-  ORDER.forEach((id, i) => {
-    const info = MILESTONE_INFO[id];
+
+  ORDER.forEach((id) => {
+    const info = OFFICIALS[id];
     let images: string[] = [];
     try {
       images = fs
@@ -68,18 +71,54 @@ function readMilestones(): Milestone[] {
     } catch {
       images = [];
     }
-    milestones.push({ id, index: i + 1, ...info, images });
+    if (images.length === 0) return;
+    memories.push({
+      id: `official-${id}`,
+      title: info.title,
+      caption: info.desc,
+      icon: info.icon,
+      author: "Ban Biên tập",
+      role: "Trường THPT Nguyễn Công Trứ",
+      year: info.year,
+      month: info.month,
+      kind: "album",
+      images,
+      isCommunity: false,
+    });
   });
-  return milestones;
+
+  for (const m of await listApprovedMediaChronological()) {
+    memories.push({
+      id: m.id,
+      title: m.caption || "Kỷ niệm dưới mái trường Trứ",
+      caption: m.caption,
+      icon: m.author.slice(0, 1),
+      author: m.author,
+      role: m.authorRole,
+      year: m.year,
+      month: m.month,
+      kind: m.kind,
+      images: [mediaFileUrl(m.file)],
+      isCommunity: true,
+    });
+  }
+
+  memories.sort(
+    (a, b) =>
+      a.year - b.year ||
+      a.month - b.month ||
+      a.title.localeCompare(b.title),
+  );
+  return memories;
 }
 
-export default function TimelinePage() {
-  const milestones = readMilestones();
+export default async function TimelinePage() {
+  const memories = await readMemories();
 
   return (
     <main className="relative min-h-screen">
       <MusicPlayer />
-      <TimelineMap milestones={milestones} />
+      <TimelineWall memories={memories} />
     </main>
   );
 }

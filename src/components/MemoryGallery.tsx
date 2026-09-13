@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 type MediaRow = {
   id: string;
   kind: "image" | "video";
+  year: number;
+  month: number;
   author: string;
   authorRole: string;
   caption: string;
@@ -77,6 +79,9 @@ export default function MemoryGallery() {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 🧡 {m.author} · {m.authorRole}
+              </p>
+              <p className="mt-0.5 text-[11px] font-bold text-slate-400">
+                📅 {String(m.month).padStart(2, "0")}.{m.year}
               </p>
             </figcaption>
           </figure>

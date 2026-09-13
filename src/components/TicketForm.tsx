@@ -30,8 +30,12 @@ export default function TicketForm({
   const [kind, setKind] = useState<Kind>("individual");
   const [attendee, setAttendee] = useState(defaultName);
   const [size, setSize] = useState<Size>("M");
-  const [quantity, setQuantity] = useState("10");
-  const [breakdown, setBreakdown] = useState<Record<string, string>>(ZERO_SIZES);
+  const [quantity, setQuantity] = useState("2");
+  const [breakdown, setBreakdown] = useState<Record<string, string>>({
+    ...ZERO_SIZES,
+    M: "1",
+    L: "1",
+  });
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -42,15 +46,19 @@ export default function TicketForm({
       SIZES.reduce((sum, s) => sum + (parseInt(breakdown[s] ?? "0", 10) || 0), 0),
     [breakdown],
   );
-  const total = qtyNum * UNIT_PRICE;
+  const total = kind === "individual" ? UNIT_PRICE : qtyNum * UNIT_PRICE;
+  const isGroupUnderMin = kind === "group" && qtyNum < 2;
   const mismatch = kind === "group" && filled !== qtyNum;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setMsg(null);
     if (kind === "group") {
-      if (qtyNum < 1) {
-        setMsg({ ok: false, text: "Vui lòng nhập số lượng suất (tối thiểu 1)." });
+      if (qtyNum < 2) {
+        setMsg({
+          ok: false,
+          text: "Vé tập thể khóa không thể đặt khi số lượng < 2 (tối thiểu 2 suất trở lên).",
+        });
         return;
       }
       if (filled !== qtyNum) {
@@ -61,6 +69,7 @@ export default function TicketForm({
         return;
       }
     }
+
     const payload =
       kind === "individual"
         ? { type: "individual", attendeeName: attendee, size, note }
@@ -72,6 +81,7 @@ export default function TicketForm({
             ),
             note,
           };
+
     setBusy(true);
     try {
       const res = await fetch("/api/tickets", {
@@ -86,10 +96,7 @@ export default function TicketForm({
       }
       setMsg({
         ok: true,
-        text:
-          kind === "individual"
-            ? "🎟 Đã đăng ký vé cá nhân (miễn phí) - xuất trình mã định danh tại cổng ngày 15/11/2026!"
-            : "🎟 Đã tạo vé tập thể - quét mã QR trong danh sách vé bên dưới để chuyển khoản nhé!",
+        text: "🎟 Đã tạo vé thành công! Quét mã QR chuyển khoản Sacombank bên dưới (mỗi phiên 2 phút) để thanh toán nhé.",
       });
       onCreated();
     } catch {
@@ -100,16 +107,32 @@ export default function TicketForm({
   }
 
   return (
-    <form className="btn-pop-soft rounded-[2rem] bg-white p-7 sm:p-9">
-      <h2 className="text-xl font-extrabold text-slate-900">
-        🎟 Đăng ký vé tham dự 15/11/2026
-      </h2>
+    <form
+      onSubmit={submit}
+      className="btn-pop-soft rounded-[2rem] bg-white p-7 sm:p-9"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-xl font-extrabold text-slate-900">
+          🎟 Đăng ký vé tham dự 15/11/2026
+        </h2>
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-extrabold text-[#1d4ed8]">
+          Đồng giá {formatVnd(UNIT_PRICE)} / suất
+        </span>
+      </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {(
           [
-            ["individual", "👤 Vé cá nhân", "Miễn phí · chọn 1 size áo kỷ niệm"],
-            ["group", "👥 Vé tập thể", `${formatVnd(UNIT_PRICE)}/suất · nhóm, lớp, khóa`],
+            [
+              "individual",
+              "👤 Vé cá nhân",
+              `${formatVnd(UNIT_PRICE)}/vé · 1 áo kỷ niệm & vé vào cổng`,
+            ],
+            [
+              "group",
+              "👥 Vé tập thể",
+              `${formatVnd(UNIT_PRICE)}/suất · theo khóa, lớp (tối thiểu 2 suất)`,
+            ],
           ] as const
         ).map(([key, title, desc]) => (
           <button
@@ -138,7 +161,7 @@ export default function TicketForm({
       </div>
 
       {kind === "individual" ? (
-        <div className="grid gap-x-5 sm:grid-cols-2">
+        <div className="mt-2 grid gap-x-5 sm:grid-cols-2">
           <div>
             <label className={labelCls} htmlFor="tk-attendee">
               Tên người tham dự
@@ -171,20 +194,29 @@ export default function TicketForm({
           </div>
         </div>
       ) : (
-        <>
+        <div className="mt-2">
           <label className={labelCls} htmlFor="tk-qty">
-            Số lượng suất *
+            Số lượng suất (khóa không đặt được khi &lt; 2) *
           </label>
           <input
             id="tk-qty"
             type="number"
-            min={1}
+            min={2}
             max={500}
             value={quantity}
             onChange={(e) => setQuantity(e.target.value.replace(/\D/g, ""))}
-            className={`${inputCls} font-extrabold`}
+            className={`${inputCls} font-extrabold ${
+              isGroupUnderMin ? "border-rose-400 bg-rose-50" : ""
+            }`}
           />
-          <p className={labelCls}>Số lượng áo theo size *</p>
+
+          {isGroupUnderMin && (
+            <p className="mt-1 text-xs font-bold text-rose-600">
+              ⚠️ Vé tập thể yêu cầu tối thiểu 2 suất trở lên.
+            </p>
+          )}
+
+          <p className={labelCls}>Phân bổ số lượng áo theo size *</p>
           <div className="mt-2 grid grid-cols-3 gap-3 sm:grid-cols-6">
             {SIZES.map((s) => (
               <label key={s} className="text-center">
@@ -206,38 +238,47 @@ export default function TicketForm({
               </label>
             ))}
           </div>
-          <p
-            className={`mt-2 text-xs font-bold ${
-              mismatch ? "text-rose-600" : "text-emerald-600"
-            }`}
-          >
-            Đã điền {filled} / {qtyNum || 0} suất
-          </p>
-          <p className="mt-1 text-sm font-extrabold text-slate-900">
-            Thành tiền: {formatVnd(total)}
-            <span className="ml-1 font-semibold text-slate-500">
-              ({qtyNum} suất × {formatVnd(UNIT_PRICE)})
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span
+              className={`font-bold ${
+                mismatch ? "text-rose-600" : "text-emerald-600"
+              }`}
+            >
+              Đã điền áo: {filled} / {qtyNum || 0} suất
             </span>
-          </p>
-        </>
+            <span className="font-extrabold text-slate-900">
+              Tổng tiền: {formatVnd(total)}
+            </span>
+          </div>
+        </div>
       )}
 
       <label className={labelCls} htmlFor="tk-note">
-        Ghi chú (khóa, lớp, nhóm - nếu có)
+        Ghi chú (khóa, lớp, niên khóa - nếu có)
       </label>
       <input
         id="tk-note"
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="VD: Lớp 12A2 - khóa 2005"
+        placeholder="VD: Lớp 12A2 - Khóa 1998"
         className={inputCls}
         maxLength={200}
       />
 
+      <div className="mt-4 rounded-2xl bg-blue-50/70 p-4 text-xs leading-relaxed text-blue-900 border border-blue-100">
+        💡 <strong>Quy trình thanh toán:</strong> Sau khi bấm Đăng ký, hệ thống sẽ
+        sinh mã QR chuẩn EMVCo (Sacombank 060004015137) có thời hạn 2 phút. Sau khi
+        chuyển khoản, bạn bấm <strong>&ldquo;Tôi đã chuyển khoản xong&rdquo;</strong>,
+        vé sẽ ở trạng thái chờ cấp (24h) để Ban Tổ chức duyệt và phát hành vé điện tử chính thức.
+      </div>
+
       {msg && (
         <p
           className={`mt-4 rounded-xl px-4 py-3 text-sm font-semibold ${
-            msg.ok ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"
+            msg.ok
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : "bg-rose-50 text-rose-600 border border-rose-200"
           }`}
         >
           {msg.text}
@@ -245,12 +286,11 @@ export default function TicketForm({
       )}
 
       <button
-        type="button"
-        onClick={submit}
-        disabled={busy}
-        className="btn-pop mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
+        type="submit"
+        disabled={busy || isGroupUnderMin}
+        className="btn-pop mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-40 sm:w-auto sm:px-10"
       >
-        {busy ? "Đang lưu…" : "✅ Đăng ký vé"}
+        {busy ? "Đang tạo vé…" : isGroupUnderMin ? "Khóa (Cần tối thiểu 2 suất)" : `🎫 Đăng ký vé (${formatVnd(total)})`}
       </button>
     </form>
   );

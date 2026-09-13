@@ -7,6 +7,8 @@ type MediaRow = {
   file: string;
   kind: "image" | "video";
   size: number;
+  year: number;
+  month: number;
   author: string;
   authorRole: string;
   caption: string;
@@ -185,7 +187,7 @@ export default function AdminMedia({
                     🧡 {m.author} · {m.authorRole}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    {vi(m.createdAt)} · {prettySize(m.size)}
+                    📅 {String(m.month).padStart(2, "0")}.{m.year} · {vi(m.createdAt)} · {prettySize(m.size)}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {m.status !== "approved" && (

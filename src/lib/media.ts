@@ -10,6 +10,9 @@ export type MediaItem = {
   file: string;
   kind: "image" | "video";
   size: number;
+  /** Năm & tháng khoác khúc - dùng để sắp xếp tự động trên Timeline */
+  year: number;
+  month: number;
   author: string;
   authorRole: string;
   caption: string;
@@ -32,7 +35,9 @@ async function readMedia(): Promise<MediaItem[]> {
   try {
     const raw = await fs.readFile(MEDIA_FILE, "utf8");
     const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed as MediaItem[];
+    if (Array.isArray(parsed)) {
+      return (parsed as MediaItem[]).map(normalizeMediaItem);
+    }
   } catch {
     await withLock(async () => {
       try {
@@ -101,10 +106,42 @@ export async function addMediaItem(item: MediaItem): Promise<void> {
   await writeMedia(items);
 }
 
+/** Dữ data cố từ các item cữ (không có năm/tháng) → năm/tháng từ createdAt */
+function normalizeMediaItem(item: MediaItem): MediaItem {
+  const created = new Date(item.createdAt);
+  const fallbackYear = Number.isNaN(created.getFullYear())
+    ? 2026
+    : created.getFullYear();
+  const fallbackMonth = Number.isNaN(created.getMonth())
+    ? 1
+    : created.getMonth() + 1;
+  const year =
+    Number.isInteger(item.year) && item.year >= 1900 && item.year <= 2100
+      ? item.year
+      : fallbackYear;
+  const month =
+    Number.isInteger(item.month) && item.month >= 1 && item.month <= 12
+      ? item.month
+      : fallbackMonth;
+  return { ...item, year, month };
+}
+
 export async function listApprovedMedia(): Promise<MediaItem[]> {
   return (await readMedia())
     .filter((m) => m.status === "approved")
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Danh sách media đã duyệt, sắp theo năm → tháng (cho Timeline tự động cuộn) */
+export async function listApprovedMediaChronological(): Promise<MediaItem[]> {
+  return (await readMedia())
+    .filter((m) => m.status === "approved")
+    .sort(
+      (a, b) =>
+        a.year - b.year ||
+        a.month - b.month ||
+        b.createdAt.localeCompare(a.createdAt),
+    );
 }
 
 export async function listAllMedia(): Promise<MediaItem[]> {

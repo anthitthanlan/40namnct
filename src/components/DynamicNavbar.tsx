@@ -7,15 +7,16 @@ import { useEffect, useState } from "react";
 
 const links = [
   { href: "#gioi-thieu", label: "Giới thiệu" },
+  { href: "#sao-ke", label: "Sao kê" },
   { href: "/bai-viet", label: "Bài viết" },
   { href: "/timeline", label: "Timeline" },
   { href: "/dang-ky", label: "Đăng ký vé" },
-  { href: "#dong-gop", label: "Đóng góp Media" },
 ];
 
 export default function DynamicNavbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [active, setActive] = useState("");
 
   useEffect(() => {
@@ -31,7 +32,6 @@ export default function DynamicNavbar() {
       { rootMargin: "-45% 0px -45% 0px" },
     );
     links.forEach(({ href }) => {
-      // Chỉ quan sát anchor trên cùng trang - các route (/bai-viet, /timeline) bỏ qua
       if (!href.startsWith("#") || href === "#") return;
       const el = document.querySelector(href);
       if (el) observer.observe(el);
@@ -43,62 +43,118 @@ export default function DynamicNavbar() {
     };
   }, [pathname]);
 
-  // Anchor (mục #gioi-thieu, #dong-gop…) chỉ tồn tại ở trang chủ -
-  // ở trang khác điều hướng về "/" kèm hash để Next.js cuộn tới section.
   const isHome = pathname === "/";
+  // Ở trang chủ khi chưa cuộn và chưa hover thì thu gọn chỉ còn logo
+  const isExpanded = !isHome || scrolled || isHovered;
+
   const resolveHref = (href: string): string =>
     href.startsWith("#") && !isHome ? `/#${href.slice(1)}` : href;
 
   return (
     <nav className="fixed inset-x-0 top-4 z-50 flex justify-center px-4">
       <div
-        className={`flex items-center gap-1 rounded-full border border-white/60 bg-white/70 p-1.5 shadow-lg shadow-slate-900/10 backdrop-blur-xl transition-all duration-500 ${
-          scrolled ? "bg-white/85" : "bg-white/50"
-        }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        style={{
+          transition: "all 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+        className={`flex items-center rounded-full border border-white/60 p-1.5 shadow-lg shadow-slate-950/15 backdrop-blur-2xl ${
+          scrolled ? "bg-white/90 shadow-slate-950/20" : "bg-white/75"
+        } ${isExpanded ? "gap-1.5" : "justify-center ring-2 ring-white/50"}`}
       >
-        {/* Logo - về trang chủ */}
-        <Link href="/" className="flex items-center pl-2 pr-1">
+        {/* Logo trường - Luôn hiển thị, nhấp để về trang chủ */}
+        <Link
+          href="/"
+          className="flex shrink-0 items-center rounded-full p-1 transition-transform duration-300 hover:scale-105 active:scale-95"
+          title="Trường THPT Nguyễn Công Trứ - 40 Năm"
+        >
           <Image
             src="/images/logo_nct.png"
             alt="Logo NCT"
-            width={32}
-            height={32}
+            width={34}
+            height={34}
+            priority
             className="h-8 w-8 object-contain"
           />
         </Link>
-        <span className="mx-1 hidden h-5 w-px bg-slate-300 md:block" />
 
-        {/* Link islands - pill trượt theo section active */}
-        <div className="relative hidden items-center md:flex">
-          {links.map(({ href, label }) => {
-            const cls = `relative z-10 rounded-full px-4 py-2 text-sm font-medium transition-colors duration-300 ${
-              active === href
-                ? "text-[#1d4ed8]"
-                : "text-slate-600 hover:text-slate-900"
-            }`;
-            // Anchor cùng trang: <a> thường; còn lại dùng Link để điều hướng
-            if (!href.startsWith("#") || !isHome) {
-              return (
-                <Link key={href} href={resolveHref(href)} className={cls}>
-                  {label}
-                </Link>
-              );
-            }
-            return (
-              <a key={href} href={href} className={cls}>
-                {label}
-              </a>
-            );
-          })}
-        </div>
-
-        {/* CTA island - bo tròn gọn, không bóng lệch gây vỡ khung */}
-        <Link
-          href={isHome ? "#dong-gop" : "/#dong-gop"}
-          className="ml-1 hidden rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-[#1d4ed8] sm:block"
+        {/* Nội dung Menu - dùng max-width+opacity cho smooth animation */}
+        <div
+          aria-hidden={!isExpanded}
+          style={{
+            maxWidth: isExpanded ? "720px" : 0,
+            opacity: isExpanded ? 1 : 0,
+            overflow: "hidden",
+            transition:
+              "max-width 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            pointerEvents: isExpanded ? undefined : "none",
+          }}
+          className="flex items-center"
         >
-          Đóng góp Media
-        </Link>
+          <span className="mx-1 hidden h-5 w-px bg-slate-300 md:block" />
+
+          {/* Links điều hướng kèm animation underline */}
+          <div className="relative hidden items-center gap-1 md:flex">
+            {links.map(({ href, label }) => {
+              const isCurrent =
+                active === href ||
+                (pathname === href && !isHome) ||
+                (href.startsWith("#") && isHome && active === href);
+
+              const content = (
+                <>
+                  <span>{label}</span>
+                  {/* Animation Underline mượt mà */}
+                  <span
+                    className={`absolute bottom-1 left-3 right-3 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-300 ease-out ${
+                      isCurrent
+                        ? "opacity-100 scale-x-100"
+                        : "opacity-0 scale-x-0 group-hover/link:opacity-60 group-hover/link:scale-x-75"
+                    }`}
+                  />
+                </>
+              );
+
+              const cls = `group/link relative z-10 rounded-full px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                isCurrent
+                  ? "text-[#1d4ed8] font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`;
+
+              if (!href.startsWith("#") || !isHome) {
+                return (
+                  <Link key={href} href={resolveHref(href)} className={cls}>
+                    {content}
+                  </Link>
+                );
+              }
+              return (
+                <a key={href} href={href} className={cls}>
+                  {content}
+                </a>
+              );
+            })}
+          </div>
+
+          {/* Nút CTA đen: "Đăng ký tham gia" dẫn tới /dang-ky */}
+          <Link
+            href="/dang-ky"
+            className="ml-2 hidden shrink-0 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white whitespace-nowrap shadow-md transition-all duration-300 hover:bg-[#1d4ed8] hover:shadow-blue-900/30 active:scale-95 sm:inline-flex items-center gap-1.5"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-3.5 w-3.5"
+              width={14}
+              height={14}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 110 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 110-4V6z" />
+            </svg>
+            <span>Đăng ký tham gia</span>
+          </Link>
+        </div>
       </div>
     </nav>
   );

@@ -52,10 +52,32 @@ export async function POST(req: NextRequest) {
   const author = str(form.get("author"), 80);
   const authorRole = str(form.get("authorRole"), 120) || "Cộng đồng Trứ";
   const caption = str(form.get("caption"), 300);
+  const year = parseInt(str(form.get("year"), 8), 10);
+  const month = parseInt(str(form.get("month"), 8), 10);
 
   if (author.length < 2) {
     return NextResponse.json(
       { ok: false, message: "Vui lòng nhập họ tên của bạn." },
+      { status: 400 },
+    );
+  }
+  if (Number.isNaN(year) || year < 1900 || year > 2100) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "Vui lòng nhập năm (1900 - 2100) - năm dùng để sắp trên Timeline.",
+      },
+      { status: 400 },
+    );
+  }
+  if (Number.isNaN(month) || month < 1 || month > 12) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "Vui lòng chọn tháng (1 - 12) - tháng dùng để sắp trên Timeline.",
+      },
       { status: 400 },
     );
   }
@@ -105,6 +127,8 @@ export async function POST(req: NextRequest) {
       file: name,
       kind,
       size: file.size,
+      year,
+      month,
       author,
       authorRole,
       caption,

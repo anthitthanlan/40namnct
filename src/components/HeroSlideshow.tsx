@@ -56,8 +56,9 @@ export default function HeroSlideshow() {
         </div>
       ))}
 
-      {/* Overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/40 to-slate-950/80" />
+      {/* Overlay gradient - tối trên cho navbar, trắng ở đáy để gợi cuộn */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/30 to-transparent" />
+      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/80 to-transparent" />
 
       {/* Nội dung */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white">

@@ -29,6 +29,8 @@ export default function MediaUploader() {
   const [author, setAuthor] = useState("");
   const [role, setRole] = useState(ROLES[0]);
   const [caption, setCaption] = useState("");
+  const [year, setYear] = useState("");
+  const [month, setMonth] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -60,6 +62,16 @@ export default function MediaUploader() {
       setError("Vui lòng nhập họ tên của bạn.");
       return;
     }
+    const y = parseInt(year, 10);
+    const m = parseInt(month, 10);
+    if (Number.isNaN(y) || y < 1950 || y > 2100) {
+      setError("Vui lòng nhập năm (1950 - 2100) - năm dùng để sắp trên Timeline.");
+      return;
+    }
+    if (Number.isNaN(m) || m < 1 || m > 12) {
+      setError("Vui lòng chọn tháng (1 - 12) - tháng dùng để sắp trên Timeline.");
+      return;
+    }
     if (files.length === 0 || files.length > 8) {
       setError("Chọn từ 1 đến 8 tệp ảnh / video.");
       return;
@@ -70,6 +82,8 @@ export default function MediaUploader() {
       form.append("author", author);
       form.append("authorRole", role);
       form.append("caption", caption);
+      form.append("year", `${y}`);
+      form.append("month", `${m}`);
       files.forEach((f) => form.append("files", f));
       const res = await fetch("/api/media", { method: "POST", body: form });
       const data = await res.json();
@@ -80,6 +94,8 @@ export default function MediaUploader() {
       setDone(data.message);
       setFiles([]);
       setCaption("");
+      setYear("");
+      setMonth("");
       if (inputRef.current) inputRef.current.value = "";
     } catch {
       setError("Có lỗi xảy ra, vui lòng thử lại.");
@@ -97,7 +113,7 @@ export default function MediaUploader() {
         </h3>
         <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-slate-600">
           {done} Sau khi được duyệt, kỷ niệm của bạn sẽ xuất hiện trong Tường
-          ký ức bên dưới.
+          ký ức và Timeline trường.
         </p>
         <button
           type="button"
@@ -116,8 +132,7 @@ export default function MediaUploader() {
         📤 Gửi hình ảnh / tư liệu ngay
       </h3>
       <p className="mt-2 text-sm text-slate-500">
-        Tải lên ảnh cũ, học bạ, sổ liên lạc, phù hiệu… hoặc video ngắn. Sau khi
-        Ban Biên tập duyệt, kỷ niệm sẽ được trưng bày trong Triển lãm 40 năm.
+        Tải lên ảng cũ, học bạ, sổ liên lạc, phù hiệu… hoặc video ngắn. Nhập năm & tháng khoác khúc - sau duyệt tự động sắp trên Timeline 40 năm.
       </p>
 
       <label className={labelCls} htmlFor="media-files">
@@ -160,6 +175,47 @@ export default function MediaUploader() {
         className={inputCls}
         maxLength={300}
       />
+
+      <div className="grid gap-x-5 sm:grid-cols-2">
+        <div>
+          <label className={labelCls} htmlFor="media-year">
+            Năm * <span className="text-slate-400">(dùng để sắp trên Timeline)</span>
+          </label>
+          <input
+            id="media-year"
+            type="number"
+            min={1950}
+            max={2100}
+            inputMode="numeric"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            placeholder="VD: 1998"
+            className={inputCls}
+            required
+          />
+        </div>
+        <div>
+          <label className={labelCls} htmlFor="media-month">
+            Tháng * <span className="text-slate-400">(dùng để sắp trên Timeline)</span>
+          </label>
+          <select
+            id="media-month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className={inputCls}
+            required
+          >
+            <option value="" disabled>
+              Chọn tháng…
+            </option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((v) => (
+              <option key={v} value={v}>
+                Tháng {v}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <div className="grid gap-x-5 sm:grid-cols-2">
         <div>

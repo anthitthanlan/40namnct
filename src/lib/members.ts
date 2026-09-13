@@ -1,14 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { UNIT_PRICE, type Size } from "./ticket-view";
+import { UNIT_PRICE, type Size, type TicketStatus } from "./ticket-view";
 
 export { SIZES, UNIT_PRICE } from "./ticket-view";
-export type { Size } from "./ticket-view";
+export type { Size, TicketStatus } from "./ticket-view";
 export const MAX_GROUP_QUANTITY = 500;
 
 export type TicketType = "individual" | "group";
-export type TicketStatus = "pending" | "confirmed" | "cancelled";
 
 export type Member = {
   id: string;
@@ -34,11 +33,15 @@ export type Ticket = {
   quantity: number;
   /** size -> số lượng */
   sizes: Record<string, number>;
-  /** Cá nhân miễn phí (0) · tập thể quantity × 200.000 */
+  /** Vé cá nhân 200.000đ · tập thể quantity × 200.000đ */
   amount: number;
   status: TicketStatus;
   /** Ghi chú tự do (VD: Lớp 12A2 - khóa 2005) */
   note: string;
+  lastSessionId?: string;
+  paymentClaimedAt?: string;
+  checkedIn?: boolean;
+  checkedInAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -178,7 +181,7 @@ function randomTicketCode(): string {
   return `VE-${randomCode(6)}`;
 }
 
-/** Tạo vé (dữ liệu đã được validate ở route gọi) */
+/** Tạo vé (cá nhân 200.000đ, tập thể 200.000đ/suất; trạng thái ban đầu là pending_payment) */
 export async function createTicket(
   memberId: string,
   input: TicketInput,
@@ -200,9 +203,11 @@ export async function createTicket(
           size: input.size,
           quantity: 1,
           sizes: input.size ? { [input.size]: 1 } : {},
-          amount: 0,
-          status: "confirmed",
+          amount: UNIT_PRICE,
+          status: "pending_payment",
           note: input.note,
+          checkedIn: false,
+          checkedInAt: null,
           createdAt: now,
           updatedAt: now,
         }
@@ -216,8 +221,10 @@ export async function createTicket(
           quantity: input.quantity,
           sizes: input.sizes,
           amount: input.quantity * UNIT_PRICE,
-          status: "pending",
+          status: "pending_payment",
           note: input.note,
+          checkedIn: false,
+          checkedInAt: null,
           createdAt: now,
           updatedAt: now,
         };
@@ -252,6 +259,60 @@ export async function setTicketStatus(
   };
   await writeJson(TICKETS_FILE, tickets);
   return tickets[index];
+}
+
+/** Người dùng xác nhận đã chuyển khoản -> chuyển sang chờ duyệt (24h) kèm Session ID */
+export async function claimPayment(
+  id: string,
+  sessionId?: string,
+): Promise<Ticket | null> {
+  const tickets = await listTickets();
+  const index = tickets.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+  const now = new Date().toISOString();
+  tickets[index] = {
+    ...tickets[index],
+    status: "pending_approval",
+    lastSessionId: sessionId || tickets[index].lastSessionId,
+    paymentClaimedAt: now,
+    updatedAt: now,
+  };
+  await writeJson(TICKETS_FILE, tickets);
+  return tickets[index];
+}
+
+/** Check-in vé tại cổng bằng camera scanner */
+export async function checkInTicket(
+  id: string,
+): Promise<{ ok: boolean; ticket?: Ticket; message?: string }> {
+  const tickets = await listTickets();
+  const index = tickets.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
+  }
+  const t = tickets[index];
+  if (t.status !== "confirmed") {
+    return {
+      ok: false,
+      message: `Vé chưa được duyệt phát hành (trạng thái: ${t.status})`,
+    };
+  }
+  if (t.checkedIn) {
+    return {
+      ok: false,
+      ticket: t,
+      message: `Vé này đã được quét vào cổng lúc ${new Date(t.checkedInAt || "").toLocaleTimeString("vi-VN")}`,
+    };
+  }
+  const now = new Date().toISOString();
+  tickets[index] = {
+    ...t,
+    checkedIn: true,
+    checkedInAt: now,
+    updatedAt: now,
+  };
+  await writeJson(TICKETS_FILE, tickets);
+  return { ok: true, ticket: tickets[index] };
 }
 
 export { vietqrUrl } from "./vietqr";

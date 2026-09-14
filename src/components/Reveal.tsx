@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { motion } from "framer-motion";
+import { type ReactNode } from "react";
 
 type RevealProps = {
   children: ReactNode;
@@ -19,45 +20,40 @@ export default function Reveal({
   delay = 0,
   as = "div",
 }: RevealProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            setVisible(true);
-            observer.unobserve(e.target);
-          }
-        });
+  // Config variants for framer-motion
+  const variants = {
+    hidden: {
+      opacity: 0,
+      y: variant === "up" ? 28 : 0,
+      x: variant === "left" ? -32 : variant === "right" ? 32 : 0,
+      scale: variant === "zoom" ? 0.92 : 1,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      x: 0,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 70,
+        damping: 15,
+        mass: 0.8,
+        delay: delay / 1000,
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+    },
+  };
 
-  const Tag = as as "div";
-  const variantClass =
-    variant === "left"
-      ? "reveal-left"
-      : variant === "right"
-        ? "reveal-right"
-        : variant === "zoom"
-          ? "reveal-zoom"
-          : "";
+  const MotionTag = (motion as any)[as] || motion.div;
 
   return (
-    <Tag
-      ref={ref}
-      className={`reveal ${variantClass} ${visible ? "visible" : ""} ${className}`}
-      style={delay ? { transitionDelay: `${delay}ms` } : undefined}
+    <MotionTag
+      className={className}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "0px 0px -8% 0px", amount: 0.12 }}
+      variants={variants}
     >
       {children}
-    </Tag>
+    </MotionTag>
   );
 }

@@ -62,7 +62,7 @@ export default function HeroSlideshow() {
 
       {/* Nội dung */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white">
-        <span className="floaty btn-pop-soft mb-6 rounded-full bg-white px-5 py-2 text-sm font-bold tracking-wide text-[#1d4ed8]">
+        <span className="floaty btn-lightship-soft mb-6 rounded-full bg-white px-5 py-2 text-sm font-bold tracking-wide text-[#1d4ed8]">
           1986 - 2026 · 40 NĂM TRỒNG NGƯỜI
         </span>
         <h1 className="max-w-4xl text-4xl font-extrabold leading-tight drop-shadow-lg sm:text-6xl">
@@ -78,13 +78,13 @@ export default function HeroSlideshow() {
         <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
           <a
             href="/timeline"
-            className="btn-pop bg-[#16a34a] px-7 py-3.5 text-base font-bold text-white"
+            className="btn-lightship bg-[#16a34a] px-7 py-3.5 text-base font-bold text-white"
           >
             Khám phá hành trình 40 năm
           </a>
           <a
             href="#gioi-thieu"
-            className="btn-pop-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"
+            className="btn-lightship-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"
           >
             Về ngôi trường
           </a>

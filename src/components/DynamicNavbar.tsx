@@ -44,8 +44,8 @@ export default function DynamicNavbar() {
   }, [pathname]);
 
   const isHome = pathname === "/";
-  // Ở trang chủ khi chưa cuộn và chưa hover thì thu gọn chỉ còn logo
-  const isExpanded = !isHome || scrolled || isHovered;
+  // Luôn mở rộng navbar, không tự động thu gọn
+  const isExpanded = true;
 
   const resolveHref = (href: string): string =>
     href.startsWith("#") && !isHome ? `/#${href.slice(1)}` : href;
@@ -62,19 +62,27 @@ export default function DynamicNavbar() {
           scrolled ? "bg-white/90 shadow-slate-950/20" : "bg-white/75"
         } ${isExpanded ? "gap-1.5" : "justify-center ring-2 ring-white/50"}`}
       >
-        {/* Logo trường - Luôn hiển thị, nhấp để về trang chủ */}
+        {/* Logo trường và logo 40 năm - Luôn hiển thị, nhấp để về trang chủ */}
         <Link
           href="/"
-          className="flex shrink-0 items-center rounded-full p-1 transition-transform duration-300 hover:scale-105 active:scale-95"
+          className="flex shrink-0 items-center gap-2 rounded-full p-1 transition-transform duration-300 hover:scale-105 active:scale-95"
           title="Trường THPT Nguyễn Công Trứ - 40 Năm"
         >
           <Image
-            src="/images/logo_nct.png"
+            src="/images/NCT.png"
             alt="Logo NCT"
             width={34}
             height={34}
             priority
-            className="h-8 w-8 object-contain"
+            className="h-8 w-auto object-contain"
+          />
+          <Image
+            src="/images/Logo_40th_NCT.png"
+            alt="Logo 40 năm NCT"
+            width={34}
+            height={34}
+            priority
+            className="h-8 w-auto object-contain"
           />
         </Link>
 

@@ -106,8 +106,8 @@ export default function MediaUploader() {
 
   if (done) {
     return (
-      <div className="btn-pop-soft rounded-[2rem] bg-white p-10 text-center">
-        <span className="text-5xl">🎉</span>
+      <div className="btn-lightship-soft rounded-[2rem] bg-white p-10 text-center">
+        <span className="material-symbols-rounded text-6xl text-amber-500 icon-hover-morph">celebration</span>
         <h3 className="mt-4 text-2xl font-extrabold text-slate-900">
           Đã gửi kỷ niệm!
         </h3>
@@ -118,18 +118,18 @@ export default function MediaUploader() {
         <button
           type="button"
           onClick={() => setDone("")}
-          className="btn-pop mt-7 rounded-2xl bg-[#1d4ed8] px-8 py-3 text-sm font-extrabold text-white"
+          className="btn-lightship mt-7 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1d4ed8] px-8 py-3 text-sm font-extrabold text-white"
         >
-          📤 Gửi thêm kỷ niệm khác
+          <span className="material-symbols-rounded">upload</span> Gửi thêm kỷ niệm khác
         </button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="btn-pop-soft rounded-[2rem] bg-white p-7 text-left sm:p-9">
-      <h3 className="text-xl font-extrabold text-slate-900">
-        📤 Gửi hình ảnh / tư liệu ngay
+    <form onSubmit={submit} className="btn-lightship-soft rounded-[2rem] bg-white p-7 text-left sm:p-9">
+      <h3 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+        <span className="material-symbols-rounded text-blue-600">upload</span> Gửi hình ảnh / tư liệu ngay
       </h3>
       <p className="mt-2 text-sm text-slate-500">
         Tải lên ảng cũ, học bạ, sổ liên lạc, phù hiệu… hoặc video ngắn. Nhập năm & tháng khoác khúc - sau duyệt tự động sắp trên Timeline 40 năm.
@@ -154,7 +154,7 @@ export default function MediaUploader() {
               key={`${f.name}-${f.size}`}
               className="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600"
             >
-              <span className="truncate">📎 {f.name}</span>
+              <span className="flex items-center gap-1.5 truncate"><span className="material-symbols-rounded text-[1.1rem]">attach_file</span> {f.name}</span>
               <span className="ml-3 shrink-0 text-slate-400">
                 {prettySize(f.size)}
               </span>
@@ -168,7 +168,7 @@ export default function MediaUploader() {
       </label>
       <textarea
         id="media-caption"
-        rows={3}
+        rows={5}
         value={caption}
         onChange={(e) => setCaption(e.target.value)}
         placeholder="VD: Lễ chào cờ đầu năm học 1998, trước sân trường cũ"
@@ -260,9 +260,9 @@ export default function MediaUploader() {
       <button
         type="submit"
         disabled={busy}
-        className="btn-pop mt-6 w-full bg-[#1d4ed8] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
+        className="btn-lightship mt-6 flex w-full items-center justify-center gap-2 bg-[#1d4ed8] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
       >
-        {busy ? "Đang tải lên…" : "📤 Gửi kỷ niệm"}
+        {busy ? "Đang tải lên…" : <><span className="material-symbols-rounded">upload</span> Gửi kỷ niệm</>}
       </button>
     </form>
   );

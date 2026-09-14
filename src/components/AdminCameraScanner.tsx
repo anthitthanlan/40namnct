@@ -170,7 +170,7 @@ export default function AdminCameraScanner({
             <button
               type="button"
               onClick={startCamera}
-              className="btn-pop rounded-xl bg-[#16a34a] px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700"
+              className="btn-lightship rounded-xl bg-[#16a34a] px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700"
             >
               🎥 Bật Camera Quét Vé
             </button>

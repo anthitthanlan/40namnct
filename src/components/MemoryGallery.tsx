@@ -54,7 +54,7 @@ export default function MemoryGallery() {
         {items.map((m) => (
           <figure
             key={m.id}
-            className="btn-pop-soft overflow-hidden rounded-3xl bg-white"
+            className="btn-lightship-soft overflow-hidden rounded-3xl bg-white"
           >
             {m.kind === "image" ? (
               // eslint-disable-next-line @next/next/no-img-element

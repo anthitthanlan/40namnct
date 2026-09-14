@@ -18,7 +18,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi">
-      <body className="antialiased">
+      <body className="antialiased selection:bg-[#1d4ed8]/20 selection:text-[#1d4ed8]">
         <DynamicNavbar />
         {children}
         <SiteFooter />

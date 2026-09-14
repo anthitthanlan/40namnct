@@ -88,7 +88,7 @@ export default function MemberLoginForm() {
       <button
         type="submit"
         disabled={busy}
-        className="btn-pop mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
+        className="btn-lightship mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
       >
         {busy ? "Đang kiểm tra…" : "Đăng nhập"}
       </button>

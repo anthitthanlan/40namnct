@@ -49,7 +49,7 @@ export default function PostCard({
 
   if (featured) {
     return (
-      <article className="btn-pop-soft group grid overflow-hidden rounded-[2rem] bg-white md:grid-cols-2">
+      <article className="btn-lightship-soft group grid overflow-hidden rounded-[2rem] bg-white md:grid-cols-2">
         <Link href={href} className="block md:order-2">
           <PostCover
             post={post}
@@ -80,7 +80,7 @@ export default function PostCard({
   }
 
   return (
-    <article className="btn-pop-soft group flex h-full flex-col overflow-hidden rounded-[2rem] bg-white">
+    <article className="btn-lightship-soft group flex h-full flex-col overflow-hidden rounded-[2rem] bg-white">
       <Link href={href} className="block overflow-hidden">
         <PostCover
           post={post}

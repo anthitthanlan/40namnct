@@ -114,7 +114,7 @@ export default async function PostDetailPage({ params }: Props) {
 
       <section className="bg-slate-50 py-16">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="btn-pop-soft rounded-[2rem] bg-white p-10 text-center">
+          <div className="btn-lightship-soft rounded-[2rem] bg-white p-10 text-center">
             <span className="text-4xl">✍️</span>
             <h2 className="mt-3 text-2xl font-extrabold text-slate-900">
               Bạn cũng có một kỷ niệm với Trứ?
@@ -125,7 +125,7 @@ export default async function PostDetailPage({ params }: Props) {
             </p>
             <Link
               href="/bai-viet/chia-se"
-              className="btn-pop mt-6 inline-block bg-[#16a34a] px-7 py-3.5 font-bold text-white"
+              className="btn-lightship mt-6 inline-block bg-[#16a34a] px-7 py-3.5 font-bold text-white"
             >
               Chia sẻ câu chuyện của bạn
             </Link>

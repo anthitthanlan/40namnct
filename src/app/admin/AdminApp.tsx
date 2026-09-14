@@ -262,7 +262,7 @@ export default function AdminApp({
   if (view === "anon") {
     return (
       <div className="mx-auto max-w-md px-6 py-10">
-        <form onSubmit={login} className="btn-pop-soft rounded-[2rem] bg-white p-8">
+        <form onSubmit={login} className="btn-lightship-soft rounded-[2rem] bg-white p-8">
           <Image src="/images/logo_nct.png" alt="Logo NCT" width={56} height={56} className="mx-auto" />
           <h1 className="mt-4 text-center text-2xl font-extrabold text-slate-900">
             Quản trị bài viết
@@ -293,7 +293,7 @@ export default function AdminApp({
           <button
             type="submit"
             disabled={busy}
-            className="btn-pop mt-5 w-full bg-[#1d4ed8] py-3 font-bold text-white disabled:opacity-50"
+            className="btn-lightship mt-5 w-full bg-[#1d4ed8] py-3 font-bold text-white disabled:opacity-50"
           >
             {busy ? "Đang kiểm tra…" : "Đăng nhập"}
           </button>
@@ -326,14 +326,14 @@ export default function AdminApp({
           <button
             type="button"
             onClick={openNew}
-            className="btn-pop rounded-full bg-[#1d4ed8] px-6 py-3 text-sm font-extrabold text-white"
+            className="btn-lightship rounded-full bg-[#1d4ed8] px-6 py-3 text-sm font-extrabold text-white"
           >
             ✍️ Viết bài mới
           </button>
           <button
             type="button"
             onClick={logout}
-            className="btn-pop-soft rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-600"
+            className="btn-lightship-soft rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-600"
           >
             Đăng xuất
           </button>
@@ -474,14 +474,14 @@ export default function AdminApp({
               type="button"
               onClick={saveDraft}
               disabled={busy}
-              className="btn-pop bg-[#1d4ed8] px-8 py-3 font-extrabold text-white disabled:opacity-50"
+              className="btn-lightship bg-[#1d4ed8] px-8 py-3 font-extrabold text-white disabled:opacity-50"
             >
               {busy ? "Đang lưu…" : draft.id ? "💾 Lưu thay đổi" : "🚀 Đăng bài"}
             </button>
             <button
               type="button"
               onClick={() => setDraft(null)}
-              className="btn-pop-soft bg-white px-6 py-3 font-bold text-slate-600"
+              className="btn-lightship-soft bg-white px-6 py-3 font-bold text-slate-600"
             >
               Huỷ
             </button>

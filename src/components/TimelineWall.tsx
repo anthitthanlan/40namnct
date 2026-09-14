@@ -139,7 +139,7 @@ export default function TimelineWall({
   if (memories.length === 0) {
     return (
       <section className="grid min-h-screen place-items-center px-6 text-center">
-        <div className="btn-pop-soft max-w-lg bg-white p-8">
+        <div className="btn-lightship-soft max-w-lg bg-white p-8">
           <span className="text-4xl">🗓</span>
           <h1 className="mt-3 text-xl font-extrabold text-slate-900">
             Timeline 40 Năm
@@ -164,7 +164,7 @@ export default function TimelineWall({
           className="absolute inset-x-0 top-[max(7rem,16vh)] z-20 text-center transition-opacity duration-300"
           style={{ opacity: Math.max(0, 1 - progress * 6) }}
         >
-          <span className="btn-pop-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#1d4ed8]">
+          <span className="btn-lightship-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#1d4ed8]">
             TIMELINE 40 NĂM
           </span>
           <h1 className="mt-4 text-4xl font-extrabold text-slate-900 sm:text-5xl">
@@ -192,7 +192,7 @@ export default function TimelineWall({
         <div className="absolute bottom-7 left-1/2 z-30 -translate-x-1/2">
           <a
             href="#"
-            className="btn-pop inline-block whitespace-nowrap bg-white px-7 py-3.5 text-sm font-extrabold text-[#1d4ed8] sm:text-base"
+            className="btn-lightship inline-block whitespace-nowrap bg-white px-7 py-3.5 text-sm font-extrabold text-[#1d4ed8] sm:text-base"
           >
             🎉 Tham gia ngày hội
           </a>
@@ -248,7 +248,7 @@ export default function TimelineWall({
                 <article
                   className={`absolute left-1/2 w-60 -translate-x-1/2 md:w-72 ${
                     up ? "bottom-[calc(50%+3rem)]" : "top-[calc(50%+3rem)]"
-                  } btn-pop-soft bg-white p-4`}
+                  } btn-lightship-soft bg-white p-4`}
                 >
                   <span className="absolute -top-3 right-3 z-10 rounded-full bg-white px-3 py-1 text-[11px] font-extrabold tracking-wider text-[#1d4ed8] shadow-md shadow-slate-900/10">
                     📅 {mm(m.month)}.{m.year}

@@ -100,7 +100,7 @@ export default function RegisterForm() {
 
         <Link
           href="/tai-khoan"
-          className="btn-pop mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 px-7 py-3 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/60 hover:from-emerald-500 hover:to-green-500"
+          className="btn-lightship mt-6 inline-block rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 px-7 py-3 text-sm font-extrabold text-white shadow-lg shadow-emerald-950/60 hover:from-emerald-500 hover:to-green-500"
         >
           🎟 Vào tài khoản & đăng ký vé
         </Link>
@@ -178,7 +178,7 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={busy}
-        className="btn-pop mt-5 w-full rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-950/60 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 active:scale-[0.98]"
+        className="btn-lightship mt-5 w-full rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 py-3.5 text-sm font-extrabold text-white shadow-xl shadow-blue-950/60 transition-all hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 active:scale-[0.98]"
       >
         {busy ? "Đang tạo tài khoản…" : "🎫 Tạo tài khoản & Nhận mã"}
       </button>

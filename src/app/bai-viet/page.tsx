@@ -73,7 +73,7 @@ export default async function BaiVietPage() {
 
       <section className="mx-auto max-w-6xl px-6 py-16">
         {!featured ? (
-          <div className="btn-pop-soft rounded-[2rem] bg-white p-12 text-center">
+          <div className="btn-lightship-soft rounded-[2rem] bg-white p-12 text-center">
             <span className="text-5xl">🌱</span>
             <h2 className="mt-4 text-2xl font-extrabold text-slate-900">
               Chưa có bài viết nào
@@ -84,7 +84,7 @@ export default async function BaiVietPage() {
             </p>
             <Link
               href="/bai-viet/chia-se"
-              className="btn-pop mt-7 inline-block bg-[#16a34a] px-7 py-3.5 font-bold text-white"
+              className="btn-lightship mt-7 inline-block bg-[#16a34a] px-7 py-3.5 font-bold text-white"
             >
               ✍️ Kể câu chuyện của bạn
             </Link>
@@ -109,7 +109,7 @@ export default async function BaiVietPage() {
 
       <section className="mx-auto max-w-4xl px-6 pb-24">
         <Reveal>
-          <div className="btn-pop-soft rounded-[2rem] border-2 border-dashed border-[#1d4ed8]/30 bg-white p-10 text-center">
+          <div className="btn-lightship-soft rounded-[2rem] border-2 border-dashed border-[#1d4ed8]/30 bg-white p-10 text-center">
             <span className="text-4xl">✍️</span>
             <h2 className="mt-4 text-2xl font-extrabold text-slate-900">
               Bạn có câu chuyện riêng với Trứ?
@@ -121,7 +121,7 @@ export default async function BaiVietPage() {
             </p>
             <Link
               href="/bai-viet/chia-se"
-              className="btn-pop mt-7 inline-block bg-[#16a34a] px-7 py-3.5 text-base font-bold text-white"
+              className="btn-lightship mt-7 inline-block bg-[#16a34a] px-7 py-3.5 text-base font-bold text-white"
             >
               Kể câu chuyện của bạn
             </Link>

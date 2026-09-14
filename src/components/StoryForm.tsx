@@ -72,7 +72,7 @@ export default function StoryForm() {
 
   if (state === "success") {
     return (
-      <div className="btn-pop-soft rounded-[2rem] bg-white p-10 text-center">
+      <div className="btn-lightship-soft rounded-[2rem] bg-white p-10 text-center">
         <span className="text-5xl">🎉</span>
         <h2 className="mt-4 text-2xl font-extrabold text-slate-900">
           Đã gửi câu chuyện!
@@ -89,7 +89,7 @@ export default function StoryForm() {
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link
             href="/bai-viet"
-            className="btn-pop bg-[#1d4ed8] px-6 py-3 text-sm font-extrabold text-white"
+            className="btn-lightship bg-[#1d4ed8] px-6 py-3 text-sm font-extrabold text-white"
           >
             Đọc bài viết khác
           </Link>
@@ -100,7 +100,7 @@ export default function StoryForm() {
               setTitle("");
               setContent("");
             }}
-            className="btn-pop-soft bg-white px-6 py-3 text-sm font-extrabold text-slate-700"
+            className="btn-lightship-soft bg-white px-6 py-3 text-sm font-extrabold text-slate-700"
           >
             Kể thêm một câu chuyện
           </button>
@@ -110,7 +110,7 @@ export default function StoryForm() {
   }
 
   return (
-    <form onSubmit={submit} className="btn-pop-soft rounded-[2rem] bg-white p-8 sm:p-10">
+    <form onSubmit={submit} className="btn-lightship-soft rounded-[2rem] bg-white p-8 sm:p-10">
       <h2 className="text-2xl font-extrabold text-slate-900">
         Kể câu chuyện của bạn
       </h2>
@@ -205,7 +205,7 @@ export default function StoryForm() {
       <button
         type="submit"
         disabled={state === "sending"}
-        className="btn-pop mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
+        className="btn-lightship mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
       >
         {state === "sending" ? "Đang gửi…" : "📨 Gửi câu chuyện"}
       </button>

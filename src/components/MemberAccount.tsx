@@ -72,7 +72,7 @@ export default function MemberAccount() {
 
   if (view === "anon" || !me) {
     return (
-      <div className="btn-pop-soft mx-auto max-w-xl rounded-[2rem] bg-white p-10 text-center">
+      <div className="btn-lightship-soft mx-auto max-w-xl rounded-[2rem] bg-white p-10 text-center">
         <span className="text-5xl">🔐</span>
         <h2 className="mt-4 text-2xl font-extrabold text-slate-900">
           Bạn chưa đăng nhập
@@ -85,13 +85,13 @@ export default function MemberAccount() {
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link
             href="/dang-ky"
-            className="btn-pop bg-[#1d4ed8] px-7 py-3 text-sm font-extrabold text-white"
+            className="btn-lightship bg-[#1d4ed8] px-7 py-3 text-sm font-extrabold text-white"
           >
             🎫 Đăng ký tài khoản
           </Link>
           <Link
             href="/dang-nhap"
-            className="btn-pop-soft bg-white px-7 py-3 text-sm font-extrabold text-slate-700"
+            className="btn-lightship-soft bg-white px-7 py-3 text-sm font-extrabold text-slate-700"
           >
             Đã có mã định danh? Đăng nhập
           </Link>
@@ -103,7 +103,7 @@ export default function MemberAccount() {
   return (
     <div className="space-y-10">
       {/* Thẻ thông tin tài khoản + mã định danh */}
-      <div className="btn-pop-soft rounded-[2rem] bg-gradient-to-br from-[#1d4ed8] to-[#1e3a8a] p-8 text-white sm:p-10">
+      <div className="btn-lightship-soft rounded-[2rem] bg-gradient-to-br from-[#1d4ed8] to-[#1e3a8a] p-8 text-white sm:p-10">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-blue-200">

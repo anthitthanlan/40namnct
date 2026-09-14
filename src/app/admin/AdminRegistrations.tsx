@@ -207,7 +207,7 @@ export default function AdminRegistrations({
           <button
             type="button"
             onClick={() => setShowScanner(!showScanner)}
-            className="btn-pop rounded-2xl bg-[#16a34a] px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700"
+            className="btn-lightship rounded-2xl bg-[#16a34a] px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700"
           >
             {showScanner ? "✕ Đóng Camera Quét" : "📷 Bật Camera Quét Vé (Check-in)"}
           </button>

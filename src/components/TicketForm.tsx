@@ -109,7 +109,7 @@ export default function TicketForm({
   return (
     <form
       onSubmit={submit}
-      className="btn-pop-soft rounded-[2rem] bg-white p-7 sm:p-9"
+      className="btn-lightship-soft rounded-[2rem] bg-white p-7 sm:p-9"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-extrabold text-slate-900">
@@ -288,7 +288,7 @@ export default function TicketForm({
       <button
         type="submit"
         disabled={busy || isGroupUnderMin}
-        className="btn-pop mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-40 sm:w-auto sm:px-10"
+        className="btn-lightship mt-6 w-full bg-[#16a34a] py-3.5 text-base font-extrabold text-white disabled:opacity-40 sm:w-auto sm:px-10"
       >
         {busy ? "Đang tạo vé…" : isGroupUnderMin ? "Khóa (Cần tối thiểu 2 suất)" : `🎫 Đăng ký vé (${formatVnd(total)})`}
       </button>

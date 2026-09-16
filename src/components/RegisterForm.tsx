@@ -98,6 +98,7 @@ export default function RegisterForm() {
 
   // Individual Combo
   const [size, setSize] = useState<Size>("M");
+  const [sizeDropdownOpen, setSizeDropdownOpen] = useState(false);
 
   // Group Combo
   const [quantity, setQuantity] = useState(1);
@@ -322,7 +323,7 @@ export default function RegisterForm() {
               <motion.div
                 layout
                 transition={boxTransition}
-                className="w-full md:w-[36rem] flex-shrink-0 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6"
+                className="w-full md:w-[36rem] flex-shrink-0 bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6"
               >
                 {/* Full Name */}
                 <div>
@@ -349,8 +350,8 @@ export default function RegisterForm() {
                 </div>
 
                 {/* Niên khóa & Lớp */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="grid grid-cols-5 gap-3 sm:gap-4">
+                  <div className="col-span-3">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Niên khóa <span className="text-red-500">*</span>
                     </label>
@@ -364,7 +365,7 @@ export default function RegisterForm() {
                       }`}
                     />
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Lớp <span className="text-red-500">*</span>
                     </label>
@@ -526,7 +527,7 @@ export default function RegisterForm() {
                           duration: 0.4,
                           ease: modalEase
                         }}
-                        className="origin-left w-full md:w-[28rem] bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
+                        className="origin-left w-full md:w-[28rem] bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
                       >
                         <div className="space-y-6">
                           {/* Placeholder Áo */}
@@ -595,17 +596,66 @@ export default function RegisterForm() {
                                       <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-blue-600 opacity-0 scale-x-0 transition-all duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/link:opacity-60 group-hover/link:scale-x-100" />
                                     </button>
                                   </div>
-                                  <select
-                                    value={size}
-                                    onChange={(e) => setSize(e.target.value as Size)}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900"
-                                  >
-                                    {SIZES.map((s) => (
-                                      <option key={s} value={s}>
-                                        Size {s}
-                                      </option>
-                                    ))}
-                                  </select>
+                                  {isMobile ? (
+                                    <select
+                                      title="Chọn size áo của bạn"
+                                      value={size}
+                                      onChange={(e) => setSize(e.target.value as Size)}
+                                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900"
+                                    >
+                                      {SIZES.map((s) => (
+                                        <option key={s} value={s}>
+                                          Size {s}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <div
+                                      className="relative"
+                                      tabIndex={-1}
+                                      onBlur={(e) => {
+                                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                                          setSizeDropdownOpen(false);
+                                        }
+                                      }}
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={() => setSizeDropdownOpen(!sizeDropdownOpen)}
+                                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900"
+                                      >
+                                        <span>Size {size}</span>
+                                        <svg className={`w-5 h-5 text-gray-500 transition-transform ${sizeDropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                      </button>
+                                      <AnimatePresence>
+                                        {sizeDropdownOpen && (
+                                          <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col max-h-60 overflow-y-auto"
+                                          >
+                                            {SIZES.map((s) => (
+                                              <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => {
+                                                  setSize(s);
+                                                  setSizeDropdownOpen(false);
+                                                }}
+                                                className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${size === s ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-700"}`}
+                                              >
+                                                Size {s}
+                                              </button>
+                                            ))}
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                    </div>
+                                  )}
                                 </div>
                               </motion.div>
                             ) : (
@@ -737,7 +787,7 @@ export default function RegisterForm() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.25, ease: modalEase }}
-            className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-xl mx-auto"
+            className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 max-w-xl mx-auto"
           >
             {/* Success header */}
             <div className="text-center mb-8">

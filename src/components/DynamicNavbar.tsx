@@ -6,11 +6,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const links = [
-  { href: "#gioi-thieu", label: "Giới thiệu" },
-  { href: "#sao-ke", label: "Sao kê" },
+  { href: "/", label: "Giới thiệu" },
   { href: "/bai-viet", label: "Bài viết" },
-  { href: "/timeline", label: "Timeline" },
-  { href: "/dang-ky", label: "Đăng ký vé" },
+  { href: "/timeline", label: "Lược sử 40 năm" },
+  { href: "/tra-cuu", label: "Tra cứu vé" },
 ];
 
 export default function DynamicNavbar() {
@@ -20,6 +19,7 @@ export default function DynamicNavbar() {
   const [active, setActive] = useState("");
 
   useEffect(() => {
+    setActive(""); // Reset active state khi chuyển trang
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll, { passive: true });
 
@@ -58,14 +58,13 @@ export default function DynamicNavbar() {
         style={{
           transition: "all 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
-        className={`flex items-center rounded-full border border-white/60 p-1.5 shadow-lg shadow-slate-950/15 backdrop-blur-2xl ${
-          scrolled ? "bg-white/90 shadow-slate-950/20" : "bg-white/75"
-        } ${isExpanded ? "gap-1.5" : "justify-center ring-2 ring-white/50"}`}
+        className={`flex items-center rounded-full border border-white/60 p-1.5 shadow-lg shadow-slate-950/15 backdrop-blur-2xl ${scrolled ? "bg-white/90 shadow-slate-950/20" : "bg-white/75"
+          } ${isExpanded ? "gap-1.5" : "justify-center ring-2 ring-white/50"}`}
       >
         {/* Logo trường và logo 40 năm - Luôn hiển thị, nhấp để về trang chủ */}
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 rounded-full p-1 transition-transform duration-300 hover:scale-105 active:scale-95"
+          className="flex shrink-0 items-center gap-2 rounded-full p-1 transition-transform duration-[var(--duration-fast)] hover:scale-105 active:scale-95"
           title="Trường THPT Nguyễn Công Trứ - 40 Năm"
         >
           <Image
@@ -92,7 +91,7 @@ export default function DynamicNavbar() {
           style={{
             maxWidth: isExpanded ? "720px" : 0,
             opacity: isExpanded ? 1 : 0,
-            overflow: "hidden",
+            overflow: isExpanded ? "visible" : "hidden",
             transition:
               "max-width 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             pointerEvents: isExpanded ? undefined : "none",
@@ -105,29 +104,27 @@ export default function DynamicNavbar() {
           <div className="relative hidden items-center gap-1 md:flex">
             {links.map(({ href, label }) => {
               const isCurrent =
-                active === href ||
-                (pathname === href && !isHome) ||
-                (href.startsWith("#") && isHome && active === href);
+                (pathname === href && !href.startsWith("#")) ||
+                (pathname.startsWith(href) && !href.startsWith("#") && href !== "/") ||
+                (href.startsWith("#") && isHome && (active === href || (active === "" && href === "#gioi-thieu")));
 
               const content = (
                 <>
                   <span>{label}</span>
                   {/* Animation Underline mượt mà */}
                   <span
-                    className={`absolute bottom-1 left-3 right-3 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-300 ease-out ${
-                      isCurrent
+                    className={`absolute bottom-1 left-3 right-3 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${isCurrent
                         ? "opacity-100 scale-x-100"
                         : "opacity-0 scale-x-0 group-hover/link:opacity-60 group-hover/link:scale-x-75"
-                    }`}
+                      }`}
                   />
                 </>
               );
 
-              const cls = `group/link relative z-10 rounded-full px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                isCurrent
+              const cls = `group/link relative z-10 rounded-full px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-all duration-[var(--duration-quick)] ${isCurrent
                   ? "text-[#1d4ed8] font-bold"
                   : "text-slate-600 hover:text-slate-900"
-              }`;
+                }`;
 
               if (!href.startsWith("#") || !isHome) {
                 return (
@@ -147,20 +144,23 @@ export default function DynamicNavbar() {
           {/* Nút CTA đen: "Đăng ký tham gia" dẫn tới /dang-ky */}
           <Link
             href="/dang-ky"
-            className="ml-2 hidden shrink-0 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white whitespace-nowrap shadow-md transition-all duration-300 hover:bg-[#1d4ed8] hover:shadow-blue-900/30 active:scale-95 sm:inline-flex items-center gap-1.5"
+            className={`group/btn ml-2 hidden shrink-0 rounded-full px-6 py-2.5 text-sm font-bold text-white whitespace-nowrap shadow-md transition-all duration-[var(--duration-fast)] active:scale-95 sm:inline-flex items-center justify-center ${
+              pathname === "/dang-ky"
+                ? "bg-live-gradient shadow-green-900/20 hover:shadow-yellow-500/40"
+                : "bg-[#1d4ed8] hover:bg-live-gradient hover:shadow-yellow-500/30"
+            }`}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-3.5 w-3.5"
-              width={14}
-              height={14}
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 110 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 110-4V6z" />
-            </svg>
-            <span>Đăng ký tham gia</span>
+            <div className="relative flex flex-col items-center justify-center">
+              <span className="relative z-10">Đăng ký tham gia</span>
+              {/* Indicator */}
+              <span
+                className={`absolute -bottom-1 left-0 right-0 h-[2px] bg-white rounded-full transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] z-10 ${
+                  pathname === "/dang-ky"
+                    ? "opacity-100 scale-x-100"
+                    : "opacity-0 scale-x-0 group-hover/btn:opacity-60 group-hover/btn:scale-x-75"
+                }`}
+              />
+            </div>
           </Link>
         </div>
       </div>

@@ -32,6 +32,15 @@
   --nct-blue: #1d4ed8;
   --nct-green: #16a34a;
   --ink: #0f172a;
+
+  --duration-quick: 500ms;
+  --duration-fast: 500ms;
+  --duration-normal: 500ms;
+  --duration-slow: 500ms;
+  --duration-very-slow: 500ms;
+
+  --ease-smooth-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 html {
@@ -46,7 +55,13 @@ body {
   font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 0;
 }
 
-h1, h2, h3, h4, h5, h6, .font-title {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-title {
   font-family: "Unbounded", sans-serif;
   font-optical-sizing: auto;
 }
@@ -58,16 +73,20 @@ h1, h2, h3, h4, h5, h6, .font-title {
   opacity: 0;
   transition: opacity 1.4s ease-in-out;
 }
+
 .hero-slide.active {
   opacity: 1;
 }
+
 .hero-slide.active img {
   animation: kenburns 9s ease-out forwards;
 }
+
 @keyframes kenburns {
   from {
     transform: scale(1.12) translateX(1.5%);
   }
+
   to {
     transform: scale(1) translateX(0);
   }
@@ -77,9 +96,61 @@ h1, h2, h3, h4, h5, h6, .font-title {
 html::-webkit-scrollbar {
   display: none;
 }
+
 html {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ===== Live Gradient Background ===== */
+@keyframes liquid-wave {
+  0% { background-position: 0% 0%, 100% 100%, 0% 50%; }
+  100% { background-position: 200% 200%, -100% -100%, 200% 50%; }
+}
+
+.bg-live-gradient {
+  background-color: #16a34a;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(234, 179, 8, 0.9) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.8) 0%, transparent 60%),
+    linear-gradient(90deg, #16a34a 0%, #eab308 25%, #16a34a 50%, #eab308 75%, #16a34a 100%);
+  background-size: 200% 200%, 200% 200%, 200% 100%;
+  animation: liquid-wave 4s linear infinite;
+}
+
+.hover\:bg-live-gradient:hover {
+  background-color: #16a34a;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(234, 179, 8, 0.9) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.8) 0%, transparent 60%),
+    linear-gradient(90deg, #16a34a 0%, #eab308 25%, #16a34a 50%, #eab308 75%, #16a34a 100%);
+  background-size: 200% 200%, 200% 200%, 200% 100%;
+  animation: liquid-wave 4s linear infinite;
+}
+
+/* ===== Shake Error Animation (Transitions.dev) ===== */
+:root {
+  --shake-distance: 6px;
+  --shake-overshoot: 4px;
+  --shake-dur-a: 80ms;
+  --shake-dur-b: 60ms;
+  --shake-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes t-input-shake {
+  0%      { transform: translateX(0);                                 animation-timing-function: var(--shake-ease); }
+  28.57%  { transform: translateX(var(--shake-distance));             animation-timing-function: var(--shake-ease); }
+  57.14%  { transform: translateX(calc(var(--shake-distance) * -1)); animation-timing-function: var(--shake-ease); }
+  78.57%  { transform: translateX(var(--shake-overshoot));            animation-timing-function: var(--shake-ease); }
+  100%    { transform: translateX(0); }
+}
+
+.shake-error {
+  animation: t-input-shake calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) linear;
+  border-color: #ef4444 !important; /* Tailwind red-500 */
+}
+.shake-error:focus-within {
+  --tw-ring-color: #fca5a5 !important;
 }
 
 /* ===== Skeleton shimmer (hiện khi ảnh chưa load xong) ===== */
@@ -87,33 +158,36 @@ html {
   from {
     background-position: 200% 0;
   }
+
   to {
     background-position: -200% 0;
   }
 }
+
 .skeleton {
   background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 37%, #e2e8f0 63%);
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
-
-
 /* ===== Marquee ngang tự chạy — Thầy cô ===== */
 @keyframes marquee {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-50%);
   }
 }
+
 .marquee-track {
   display: flex;
   width: max-content;
   animation: marquee 28s linear infinite;
   will-change: transform;
 }
+
 .marquee-track:hover {
   animation-play-state: paused;
 }
@@ -138,20 +212,24 @@ html {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(15, 23, 42, 0.15);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(15, 23, 42, 0.3);
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
 html {
   scrollbar-width: thin;
   scrollbar-color: rgba(15, 23, 42, 0.25) transparent;
@@ -162,13 +240,16 @@ html {
   border-radius: 1.25rem;
   background: linear-gradient(180deg, #1d4ed8, #1e3a8a);
   box-shadow:
-    0 1px 2px rgba(255, 255, 255, 0.15) inset, /* Top inner glow */
-    0 -1px 2px rgba(0, 0, 0, 0.25) inset, /* Bottom inner shadow */
+    0 1px 2px rgba(255, 255, 255, 0.15) inset,
+    /* Top inner glow */
+    0 -1px 2px rgba(0, 0, 0, 0.25) inset,
+    /* Bottom inner shadow */
     0 4px 12px -2px rgba(29, 78, 216, 0.35),
     0 8px 24px -6px rgba(29, 78, 216, 0.2);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .btn-lightship:hover {
   transform: translateY(-2px) scale(1.02);
   box-shadow:
@@ -177,6 +258,7 @@ html {
     0 6px 16px -2px rgba(29, 78, 216, 0.45),
     0 12px 32px -6px rgba(29, 78, 216, 0.3);
 }
+
 .btn-lightship:active {
   transform: translateY(1px) scale(0.98);
   box-shadow:
@@ -194,9 +276,10 @@ html {
     0 -1px 2px rgba(15, 23, 42, 0.05) inset,
     0 4px 12px -2px rgba(15, 23, 42, 0.06),
     0 8px 24px -6px rgba(15, 23, 42, 0.04);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(15, 23, 42, 0.06);
 }
+
 .btn-lightship-soft:hover {
   transform: translateY(-2px) scale(1.02);
   box-shadow:
@@ -205,6 +288,7 @@ html {
     0 8px 16px -2px rgba(15, 23, 42, 0.08),
     0 16px 32px -6px rgba(15, 23, 42, 0.06);
 }
+
 .btn-lightship-soft:active {
   transform: translateY(1px) scale(0.98);
   box-shadow:
@@ -222,30 +306,36 @@ html {
 }
 
 @keyframes floaty {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-6px);
   }
 }
+
 .floaty {
   animation: floaty 4s ease-in-out infinite;
 }
 
 /* ===== Sổ sao kê đóng góp: trời sao nhấp nháy ===== */
 @keyframes twinkle {
+
   0%,
   100% {
     opacity: 0.15;
     transform: scale(0.85);
   }
+
   50% {
     opacity: 0.95;
     transform: scale(1.15);
   }
 }
+
 .saoke-star {
   position: absolute;
   border-radius: 9999px;
@@ -254,6 +344,7 @@ html {
   animation: twinkle 3.4s ease-in-out infinite;
   will-change: opacity, transform;
 }
+
 @media (prefers-reduced-motion: reduce) {
   .saoke-star {
     animation: none;
@@ -267,6 +358,7 @@ html {
     opacity: 0;
     transform: translateY(24px) scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -298,15 +390,205 @@ html {
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 .glass-dark-input:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.15);
 }
+
 .glass-dark-input:focus {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 
+  box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.1),
     0 0 0 4px rgba(255, 255, 255, 0.05);
   outline: none;
 }
+
+/* Transitions.dev — Texts reveal */
+:root {
+  --stagger-dur: 500ms;
+  --stagger-distance: 12px;
+  --stagger-stagger: 40ms;
+  --stagger-blur: 3px;
+  --stagger-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-stagger-line {
+  display: block;
+  opacity: 0;
+  transform: translateY(var(--stagger-distance));
+  filter: blur(var(--stagger-blur));
+  transition:
+    opacity var(--stagger-dur) var(--stagger-ease),
+    transform var(--stagger-dur) var(--stagger-ease),
+    filter var(--stagger-dur) var(--stagger-ease);
+  will-change: transform, opacity, filter;
+}
+
+.t-stagger-line--2 {
+  transition-delay: var(--stagger-stagger);
+}
+
+.t-stagger.is-shown .t-stagger-line {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+.t-stagger.is-hiding .t-stagger-line {
+  opacity: 0;
+  transform: translateY(0);
+  filter: blur(0);
+  transition:
+    opacity 200ms ease,
+    transform 0s linear,
+    filter 0s linear;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-stagger-line {
+    transition: none !important;
+  }
+}
+
+/* Transitions.dev — Number pop-in */
+:root {
+  --digit-dur: 500ms;
+  --digit-distance: 8px;
+  --digit-stagger: 70ms;
+  --digit-blur: 2px;
+  --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --digit-dir-x: 0;
+  --digit-dir-y: 1;
+}
+
+@keyframes t-digit-pop-in {
+  0% {
+    transform: translate(calc(var(--digit-distance) * var(--digit-dir-x)),
+        calc(var(--digit-distance) * var(--digit-dir-y)));
+    opacity: 0;
+    filter: blur(var(--digit-blur));
+  }
+
+  100% {
+    transform: translate(0, 0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.t-digit-group {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.t-digit {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+.t-digit-group.is-animating .t-digit {
+  animation: t-digit-pop-in var(--digit-dur) var(--digit-ease) both;
+}
+
+.t-digit-group.is-animating .t-digit[data-stagger="1"] {
+  animation-delay: var(--digit-stagger);
+}
+
+.t-digit-group.is-animating .t-digit[data-stagger="2"] {
+  animation-delay: calc(var(--digit-stagger) * 2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-digit-group .t-digit {
+    animation: none !important;
+  }
+}
+
+/* Fix autofill text color visibility */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Transitions.dev — Modal open / close */
+:root {
+  --modal-open-dur: 400ms;
+  --modal-close-dur: 400ms;
+  --modal-scale: 0.96;
+  --modal-scale-close: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-modal {
+  transform-origin: center;
+  transform: scale(var(--modal-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-open-dur) var(--modal-ease),
+    opacity var(--modal-open-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+
+.t-modal.is-open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.t-modal.is-closing {
+  transform: scale(var(--modal-scale-close));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-close-dur) var(--modal-ease),
+    opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-modal {
+    transition: none !important;
+  }
+}
+
+/* Transitions.dev — Checkbox check */
+:root {
+  --check-box: 150ms;
+  --check-draw: 350ms;
+  --check-delay: 0ms;
+  --check-uncheck: 150ms;
+  --check-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-check {
+  transition:
+    background-color var(--check-box) var(--check-ease),
+    border-color var(--check-box) var(--check-ease),
+    box-shadow var(--check-box) var(--check-ease);
+}
+
+.t-check svg path {
+  stroke-dasharray: var(--check-len, 15);
+  stroke-dashoffset: var(--check-len, 15);
+  transition: stroke-dashoffset var(--check-uncheck) var(--check-ease);
+}
+
+.t-check[aria-checked="true"] svg path {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--check-draw) var(--check-ease) var(--check-delay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .t-check,
+  .t-check svg path {
+    transition: none !important;
+  }
+}

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import MobileNavMorph from "./MobileNavMorph";
 
 const links = [
   { href: "/", label: "Giới thiệu" },
@@ -51,15 +52,21 @@ export default function DynamicNavbar() {
     href.startsWith("#") && !isHome ? `/#${href.slice(1)}` : href;
 
   return (
-    <nav className="fixed inset-x-0 top-4 z-50 flex justify-center px-4">
+    <nav className="fixed inset-x-0 top-4 z-50 flex justify-between items-center md:justify-center px-4 md:px-0 pointer-events-none">
+      
+      {/* Nút Hamburger Morph cho Mobile (Bên trái) */}
+      <div className="md:hidden pointer-events-auto w-[48px] h-[48px] relative">
+        <MobileNavMorph />
+      </div>
+
       <div
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         style={{
           transition: "all 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
-        className={`flex items-center rounded-full border border-white/60 p-1.5 shadow-lg shadow-slate-950/15 backdrop-blur-2xl ${scrolled ? "bg-white/90 shadow-slate-950/20" : "bg-white/75"
-          } ${isExpanded ? "gap-1.5" : "justify-center ring-2 ring-white/50"}`}
+        className={`pointer-events-auto flex items-center rounded-full border border-white/60 p-1.5 shadow-lg shadow-slate-950/15 backdrop-blur-2xl ${scrolled ? "bg-white/90 shadow-slate-950/20" : "bg-white/75"
+          } ${isExpanded ? "md:gap-1.5" : "justify-center ring-2 ring-white/50"}`}
       >
         {/* Logo trường và logo 40 năm - Luôn hiển thị, nhấp để về trang chủ */}
         <Link
@@ -144,14 +151,17 @@ export default function DynamicNavbar() {
           {/* Nút CTA đen: "Đăng ký tham gia" dẫn tới /dang-ky */}
           <Link
             href="/dang-ky"
-            className={`group/btn ml-2 hidden shrink-0 rounded-full px-6 py-2.5 text-sm font-bold text-white whitespace-nowrap shadow-md transition-all duration-[var(--duration-fast)] active:scale-95 sm:inline-flex items-center justify-center ${
-              pathname === "/dang-ky"
-                ? "bg-live-gradient shadow-green-900/20 hover:shadow-yellow-500/40"
-                : "bg-[#1d4ed8] hover:bg-live-gradient hover:shadow-yellow-500/30"
+            className={`group/btn relative ml-2 hidden shrink-0 rounded-full px-6 py-2.5 text-sm font-bold text-white whitespace-nowrap shadow-md transition-all duration-[var(--duration-fast)] active:scale-95 sm:inline-flex items-center justify-center bg-[#1d4ed8] overflow-hidden ${
+              pathname === "/dang-ky" ? "shadow-green-900/20" : "hover:shadow-yellow-500/30"
             }`}
           >
-            <div className="relative flex flex-col items-center justify-center">
-              <span className="relative z-10">Đăng ký tham gia</span>
+            <div 
+              className={`absolute inset-0 rounded-full bg-live-gradient transition-opacity duration-300 ease-in-out pointer-events-none ${
+                pathname === "/dang-ky" ? "opacity-100" : "opacity-0 group-hover/btn:opacity-100"
+              }`}
+            />
+            <div className="relative flex flex-col items-center justify-center z-10">
+              <span className="relative z-10">Đăng kí tham gia</span>
               {/* Indicator */}
               <span
                 className={`absolute -bottom-1 left-0 right-0 h-[2px] bg-white rounded-full transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] z-10 ${
@@ -163,6 +173,26 @@ export default function DynamicNavbar() {
             </div>
           </Link>
         </div>
+      </div>
+
+      {/* Nút Đăng kí ngay cho Mobile (Bên phải) */}
+      <div className="md:hidden pointer-events-auto">
+        <Link
+          href="/dang-ky"
+          className="group/btnmobile flex h-12 items-center justify-center rounded-full px-5 text-sm font-bold text-white shadow-md transition-all active:scale-95 bg-live-gradient shadow-green-900/20 hover:shadow-yellow-500/40"
+        >
+          <div className="relative flex flex-col items-center justify-center">
+            <span className="relative z-10">Đăng kí ngay</span>
+            {/* Indicator */}
+            <span
+              className={`absolute -bottom-1 left-0 right-0 h-[2px] bg-white rounded-full transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] z-10 ${
+                pathname === "/dang-ky"
+                  ? "opacity-100 scale-x-100"
+                  : "opacity-0 scale-x-0 group-hover/btnmobile:opacity-60 group-hover/btnmobile:scale-x-75"
+              }`}
+            />
+          </div>
+        </Link>
       </div>
     </nav>
   );

@@ -72,7 +72,7 @@ export default function DynamicTicketQr({
         </div>
         <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-1000 ease-linear"
+            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-[var(--duration-very-slow)] ease-linear"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -80,7 +80,7 @@ export default function DynamicTicketQr({
 
       <p className="mt-3 max-w-[240px] text-[11px] leading-relaxed text-slate-400">
         🔒 Mã bảo mật tự động đổi mỗi 30s để chống chụp màn hình. Ban Tổ chức sẽ
-        quét mã này tại cổng ngày 15/11/2026.
+        quét mã này tại cổng ngày 08/11/2026.
       </p>
     </div>
   );

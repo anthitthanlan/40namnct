@@ -78,18 +78,18 @@ export default async function Home() {
             </Reveal>
           </div>
           
-          <Reveal delay={400} variant="zoom" className="h-full">
-            <div className="relative flex h-full min-h-[400px] flex-col items-center justify-end overflow-hidden rounded-[3rem] p-10 text-center text-white shadow-2xl">
+          <Reveal delay={400} variant="zoom" className="h-full mt-10 lg:mt-0">
+            <div className="relative flex h-full min-h-[420px] flex-col items-center justify-end overflow-hidden rounded-[2.5rem] p-6 sm:p-10 text-center text-white shadow-2xl">
               {/* Hình nền không có lớp phủ xám toàn bộ */}
               <div className="absolute inset-0 bg-[url('/images/hero-2.jpg')] bg-cover bg-center"></div>
               
               {/* Lớp phủ blur-gradient-dimmer ở dưới */}
-              <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none backdrop-blur-sm [mask-image:linear-gradient(to_top,black_30%,transparent)]"></div>
+              <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none backdrop-blur-sm [mask-image:linear-gradient(to_top,black_20%,transparent)]"></div>
 
               {/* Nội dung icon và text */}
-              <span className="material-symbols-rounded relative z-10 mb-4 text-6xl text-emerald-400 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">forest</span>
-              <h3 className="relative z-10 mb-3 text-4xl font-black drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">Làm cây thông đứng giữa trời mà reo</h3>
-              <p className="relative z-10 font-medium tracking-wide text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Uy Viễn Tướng Công - Nguyễn Công Trứ</p>
+              <span className="material-symbols-rounded relative z-10 mb-3 text-5xl sm:text-6xl text-emerald-400 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">forest</span>
+              <h3 className="relative z-10 mb-3 text-[1.75rem] leading-[1.3] font-black drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] sm:text-4xl">Làm cây thông đứng giữa trời mà reo</h3>
+              <p className="relative z-10 text-sm sm:text-base font-medium tracking-wide text-white/90 drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">Uy Viễn Tướng Công - Nguyễn Công Trứ</p>
             </div>
           </Reveal>
         </div>
@@ -112,10 +112,10 @@ export default async function Home() {
           {/* Main Content (Removed Box Styling) */}
           <Reveal delay={100} className="md:col-span-7 md:row-span-2 flex flex-col justify-center text-left">
             <h2 className="relative z-10 text-4xl font-black leading-tight text-slate-900 sm:text-5xl">
-              15/11/2026<br />&ldquo;NGÀY TRỞ VỀ&rdquo;
+              08/11/2026<br />&ldquo;NGÀY TRỞ VỀ&rdquo;
             </h2>
             <p className="relative z-10 mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
-              Ngày 15/11/2026, Trường THPT Nguyễn Công Trứ trân trọng tổ chức{" "}
+              Ngày 08/11/2026, Trường THPT Nguyễn Công Trứ trân trọng tổ chức{" "}
               <strong className="font-extrabold text-slate-900">
                 Lễ kỷ niệm 40 năm thành lập trường
               </strong>
@@ -127,8 +127,8 @@ export default async function Home() {
                 href="/dang-ky"
                 className="group icon-hover-morph relative inline-flex pb-1 text-lg font-bold text-[#16a34a] transition-colors hover:text-emerald-700"
               >
-                <span className="flex items-center gap-1.5">Đăng ký tham gia ngay <span className="transition-transform duration-300 ease-out group-hover:translate-x-1.5"><span className="material-symbols-rounded text-[1.25em] block">send</span></span></span>
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#16a34a] opacity-0 scale-x-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:scale-x-100" />
+                <span className="flex items-center gap-1.5">Đăng ký tham gia ngay <span className="transition-transform duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:translate-x-1.5"><span className="material-symbols-rounded text-[1.25em] block">send</span></span></span>
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#16a34a] opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
               </a>
             </div>
           </Reveal>
@@ -145,15 +145,81 @@ export default async function Home() {
             <div className="flex flex-col p-4 text-left md:pl-0 border-t border-slate-200/60 pt-6 mt-2">
               <a 
                 href="/timeline" 
-                className="group inline-flex items-center gap-4 text-base font-medium leading-relaxed text-slate-600 hover:text-[#16a34a] transition-colors duration-300 ease-out"
+                className="group inline-flex items-center gap-4 text-base font-medium leading-relaxed text-slate-600 hover:text-[#16a34a] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
               >
                 <span className="max-w-[280px]">Khám phá cột mốc phát triển của nhà trường qua các thời kỳ.</span>
-                <span className="material-symbols-rounded rounded-full bg-slate-100 p-1 text-[1.2rem] text-slate-500 !transition-all duration-300 ease-out group-hover:translate-x-1.5 group-hover:bg-[#16a34a] group-hover:text-white group-hover:shadow-md">
+                <span className="material-symbols-rounded rounded-full bg-slate-100 p-1 text-[1.2rem] text-slate-500 !transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:translate-x-1.5 group-hover:bg-[#16a34a] group-hover:text-white group-hover:shadow-md">
                   arrow_forward_ios
                 </span>
               </a>
             </div>
           </Reveal>
+        </div>
+
+        {/* Chương trình dự kiến */}
+        <div className="mt-24 mx-auto max-w-4xl text-left">
+          <Reveal delay={300}>
+            <div className="flex flex-col items-center text-center mb-12">
+              <h3 className="text-3xl font-black text-slate-900">
+                Chương trình dự kiến
+              </h3>
+              <p className="mt-3 text-slate-600">Lịch trình các hoạt động chính trong Ngày trở về (08/11/2026)</p>
+            </div>
+          </Reveal>
+
+          <div className="relative border-l-2 border-[#16a34a]/20 pl-8 ml-4 md:ml-12 space-y-10">
+            {[
+              {
+                time: "07:30",
+                title: "Đón khách & Tham quan Triển lãm 40 năm",
+                desc: "Trưng bày ảnh, kỷ vật, học bạ, sổ liên lạc của các thế hệ học sinh.",
+                icon: "groups"
+              },
+              {
+                time: "08:30",
+                title: "Lễ Kỷ Niệm Chính Thức",
+                desc: "Ôn lại hoàn cảnh ra đời của trường, xem film tư liệu 40 năm, lắng nghe phát biểu của đại biểu và đại diện các thế hệ.",
+                icon: "celebration"
+              },
+              {
+                time: "10:00",
+                title: "Lễ Tri ân & Vinh danh",
+                desc: "Vinh danh Thầy Cô giáo về hưu, tri ân các thế hệ cựu học sinh tiêu biểu.",
+                icon: "award_star"
+              },
+              {
+                time: "10:45",
+                title: "Công bố Quỹ học bổng",
+                desc: 'Ra mắt Quỹ học bổng "Uyên bác - Nhân ái - Giàu chí khí" nhằm hỗ trợ các thế hệ học sinh hiếu học.',
+                icon: "local_library"
+              },
+              {
+                time: "11:30",
+                title: "Giao lưu & Chụp ảnh lưu niệm",
+                desc: "Các thế hệ gặp mặt, giao lưu theo từng khóa và chụp ảnh lưu niệm tại các góc check-in kỷ niệm.",
+                icon: "photo_camera"
+              }
+            ].map((item, i) => (
+              <Reveal key={i} delay={300 + i * 100} variant="left">
+                <div className="relative group">
+                  {/* Dot */}
+                  <div className="absolute -left-[41px] top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-4 border-white bg-[#16a34a] shadow-sm transition-transform duration-[var(--duration-fast)] group-hover:scale-125 group-hover:bg-[#1d4ed8]" />
+                  
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-6">
+                    <div className="shrink-0 pt-0.5">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-sm font-black text-[#16a34a]">
+                        <span className="material-symbols-rounded text-[1.2rem]">{item.icon}</span> {item.time}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-bold text-slate-900 group-hover:text-[#1d4ed8] transition-colors duration-[var(--duration-fast)]">{item.title}</h4>
+                      <p className="mt-2 text-base leading-relaxed text-slate-600">{item.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -190,14 +256,14 @@ export default async function Home() {
                 className="group relative inline-flex pb-1 text-base font-bold text-[#1d4ed8] transition-colors hover:text-blue-800"
               >
                 <span>Xem tất cả ({allPosts.length})</span>
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] opacity-0 scale-x-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:scale-x-100" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
               </a>
               <a
                 href="/bai-viet/chia-se"
                 className="group relative inline-flex pb-1 text-base font-bold text-slate-700 transition-colors hover:text-slate-900"
               >
                 <span className="flex items-center gap-1.5"><span className="material-symbols-rounded text-[1.25em]">edit</span> Gửi bài</span>
-                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-slate-700 opacity-0 scale-x-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:scale-x-100" />
+                <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-slate-700 opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
               </a>
             </div>
           </Reveal>
@@ -217,7 +283,6 @@ export default async function Home() {
 
       {/* Sổ sao kê đóng góp - tổng số tiền đã xác nhận */}
       <ContributionCounter
-        totalAmount={totalAmount}
         orderCount={confirmedTickets.length}
         attendeeCount={attendeeCount}
         memberCount={memberCount}
@@ -339,7 +404,7 @@ export default async function Home() {
                     Địa chỉ
                   </span>
                   <span className="block mt-1 text-sm font-extrabold text-white">
-                    97 Quang Trung, P. 11, Gò Vấp
+                    97 Quang Trung, P. Thông Tây Hội, Gò Vấp
                   </span>
                 </span>
               </div>

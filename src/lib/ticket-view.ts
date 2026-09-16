@@ -4,8 +4,8 @@
 export const SIZES = ["S", "M", "L", "XL", "2XL", "3XL"] as const;
 export type Size = (typeof SIZES)[number];
 
-/** Giá vé: Cá nhân cũng 200.000đ, tập thể 200.000đ/suất */
-export const UNIT_PRICE = 200_000;
+/** Giá Combo: Áo kỷ niệm + Đồ ăn nhẹ = 500.000đ */
+export const UNIT_PRICE = 500_000;
 
 export type TicketStatus =
   | "pending" // Đăng ký dùng, đang chờ chuyển khoản
@@ -24,6 +24,8 @@ export type TicketView = {
   size: string | null;
   quantity: number;
   sizes: Record<string, number>;
+  /** Số lượng Combo (Áo + Ăn) */
+  snacks: number;
   amount: number;
   status: TicketStatus;
   note: string;
@@ -49,7 +51,7 @@ export function ticketStatusInfo(status: TicketStatus | string): {
       return {
         label: "✅ Đã phát hành",
         cls: "bg-emerald-100 text-emerald-800 border border-emerald-300",
-        desc: "Vé hợp lệ · Xuất trình QR động khi vào cổng 15/11/2026",
+        desc: "Vé hợp lệ · Xuất trình QR động khi vào cổng 08/11/2026",
       };
     case "pending_approval":
       return {

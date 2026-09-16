@@ -27,7 +27,7 @@ export default function ShareButtons({ title }: Props) {
   }
 
   const btn =
-    "btn-lightship-soft inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-extrabold text-white transition";
+    "btn-lightship-soft inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-extrabold text-white transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]";
 
   return (
     <div className="flex flex-wrap items-center gap-3">

@@ -166,7 +166,7 @@ export default function TransferQr({
       <div className="relative mx-auto mt-4 flex items-center justify-center overflow-hidden rounded-2xl border-2 border-slate-200 bg-white p-2.5 shadow-xs w-fit">
         <canvas
           ref={canvasRef}
-          className={`block rounded-lg transition-all duration-300 ${
+          className={`block rounded-lg transition-all duration-[var(--duration-fast)] ${
             isExpired ? "blur-sm opacity-25" : "opacity-100"
           }`}
         />
@@ -181,7 +181,7 @@ export default function TransferQr({
             <button
               type="button"
               onClick={renewSession}
-              className="mt-2.5 rounded-full bg-[#1d4ed8] px-3.5 py-1.5 text-[11px] font-extrabold text-white shadow-md hover:bg-blue-600 active:scale-95 transition"
+              className="mt-2.5 rounded-full bg-[#1d4ed8] px-3.5 py-1.5 text-[11px] font-extrabold text-white shadow-md hover:bg-blue-600 active:scale-95 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
             >
               🔄 Renew QR mới
             </button>
@@ -234,7 +234,7 @@ export default function TransferQr({
           type="button"
           onClick={handleClaimPayment}
           disabled={claiming}
-          className="w-full rounded-2xl bg-[#16a34a] py-3 text-xs font-black text-white shadow-md hover:bg-emerald-700 active:scale-98 transition disabled:opacity-50"
+          className="w-full rounded-2xl bg-[#16a34a] py-3 text-xs font-black text-white shadow-md hover:bg-emerald-700 active:scale-98 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50"
         >
           {claiming ? "Đang gửi xác nhận…" : "✅ Tôi đã chuyển khoản xong"}
         </button>
@@ -248,7 +248,7 @@ export default function TransferQr({
           <button
             type="button"
             onClick={renewSession}
-            className="text-[11px] text-slate-500 font-semibold hover:text-slate-800 transition"
+            className="text-[11px] text-slate-500 font-semibold hover:text-slate-800 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
           >
             🔄 Đổi mã phiên khác (Renew)
           </button>

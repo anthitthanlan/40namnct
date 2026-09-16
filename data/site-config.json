@@ -1,0 +1,22 @@
+{
+  "school": {
+    "name": "Trường THPT Nguyễn Công Trứ",
+    "address": "97 Quang Trung, Phường Thông Tây Hội, Thành phố Hồ Chí Minh (Phường 8, Quận Gò Vấp cũ)",
+    "phone": "(028) 38941546",
+    "email": "thptnguyencongtru@hcm.edu.vn",
+    "website": "thptnguyencongtru.hcm.edu.vn"
+  },
+  "event": {
+    "name": "Lễ kỷ niệm 40 năm thành lập trường (1986 - 2026)",
+    "date": "2026-11-08",
+    "dateDisplay": "08/11/2026",
+    "tagline": "Ngày Trở Về"
+  },
+  "developer": {
+    "name": "CLB Tin học Nguyễn Công Trứ",
+    "organization": "Đoàn Trường THPT Nguyễn Công Trứ",
+    "description": "Đơn vị thực hiện website kỉ niệm 40 năm",
+    "fanpage": "https://www.facebook.com/clb.Tin.nct",
+    "email": "clb.tinhocnct.itc@gmail.com"
+  }
+}

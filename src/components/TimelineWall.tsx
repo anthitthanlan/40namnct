@@ -161,7 +161,7 @@ export default function TimelineWall({
 
         {/* Header - chỉ bắt đầu, mờ khi camera đi */}
         <div
-          className="absolute inset-x-0 top-[max(7rem,16vh)] z-20 text-center transition-opacity duration-300"
+          className="absolute inset-x-0 top-[max(7rem,16vh)] z-20 text-center transition-opacity duration-[var(--duration-fast)]"
           style={{ opacity: Math.max(0, 1 - progress * 6) }}
         >
           <span className="btn-lightship-soft inline-block rounded-2xl bg-white px-6 py-3 text-sm font-extrabold tracking-widest text-[#1d4ed8]">
@@ -273,7 +273,7 @@ export default function TimelineWall({
                             src={src}
                             alt={`${m.title} - ${j + 1}`}
                             loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
+                            className="h-full w-full object-cover transition-transform duration-[var(--duration-slow)] hover:scale-110"
                           />
                           {j === thumbs.length - 1 && extra > 0 && (
                             <span className="absolute inset-0 grid place-items-center bg-slate-950/55 text-sm font-extrabold text-white">

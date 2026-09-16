@@ -328,7 +328,7 @@ export default function AdminRegistrations({
               key={tab.id}
               type="button"
               onClick={() => setFilterTab(tab.id as typeof filterTab)}
-              className={`rounded-xl px-3.5 py-2 transition ${
+              className={`rounded-xl px-3.5 py-2 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
                 filterTab === tab.id
                   ? "bg-slate-900 text-white shadow-xs"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -354,7 +354,7 @@ export default function AdminRegistrations({
               return (
                 <div
                   key={t.id}
-                  className={`rounded-2xl border p-5 transition ${
+                  className={`rounded-2xl border p-5 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
                     t.status === "pending_approval"
                       ? "border-blue-300 bg-blue-50/40"
                       : isConfirmed
@@ -447,7 +447,7 @@ export default function AdminRegistrations({
                               `Đã duyệt & phát hành vé ${t.code}`,
                             )
                           }
-                          className="rounded-xl bg-[#16a34a] px-4 py-2 text-xs font-black text-white shadow-xs hover:bg-emerald-700 transition disabled:opacity-50"
+                          className="rounded-xl bg-[#16a34a] px-4 py-2 text-xs font-black text-white shadow-xs hover:bg-emerald-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50"
                         >
                           ✅ Duyệt &amp; Phát hành vé
                         </button>
@@ -460,7 +460,7 @@ export default function AdminRegistrations({
                           onClick={() =>
                             act(t, "rejected", `Đã từ chối vé ${t.code}`)
                           }
-                          className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition disabled:opacity-50"
+                          className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50"
                         >
                           Từ chối
                         </button>
@@ -477,7 +477,7 @@ export default function AdminRegistrations({
                               `Đã hoàn tác duyệt vé ${t.code}`,
                             )
                           }
-                          className="rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-500 hover:bg-slate-200 transition"
+                          className="rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-500 hover:bg-slate-200 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
                         >
                           Hoàn tác về chờ duyệt
                         </button>

@@ -48,7 +48,7 @@ const SEED: Post[] = [
       "Tin tức chính thức về Lễ kỷ niệm 40 năm: thời gian, địa điểm, chương trình tri ân, triển lãm kỷ vật và gặp mặt các thế hệ Thầy trò Nguyễn Công Trứ.",
     content: `## Thông báo chính thức
 
-Ngày 15/11/2026, Trường THPT Nguyễn Công Trứ trân trọng tổ chức **LỄ KỶ NIỆM 40 NĂM THÀNH LẬP TRƯỜNG (1986 - 2026)** tại hội trường và sân trường - 97 Quang Trung, Phường Thông Tây Hội, TP. Hồ Chí Minh.
+Ngày 08/11/2026, Trường THPT Nguyễn Công Trứ trân trọng tổ chức **LỄ KỶ NIỆM 40 NĂM THÀNH LẬP TRƯỜNG (1986 - 2026)** tại hội trường và sân trường - 97 Quang Trung, Phường Thông Tây Hội, TP. Hồ Chí Minh.
 
 > "Đây còn là NGÀY TRỞ VỀ - ngày các thế hệ Thầy Cô, cựu học sinh và học sinh cùng hội ngộ, cùng viết tiếp câu chuyện đầy tự hào về THPT Nguyễn Công Trứ."
 
@@ -126,7 +126,7 @@ Các bạn học trò ngày nay ơi, 20 năm nữa nhìn lại, các bạn sẽ 
     slug: "san-truong-mua-phuong-2005-loi-nhan-gui-cac-the-he-sau",
     title: "Sân trường mùa phượng 2005 - lời nhắn gửi các thế hệ sau",
     excerpt:
-      "Chị Thanh Hường (khóa 2005) kể về mùa phượng nở, về vở ghi đầy chữ phê của cô giáo Hóa và mong mỏi trở về trong ngày hội 15/11/2026.",
+      "Chị Thanh Hường (khóa 2005) kể về mùa phượng nở, về vở ghi đầy chữ phê của cô giáo Hóa và mong mỏi trở về trong ngày hội 08/11/2026.",
     content: `Mùa phượng năm 2005, chúng tôi tốt nghiệp trong những cơn mưa bất chợt. Tấm ảnh chụp trước cổng trường, cả lớp mình đứng chen nhau, ai cũng cười mà mắt đỏ hoe.
 
 ## Vở ghi chữ cô Hóa
@@ -139,7 +139,7 @@ Tôi giữ đến nay một vở ghi môn Hóa học - từng trang đều có d
 - Với các thầy cô: lời phê nhỏ trong sổ vở có thể theo đuổi một học sinh cả cuộc đời, như lời cô Hóa theo tôi tận bây giờ
 - Với trường: mong Triển lãm 40 năm sẽ có một góc trưng bày những vở ghi của học trò các thời
 
-Mong gặp lại mái trường trong ngày 15/11/2026!
+Mong gặp lại mái trường trong ngày 08/11/2026!
 
 *- Trần Thanh Hường, cựu học sinh khóa 2005*`,
     author: "Trần Thanh Hường",

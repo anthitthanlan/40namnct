@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import Reveal from "@/components/Reveal";
 
 const slides = [
   { src: "/images/hero-1.jpg", alt: "Học sinh trường THPT Nguyễn Công Trứ" },
@@ -33,7 +34,7 @@ export default function HeroSlideshow() {
         <div key={slide.src} className={`hero-slide ${i === current ? "active" : ""}`}>
           {/* Skeleton shimmer nằm dưới ảnh, biến mất khi load xong */}
           <div
-            className={`skeleton absolute inset-0 transition-opacity duration-700 ${
+            className={`skeleton absolute inset-0 transition-opacity duration-[var(--duration-very-slow)] ${
               loaded[i] ? "opacity-0" : "opacity-100"
             }`}
           />
@@ -62,33 +63,42 @@ export default function HeroSlideshow() {
 
       {/* Nội dung */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white">
-        <span className="floaty btn-lightship-soft mb-6 rounded-full bg-white px-5 py-2 text-sm font-bold tracking-wide text-[#1d4ed8]">
-          1986 - 2026 · 40 NĂM TRỒNG NGƯỜI
-        </span>
-        <h1 className="max-w-4xl text-4xl font-extrabold leading-tight drop-shadow-lg sm:text-6xl">
-          40 Năm Trường THPT
-          <br />
-          Nguyễn Công Trứ
-        </h1>
-        <p className="mt-5 max-w-2xl text-base text-slate-100 sm:text-lg">
-          Hành trình 40 năm kiên trì sự nghiệp &ldquo;trồng người&rdquo; - nơi
-          ươm mầm những thế hệ học trò hiếu học, nhân ái, giàu ý chí.
-        </p>
+        <Reveal>
+          <span className="floaty btn-lightship-soft mb-6 rounded-full bg-white px-5 py-2 text-sm font-bold tracking-wide text-[#1d4ed8]">
+            1986 - 2026 · 40 NĂM TRỒNG NGƯỜI
+          </span>
+        </Reveal>
+        <Reveal delay={100}>
+          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight drop-shadow-lg sm:text-6xl">
+            40 Năm Trường THPT
+            <br />
+            Nguyễn Công Trứ
+          </h1>
+        </Reveal>
+        <Reveal delay={200}>
+          <p className="mt-5 max-w-2xl text-base text-slate-100 sm:text-lg">
+            Hành trình 40 năm kiên trì sự nghiệp &ldquo;trồng người&rdquo; - nơi
+            ươm mầm những thế hệ học trò hiếu học, nhân ái, giàu ý chí.
+          </p>
+        </Reveal>
 
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-          <a
-            href="/timeline"
-            className="btn-lightship bg-[#16a34a] px-7 py-3.5 text-base font-bold text-white"
-          >
-            Khám phá hành trình 40 năm
-          </a>
-          <a
-            href="#gioi-thieu"
-            className="btn-lightship-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"
-          >
-            Về ngôi trường
-          </a>
-        </div>
+        <Reveal delay={300}>
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+            <a
+              href="/timeline"
+              className="group/btn relative overflow-hidden rounded-[1.25rem] bg-[#1d4ed8] px-7 py-3.5 text-base font-bold text-white shadow-md transition-all duration-300 active:scale-95 hover:shadow-yellow-500/30"
+            >
+              <div className="absolute inset-0 bg-live-gradient opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 ease-in-out pointer-events-none"></div>
+              <span className="relative z-10">Khám phá hành trình 40 năm</span>
+            </a>
+            <a
+              href="#gioi-thieu"
+              className="btn-lightship-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"
+            >
+              Về ngôi trường
+            </a>
+          </div>
+        </Reveal>
       </div>
 
       {/* Chấm điều hướng + progress */}
@@ -98,7 +108,7 @@ export default function HeroSlideshow() {
             key={i}
             aria-label={`Ảnh ${i + 1}`}
             onClick={() => setCurrent(i)}
-            className={`h-2.5 rounded-full transition-all duration-500 ${
+            className={`h-2.5 rounded-full transition-all duration-[var(--duration-slow)] ${
               i === current
                 ? "w-9 bg-white"
                 : "w-2.5 bg-white/40 hover:bg-white/70"

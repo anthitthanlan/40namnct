@@ -97,7 +97,7 @@ export default function ChiaSePage() {
               {[
                 { num: "40", label: "năm lịch sử" },
                 { num: "1986", label: "năm thành lập" },
-                { num: "15/11", label: "Ngày Trở Về" },
+                { num: "08/11", label: "Ngày Trở Về" },
               ].map((s) => (
                 <div key={s.label} className="flex flex-col">
                   <span className="text-3xl font-black text-white">{s.num}</span>
@@ -183,7 +183,7 @@ export default function ChiaSePage() {
                     </p>
                     <a
                       href="mailto:thptnguyencongtru@hcm.edu.vn"
-                      className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-bold text-white transition hover:bg-white/20"
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-bold text-white transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] hover:bg-white/20"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />

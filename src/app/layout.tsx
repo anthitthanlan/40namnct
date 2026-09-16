@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import DynamicNavbar from "@/components/DynamicNavbar";
 import SiteFooter from "@/components/SiteFooter";
+import PageTransitionProvider from "@/components/PageTransitionProvider";
 
 export const metadata: Metadata = {
   title: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
@@ -20,7 +21,7 @@ export default function RootLayout({
     <html lang="vi">
       <body className="antialiased selection:bg-[#1d4ed8]/20 selection:text-[#1d4ed8]">
         <DynamicNavbar />
-        {children}
+        <PageTransitionProvider>{children}</PageTransitionProvider>
         <SiteFooter />
       </body>
     </html>

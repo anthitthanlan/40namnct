@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const EVENT_DATE = new Date("2026-11-15T00:00:00+07:00");
+const EVENT_DATE = new Date("2026-11-08T00:00:00+07:00");
 
 interface TimeLeft {
   days: number;
@@ -25,6 +25,19 @@ function calculateTimeLeft(): TimeLeft {
   }
 
   return timeLeft;
+}
+
+function AnimatedDigits({ value, className = "" }: { value: number; className?: string }) {
+  const str = String(value).padStart(2, "0");
+  return (
+    <span className={`t-digit-group is-animating ${className}`}>
+      {str.split("").map((char, i) => (
+        <span key={`${i}-${char}`} className="t-digit" data-stagger={i > 0 ? i : undefined}>
+          {char}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 export default function CountdownBadge() {
@@ -50,24 +63,24 @@ export default function CountdownBadge() {
         <span className="material-symbols-rounded text-xl">schedule</span>
         <span>CHỈ CÒN</span>
       </div>
-      <div className="flex gap-4 sm:gap-6 text-center">
+      <div className="flex gap-2 sm:gap-6 text-center">
         <div className="flex flex-col items-center">
-          <div className="text-4xl sm:text-5xl font-black text-slate-800">{String(timeLeft.days).padStart(2, '0')}</div>
+          <AnimatedDigits value={timeLeft.days} className="text-4xl sm:text-5xl font-black text-slate-800" />
           <div className="text-xs sm:text-sm font-semibold uppercase text-slate-500 mt-1">Ngày</div>
         </div>
         <div className="text-3xl sm:text-4xl font-black text-slate-300 mt-1">:</div>
         <div className="flex flex-col items-center">
-          <div className="text-4xl sm:text-5xl font-black text-slate-800">{String(timeLeft.hours).padStart(2, '0')}</div>
+          <AnimatedDigits value={timeLeft.hours} className="text-4xl sm:text-5xl font-black text-slate-800" />
           <div className="text-xs sm:text-sm font-semibold uppercase text-slate-500 mt-1">Giờ</div>
         </div>
         <div className="text-3xl sm:text-4xl font-black text-slate-300 mt-1">:</div>
         <div className="flex flex-col items-center">
-          <div className="text-4xl sm:text-5xl font-black text-slate-800">{String(timeLeft.minutes).padStart(2, '0')}</div>
+          <AnimatedDigits value={timeLeft.minutes} className="text-4xl sm:text-5xl font-black text-slate-800" />
           <div className="text-xs sm:text-sm font-semibold uppercase text-slate-500 mt-1">Phút</div>
         </div>
-        <div className="text-3xl sm:text-4xl font-black text-slate-300 mt-1 hidden sm:block">:</div>
-        <div className="flex flex-col items-center hidden sm:flex">
-          <div className="text-4xl sm:text-5xl font-black text-emerald-600">{String(timeLeft.seconds).padStart(2, '0')}</div>
+        <div className="text-3xl sm:text-4xl font-black text-slate-300 mt-1">:</div>
+        <div className="flex flex-col items-center">
+          <AnimatedDigits value={timeLeft.seconds} className="text-4xl sm:text-5xl font-black text-emerald-600" />
           <div className="text-xs sm:text-sm font-semibold uppercase text-emerald-600/70 mt-1">Giây</div>
         </div>
       </div>

@@ -57,12 +57,12 @@ export default function SchoolAnimatedBg() {
         return (
           <div
             key={img.src}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+            className={`absolute inset-0 transition-opacity duration-[var(--duration-very-slow)] ease-[var(--ease-in-out)] ${
               isActive ? "opacity-100" : "opacity-0"
             }`}
           >
             <div
-              className={`absolute inset-0 h-full w-full transition-transform duration-[7000ms] ease-out ${
+              className={`absolute inset-0 h-full w-full transition-transform duration-[7000ms] ease-[var(--ease-smooth-out)] ${
                 isActive ? "scale-110 translate-x-1" : "scale-100 translate-x-0"
               }`}
             >

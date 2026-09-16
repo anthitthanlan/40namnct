@@ -157,7 +157,7 @@ export default function AdminCameraScanner({
         <div>
           <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
             <span>📷</span>
-            <span>Duyệt Vé Bằng Camera (Check-in 15/11)</span>
+            <span>Duyệt Vé Bằng Camera (Check-in 08/11)</span>
           </h3>
           <p className="mt-0.5 text-xs text-slate-500">
             Quét mã QR bảo mật động (xoay 30s) trên điện thoại người tham dự để
@@ -178,7 +178,7 @@ export default function AdminCameraScanner({
             <button
               type="button"
               onClick={stopCamera}
-              className="rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-slate-900"
+              className="rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-bold text-white transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] hover:bg-slate-900"
             >
               ⏹ Tắt Camera
             </button>

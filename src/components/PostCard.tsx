@@ -53,7 +53,7 @@ export default function PostCard({
         <Link href={href} className="block md:order-2">
           <PostCover
             post={post}
-            className="h-60 w-full object-cover transition duration-700 group-hover:scale-[1.04] md:h-full"
+            className="h-60 w-full object-cover transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.04] md:h-full"
           />
         </Link>
         <div className="flex flex-col p-7 md:p-9">
@@ -69,7 +69,7 @@ export default function PostCard({
             <span>{formatDate(post.createdAt)}</span>
             <Link
               href={href}
-              className="rounded-full bg-[#1d4ed8]/10 px-5 py-2 text-sm font-extrabold text-[#1d4ed8] transition group-hover:bg-[#1d4ed8] group-hover:text-white"
+              className="rounded-full bg-[#1d4ed8]/10 px-5 py-2 text-sm font-extrabold text-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:bg-[#1d4ed8] group-hover:text-white"
             >
               Đọc tiếp →
             </Link>
@@ -84,7 +84,7 @@ export default function PostCard({
       <Link href={href} className="block overflow-hidden">
         <PostCover
           post={post}
-          className="h-44 w-full object-cover transition duration-700 group-hover:scale-[1.05]"
+          className="h-44 w-full object-cover transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.05]"
         />
       </Link>
       <div className="flex flex-1 flex-col p-6">

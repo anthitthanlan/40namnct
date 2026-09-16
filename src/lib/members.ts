@@ -12,9 +12,10 @@ export type TicketType = "individual" | "group";
 export type Member = {
   id: string;
   name: string;
-  /** SĐT chuẩn hoá (bắt đầu 0) - khoá đăng nhập */
+  /** SĐT chuẩn hoá (bắt đầu 0) */
   phone: string;
-  /** Mã định danh - đăng nhập lại & xuất trình tại cổng 15/11 */
+  email: string;
+  /** Mã định danh - xuất trình tại cổng 08/11 */
   code: string;
   createdAt: string;
 };
@@ -33,7 +34,9 @@ export type Ticket = {
   quantity: number;
   /** size -> số lượng */
   sizes: Record<string, number>;
-  /** Vé cá nhân 200.000đ · tập thể quantity × 200.000đ */
+  /** Số lượng Combo Áo + Ăn nhẹ (500k/suất) */
+  snacks: number;
+  /** Vé tham gia miễn phí. Tiền = snacks × UNIT_PRICE */
   amount: number;
   status: TicketStatus;
   /** Ghi chú tự do (VD: Lớp 12A2 - khóa 2005) */
@@ -49,9 +52,10 @@ export type Ticket = {
 export type TicketInput = {
   type: TicketType;
   attendeeName: string;
-  size: Size | null;
+  size: Size | null; // Size áo
   quantity: number;
   sizes: Record<string, number>;
+  snacks: number;
   note: string;
 };
 
@@ -136,13 +140,14 @@ export async function findMemberByCode(code: string): Promise<Member | null> {
 export async function createMember(
   name: string,
   phone: string,
+  email: string,
 ): Promise<{ ok: true; member: Member } | { ok: false; message: string }> {
   const members = await listMembers();
   if (members.some((m) => m.phone === phone)) {
     return {
       ok: false,
       message:
-        "Số điện thoại này đã đăng ký tài khoản. Hãy đăng nhập bằng SĐT + mã định danh.",
+        "Số điện thoại này đã đăng ký tham gia. Vui lòng sử dụng mã định danh đã được cấp.",
     };
   }
   let code = "";
@@ -153,6 +158,7 @@ export async function createMember(
     id: randomUUID(),
     name,
     phone,
+    email,
     code,
     createdAt: new Date().toISOString(),
   };
@@ -161,16 +167,7 @@ export async function createMember(
   return { ok: true, member };
 }
 
-/** Đăng nhập: SĐT + mã định danh */
-export async function verifyMemberLogin(
-  phone: string,
-  code: string,
-): Promise<Member | null> {
-  const member = await findMemberByPhone(phone);
-  if (!member) return null;
-  if (member.code !== code.trim().toUpperCase()) return null;
-  return member;
-}
+
 
 export async function getMemberById(id: string): Promise<Member | null> {
   const members = await listMembers();
@@ -181,7 +178,7 @@ function randomTicketCode(): string {
   return `VE-${randomCode(6)}`;
 }
 
-/** Tạo vé (cá nhân 200.000đ, tập thể 200.000đ/suất; trạng thái ban đầu là pending_payment) */
+/** Tạo vé tham dự. Combo tính phí 500k/suất (lưu vào biến snacks) */
 export async function createTicket(
   memberId: string,
   input: TicketInput,
@@ -203,8 +200,9 @@ export async function createTicket(
           size: input.size,
           quantity: 1,
           sizes: input.size ? { [input.size]: 1 } : {},
-          amount: UNIT_PRICE,
-          status: "pending_payment",
+          snacks: input.snacks,
+          amount: input.snacks * UNIT_PRICE,
+          status: input.snacks > 0 ? "pending_payment" : "confirmed",
           note: input.note,
           checkedIn: false,
           checkedInAt: null,
@@ -220,8 +218,9 @@ export async function createTicket(
           size: null,
           quantity: input.quantity,
           sizes: input.sizes,
-          amount: input.quantity * UNIT_PRICE,
-          status: "pending_payment",
+          snacks: input.snacks,
+          amount: input.snacks * UNIT_PRICE,
+          status: input.snacks > 0 ? "pending_payment" : "confirmed",
           note: input.note,
           checkedIn: false,
           checkedInAt: null,

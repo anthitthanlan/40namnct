@@ -6,8 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import Reveal from "@/components/Reveal";
 
 type ContributionCounterProps = {
-  /** Tổng tiền các đơn vé ĐÃ DUYỆT (status = confirmed) */
-  totalAmount: number;
   /** Số đơn vé hợp lệ */
   orderCount: number;
   /** Tổng số suất tham dự của các vé hợp lệ */
@@ -93,16 +91,14 @@ function formatNumber(amount: number): string {
 }
 
 export default function ContributionCounter({
-  totalAmount,
   orderCount,
   attendeeCount,
   memberCount,
 }: ContributionCounterProps) {
-  const { ref, value } = useCountUp(totalAmount);
+  const { ref, value } = useCountUp(attendeeCount);
 
   const stats = [
     { value: orderCount, label: "Đơn vé hợp lệ", suffix: "" },
-    { value: attendeeCount, label: "Suất tham dự", suffix: "" },
     { value: memberCount, label: "Thành viên đồng hành", suffix: "" },
   ];
 
@@ -141,7 +137,7 @@ export default function ContributionCounter({
             <Reveal variant="left">
               <div className="inline-flex items-center gap-3 text-xs font-extrabold tracking-widest text-emerald-300 sm:text-sm">
                 <span className="h-0.5 w-6 rounded-full bg-emerald-400" />
-                <span>SỔ SAO KÊ ĐÓNG GÓP</span>
+                <span>ĐÓNG GÓP & VÉ THAM DỰ</span>
               </div>
             </Reveal>
 
@@ -162,22 +158,19 @@ export default function ContributionCounter({
             <Reveal delay={220} variant="zoom">
               <div className="mt-12">
                 <span className="text-xs font-bold uppercase tracking-widest text-emerald-300">
-                  Tổng số đóng góp được ghi nhận
+                  Tổng số suất tham dự dự kiến
                 </span>
                 <p className="mt-6 flex flex-wrap items-end gap-2 leading-none">
                   <span
                     ref={ref}
-                    aria-label={`${formatNumber(totalAmount)} đồng`}
+                    aria-label={`${formatNumber(attendeeCount)} người`}
                     className="text-6xl font-black tabular-nums tracking-tight text-white drop-shadow-[0_0_32px_rgba(52,211,153,0.4)] sm:text-7xl lg:text-8xl"
                   >
                     {formatNumber(value)}
                   </span>
                   <span className="pb-2 text-4xl font-black text-emerald-300 sm:text-5xl">
-                    đ
+                    người
                   </span>
-                </p>
-                <p className="mt-4 text-sm font-semibold text-emerald-100/70">
-                  200.000đ / suất · Chỉ tính vé đã được BTC xác nhận
                 </p>
               </div>
             </Reveal>
@@ -189,15 +182,15 @@ export default function ContributionCounter({
                   href="/dang-ky"
                   className="group icon-hover-morph relative inline-flex items-center pb-1 text-lg font-bold text-white transition-colors hover:text-emerald-300"
                 >
-                  <span className="flex items-center gap-1.5">Đăng ký tham gia ngay <span className="transition-transform duration-300 ease-out group-hover:translate-x-1.5"><span className="material-symbols-rounded text-[1.25em] block">send</span></span></span>
-                  <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-emerald-400 opacity-0 scale-x-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:scale-x-100" />
+                  <span className="flex items-center gap-1.5">Đăng ký tham gia ngay <span className="transition-transform duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:translate-x-1.5"><span className="material-symbols-rounded text-[1.25em] block">send</span></span></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-emerald-400 opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
                 </Link>
                 <Link
-                  href="/tai-khoan"
+                  href="/tra-cuu"
                   className="group relative inline-flex items-center pb-1 text-lg font-bold text-white transition-colors hover:text-emerald-300"
                 >
-                  <span>Sổ sao kê của tôi</span>
-                  <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-emerald-400 opacity-0 scale-x-0 transition-all duration-300 ease-out group-hover:opacity-100 group-hover:scale-x-100" />
+                  <span>Tra cứu vé của tôi</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-emerald-400 opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
                 </Link>
               </div>
             </Reveal>

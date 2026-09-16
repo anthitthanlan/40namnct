@@ -37,5 +37,25 @@
     "note": "",
     "createdAt": "2026-09-12T16:35:56.885Z",
     "updatedAt": "2026-09-13T05:46:48.059Z"
+  },
+  {
+    "id": "30b5f1ba-e900-47d7-a3b2-12ee383dff00",
+    "code": "VE-QGUDWA",
+    "memberId": "9fc6b857-bc16-44fc-bca2-61bcb7aabd41",
+    "type": "individual",
+    "attendeeName": "Nhất Phong Lại",
+    "size": "M",
+    "quantity": 1,
+    "sizes": {
+      "M": 1
+    },
+    "snacks": 1,
+    "amount": 500000,
+    "status": "pending_payment",
+    "note": "",
+    "checkedIn": false,
+    "checkedInAt": null,
+    "createdAt": "2026-09-16T08:02:09.266Z",
+    "updatedAt": "2026-09-16T08:02:09.266Z"
   }
 ]

@@ -25,6 +25,17 @@ function DelayedMount({ children, isInitial }: { children: React.ReactNode, isIn
     return () => clearTimeout(timer);
   }, [isInitial]);
 
+  useEffect(() => {
+    if (show && !isInitial) {
+      // Đợi DOM paint xong mới scroll để trình duyệt không bị đè vị trí cũ
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        }, 10);
+      });
+    }
+  }, [show, isInitial]);
+
   return show ? <>{children}</> : <div className="min-h-screen bg-transparent" />;
 }
 

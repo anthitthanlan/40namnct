@@ -57,5 +57,25 @@
     "checkedInAt": null,
     "createdAt": "2026-09-16T08:02:09.266Z",
     "updatedAt": "2026-09-16T08:02:09.266Z"
+  },
+  {
+    "id": "e10dbe54-785a-4c22-81d6-d7dba1bb5b5e",
+    "code": "VE-HZABMJ",
+    "memberId": "a73f6202-190d-4e8a-a09c-d873afde390f",
+    "type": "individual",
+    "attendeeName": "Đoàn Thụy Kim Phượng",
+    "size": "S",
+    "quantity": 1,
+    "sizes": {
+      "S": 1
+    },
+    "snacks": 1,
+    "amount": 500000,
+    "status": "pending_payment",
+    "note": "",
+    "checkedIn": false,
+    "checkedInAt": null,
+    "createdAt": "2026-09-17T06:24:50.139Z",
+    "updatedAt": "2026-09-17T06:24:50.139Z"
   }
 ]

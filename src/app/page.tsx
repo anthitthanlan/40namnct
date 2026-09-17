@@ -1,4 +1,5 @@
 import HeroSlideshow from "@/components/HeroSlideshow";
+import Link from "next/link";
 import MediaUploader from "@/components/MediaUploader";
 import MemoryGallery from "@/components/MemoryGallery";
 import PostCard from "@/components/PostCard";
@@ -123,13 +124,13 @@ export default async function Home() {
               là ngày các thế hệ Thầy Cô và học sinh cùng hội ngộ dưới mái trường thân thương.
             </p>
             <div className="relative z-10 mt-10 flex flex-wrap gap-4">
-              <a
+              <Link
                 href="/dang-ky"
                 className="group icon-hover-morph relative inline-flex pb-1 text-lg font-bold text-[#16a34a] transition-colors hover:text-emerald-700"
               >
                 <span className="flex items-center gap-1.5">Đăng ký tham gia ngay <span className="transition-transform duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:translate-x-1.5"><span className="material-symbols-rounded text-[1.25em] block">send</span></span></span>
                 <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#16a34a] opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
-              </a>
+              </Link>
             </div>
           </Reveal>
 
@@ -143,7 +144,7 @@ export default async function Home() {
           {/* Secondary Bento Box 2 - Removed box styling and icon */}
           <Reveal delay={240} className="md:col-span-5 md:row-span-1 flex flex-col justify-start">
             <div className="flex flex-col p-4 text-left md:pl-0 border-t border-slate-200/60 pt-6 mt-2">
-              <a 
+              <Link 
                 href="/timeline" 
                 className="group inline-flex items-center gap-4 text-base font-medium leading-relaxed text-slate-600 hover:text-[#16a34a] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
               >
@@ -151,7 +152,7 @@ export default async function Home() {
                 <span className="material-symbols-rounded rounded-full bg-slate-100 p-1 text-[1.2rem] text-slate-500 !transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:translate-x-1.5 group-hover:bg-[#16a34a] group-hover:text-white group-hover:shadow-md">
                   arrow_forward_ios
                 </span>
-              </a>
+              </Link>
             </div>
           </Reveal>
         </div>
@@ -251,20 +252,20 @@ export default async function Home() {
           
           <Reveal delay={260} variant="right" className="shrink-0">
             <div className="flex gap-4">
-              <a
+              <Link
                 href="/bai-viet"
                 className="group relative inline-flex pb-1 text-base font-bold text-[#1d4ed8] transition-colors hover:text-blue-800"
               >
                 <span>Xem tất cả ({allPosts.length})</span>
                 <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/bai-viet/chia-se"
                 className="group relative inline-flex pb-1 text-base font-bold text-slate-700 transition-colors hover:text-slate-900"
               >
                 <span className="flex items-center gap-1.5"><span className="material-symbols-rounded text-[1.25em]">edit</span> Gửi bài</span>
                 <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-slate-700 opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
-              </a>
+              </Link>
             </div>
           </Reveal>
         </div>

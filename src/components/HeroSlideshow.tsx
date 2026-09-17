@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import Reveal from "@/components/Reveal";
 
@@ -63,16 +64,15 @@ export default function HeroSlideshow() {
 
       {/* Nội dung */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white">
-        <Reveal>
-          <span className="floaty btn-lightship-soft mb-6 rounded-full bg-white px-5 py-2 text-sm font-bold tracking-wide text-[#1d4ed8]">
+        <Reveal className="mb-6">
+          <span className="floaty btn-lightship-soft rounded-full bg-white px-5 py-2 text-sm font-bold tracking-wide text-[#1d4ed8]">
             1986 - 2026 · 40 NĂM TRỒNG NGƯỜI
           </span>
         </Reveal>
         <Reveal delay={100}>
-          <h1 className="max-w-4xl text-4xl font-extrabold leading-tight drop-shadow-lg sm:text-6xl">
-            40 Năm Trường THPT
-            <br />
-            Nguyễn Công Trứ
+          <h1 className="flex flex-col items-center gap-1 font-extrabold leading-tight drop-shadow-lg">
+            <span className="whitespace-nowrap text-[clamp(1.25rem,5.5vw,2.75rem)]">40 Năm Trường THPT</span>
+            <span className="whitespace-nowrap text-[clamp(1.6rem,8vw,3.75rem)]">Nguyễn Công Trứ</span>
           </h1>
         </Reveal>
         <Reveal delay={200}>
@@ -84,13 +84,13 @@ export default function HeroSlideshow() {
 
         <Reveal delay={300}>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-            <a
+            <Link
               href="/timeline"
               className="group/btn relative overflow-hidden rounded-[1.25rem] bg-[#1d4ed8] px-7 py-3.5 text-base font-bold text-white shadow-md transition-all duration-300 active:scale-95 hover:shadow-yellow-500/30"
             >
               <div className="absolute inset-0 bg-live-gradient opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 ease-in-out pointer-events-none"></div>
               <span className="relative z-10">Khám phá hành trình 40 năm</span>
-            </a>
+            </Link>
             <a
               href="#gioi-thieu"
               className="btn-lightship-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"

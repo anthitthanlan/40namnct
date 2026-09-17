@@ -103,7 +103,7 @@ export default function SiteFooter() {
                 { href: "/tra-cuu", label: "Tra cứu vé" },
                 { href: "/bai-viet", label: "Bài viết" },
                 { href: "/bai-viet/chia-se", label: "Chia sẻ câu chuyện" },
-                { href: "/timeline", label: "Timeline 40 năm" },
+                { href: "/timeline", label: "Lược sử 40 năm" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -123,13 +123,6 @@ export default function SiteFooter() {
               Đơn vị thực hiện website
             </h4>
             <div className="mt-4 mb-3 flex items-center gap-3">
-              <Image
-                src="/images/Huy_Hieu_Doan.png"
-                alt="Huy hiệu Đoàn"
-                width={48}
-                height={48}
-                className="h-12 w-auto object-contain"
-              />
               <Image
                 src="/images/Logo_CLB_Tin_Hoc.png"
                 alt="Logo CLB Tin học"

@@ -416,8 +416,8 @@ export default function RegisterForm() {
                   {/* Note and Checkboxes */}
                   <div className="mt-3">
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      <span className="text-amber-600 font-medium">Lưu ý:</span> Bạn có thể nhập email để hệ thống tự động gửi Vé QR, hoặc tải vé về thủ công sau khi hoàn tất.
-                      <strong className="font-semibold text-gray-900 block mt-1">Vé QR này sẽ được dùng để kiểm tra nhận áo và check-in vào ngày 08/11.</strong>
+                      <span className="text-amber-600 font-medium">Lưu ý:</span> Bạn có thể nhập email để hệ thống tự động gửi Phiếu đăng kí, hoặc tải về thủ công sau khi hoàn tất.
+                      <strong className="font-semibold text-gray-900 block mt-1">Mã QR này sẽ được dùng để kiểm tra nhận áo và check-in vào ngày 08/11.</strong>
                     </p>
 
                     <div className="flex flex-col gap-3 mt-4">
@@ -471,34 +471,18 @@ export default function RegisterForm() {
                       />
                       <div>
                         <p className={`font-medium transition-colors ${buyCombo ? "text-blue-900" : "text-gray-900"}`}>
-                          Đăng ký mua Áo kỉ niệm
+                          Đăng ký Áo kỉ niệm
                         </p>
                         <p className={`text-sm mt-0.5 transition-colors ${buyCombo ? "text-blue-700/80" : "text-gray-500"}`}>
-                          Giá 500.000đ/suất bao gồm áo kỷ niệm 40 năm và 1 suất ăn.
+                          Giá 500.000đ/suất bao gồm áo kỷ niệm 40 năm và F&B liên hoan giao lưu.
                           <br />
-                          <span className="text-blue-600/90 font-medium inline-block mt-1">Có thể đăng ký mua tập thể.</span>
+                          <span className="text-blue-600/90 font-medium inline-block mt-1">Có thể đăng kí áo tập thể.</span>
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Submit Button - Ở Box trái khi KHÔNG chọn Combo */}
-                  <AnimatePresence>
-                    {!buyCombo && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0, overflow: "hidden" }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0, overflow: "hidden" }}
-                        transition={{ duration: 0.4, ease: modalEase }}
-                      >
-                        <div className="pt-6">
-                          <div className="pt-4 border-t border-gray-100">
-                            <SubmitButtonSection />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* Khi chưa chọn áo: không hiển thị nút submit */}
                 </motion.div>
               </motion.div>
 
@@ -507,14 +491,14 @@ export default function RegisterForm() {
                 {buyCombo && (
                   <motion.div
                     layout
-                    initial={{ opacity: 0, scale: 0.96, ...(isMobile ? { height: 0 } : { width: 0 }) }}
-                    animate={{ opacity: 1, scale: 1, ...(isMobile ? { height: "auto" } : { width: "auto" }) }}
-                    exit={{ opacity: 0, scale: 0.96, ...(isMobile ? { height: 0 } : { width: 0 }) }}
+                    initial={{ opacity: 0, scale: 0.96, overflow: "hidden", ...(isMobile ? { height: 0 } : { width: 0 }) }}
+                    animate={{ opacity: 1, scale: 1, overflow: "visible", ...(isMobile ? { height: "auto" } : { width: "auto" }) }}
+                    exit={{ opacity: 0, scale: 0.96, overflow: "hidden", ...(isMobile ? { height: 0 } : { width: 0 }) }}
                     transition={{
                       duration: 0.4,
                       ease: modalEase
                     }}
-                    className="overflow-hidden w-full md:w-auto flex-shrink-0 origin-top md:origin-left"
+                    className="w-full md:w-auto flex-shrink-0 origin-top md:origin-left"
                   >
                     {/* Padding thay cho Gap để chống nhảy giật layout khi unmount */}
                   <div className="pt-6 pb-2 pr-2 md:pt-2 md:pb-2 md:pr-2 md:pl-8 h-full">
@@ -575,13 +559,13 @@ export default function RegisterForm() {
                           {/* Form Chi Tiết Combo */}
                           <AnimatePresence mode="wait" initial={false}>
                             {type === "individual" ? (
-                              <motion.div
-                                key="individual-options"
-                                initial={{ opacity: 0, height: 0, overflow: "hidden" }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                exit={{ opacity: 0, height: 0, overflow: "hidden" }}
-                                transition={{ duration: 0.4, ease: modalEase }}
-                              >
+                                <motion.div
+                                  key="individual-options"
+                                  initial={{ opacity: 0, height: 0, overflow: "hidden" }}
+                                  animate={{ opacity: 1, height: "auto", overflow: "visible" }}
+                                  exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+                                  transition={{ duration: 0.4, ease: modalEase }}
+                                >
                                 <div className="py-2">
                                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                                     <label className="block text-sm font-medium text-gray-700">
@@ -636,7 +620,7 @@ export default function RegisterForm() {
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -10 }}
                                             transition={{ duration: 0.2 }}
-                                            className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col max-h-60 overflow-y-auto"
+                                            className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col"
                                           >
                                             {SIZES.map((s) => (
                                               <button
@@ -755,14 +739,12 @@ export default function RegisterForm() {
                                   </div>
 
                                   {/* Tổng tiền */}
-                                  {comboCount > 0 && (
-                                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                      <span className="text-sm font-medium text-gray-700">Tổng tiền áo kỉ niệm</span>
-                                      <span className="text-lg font-bold text-amber-600 flex items-center">
-                                        <AnimatedNumber value={(comboCount * 500000).toLocaleString("vi-VN")} /><span className="ml-0.5">đ</span>
-                                      </span>
-                                    </div>
-                                  )}
+                                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                    <span className="text-sm font-medium text-gray-700">Tổng tiền áo kỉ niệm</span>
+                                    <span className="text-lg font-bold text-amber-600 flex items-center">
+                                      <AnimatedNumber value={(comboCount * 500000).toLocaleString("vi-VN")} /><span className="ml-0.5">đ</span>
+                                    </span>
+                                  </div>
                                 </div>
                               </motion.div>
                             )}

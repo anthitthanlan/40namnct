@@ -104,13 +104,18 @@ html {
 
 /* ===== Live Gradient Background ===== */
 @keyframes liquid-wave {
-  0% { background-position: 0% 0%, 100% 100%, 0% 50%; }
-  100% { background-position: 200% 200%, -100% -100%, 200% 50%; }
+  0% {
+    background-position: 0% 0%, 100% 100%, 0% 50%;
+  }
+
+  100% {
+    background-position: 200% 200%, -100% -100%, 200% 50%;
+  }
 }
 
 .bg-live-gradient {
   background-color: #16a34a;
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% 50%, rgba(234, 179, 8, 0.9) 0%, transparent 60%),
     radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.8) 0%, transparent 60%),
     linear-gradient(90deg, #16a34a 0%, #eab308 25%, #16a34a 50%, #eab308 75%, #16a34a 100%);
@@ -120,7 +125,7 @@ html {
 
 .hover\:bg-live-gradient:hover {
   background-color: #16a34a;
-  background-image: 
+  background-image:
     radial-gradient(circle at 50% 50%, rgba(234, 179, 8, 0.9) 0%, transparent 60%),
     radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.8) 0%, transparent 60%),
     linear-gradient(90deg, #16a34a 0%, #eab308 25%, #16a34a 50%, #eab308 75%, #16a34a 100%);
@@ -138,17 +143,37 @@ html {
 }
 
 @keyframes t-input-shake {
-  0%      { transform: translateX(0);                                 animation-timing-function: var(--shake-ease); }
-  28.57%  { transform: translateX(var(--shake-distance));             animation-timing-function: var(--shake-ease); }
-  57.14%  { transform: translateX(calc(var(--shake-distance) * -1)); animation-timing-function: var(--shake-ease); }
-  78.57%  { transform: translateX(var(--shake-overshoot));            animation-timing-function: var(--shake-ease); }
-  100%    { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+    animation-timing-function: var(--shake-ease);
+  }
+
+  28.57% {
+    transform: translateX(var(--shake-distance));
+    animation-timing-function: var(--shake-ease);
+  }
+
+  57.14% {
+    transform: translateX(calc(var(--shake-distance) * -1));
+    animation-timing-function: var(--shake-ease);
+  }
+
+  78.57% {
+    transform: translateX(var(--shake-overshoot));
+    animation-timing-function: var(--shake-ease);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .shake-error {
   animation: t-input-shake calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) linear;
-  border-color: #ef4444 !important; /* Tailwind red-500 */
+  border-color: #ef4444 !important;
+  /* Tailwind red-500 */
 }
+
 .shake-error:focus-within {
   --tw-ring-color: #fca5a5 !important;
 }
@@ -591,4 +616,4 @@ input:-webkit-autofill:active {
   .t-check svg path {
     transition: none !important;
   }
-}
+}

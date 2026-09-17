@@ -11,6 +11,7 @@ const links = [
   { href: "/timeline", label: "Lược sử 40 năm" },
   { href: "/tra-cuu", label: "Tra cứu vé" },
   { href: "/dang-ky", label: "Đăng kí tham gia" },
+  { href: "/an-pham", label: "Ấn phẩm", comingSoon: true },
 ];
 
 export default function MobileNavMorph() {
@@ -162,7 +163,7 @@ export default function MobileNavMorph() {
                   key={link.href} 
                   href={resolveHref(link.href)}
                   onClick={() => setIsOpen(false)}
-                  className={`group relative w-fit text-[17px] font-semibold transition-colors ${
+                  className={`group relative w-fit text-[17px] font-semibold transition-colors flex items-center gap-2 ${
                     isCurrent ? "text-[#1d4ed8]" : "text-slate-700 hover:text-slate-900"
                   }`}
                 >

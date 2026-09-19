@@ -31,6 +31,15 @@ export type TicketView = {
   note: string;
   lastSessionId?: string;
   paymentClaimedAt?: string;
+  receiptUrl?: string;
+  ocrResult?: {
+    amount: number | null;
+    content: string | null;
+    time: string | null;
+    confidence: "high" | "low" | "mismatch";
+    note: string;
+    provider: string;
+  };
   checkedIn?: boolean;
   checkedInAt?: string | null;
   createdAt: string;
@@ -55,16 +64,16 @@ export function ticketStatusInfo(status: TicketStatus | string): {
       };
     case "pending_approval":
       return {
-        label: "⏳ Chờ cấp vé (24h)",
+        label: "⏳ Chờ duyệt (24h)",
         cls: "bg-blue-100 text-blue-800 border border-blue-300",
-        desc: "Đã gửi xác nhận CK, Ban Tổ chức đang đối soát để phát hành vé",
+        desc: "Đã gửi xác nhận đóng góp, Ban Tổ chức đang đối soát biên lai để phát hành vé",
       };
     case "pending_payment":
     case "pending":
       return {
-        label: "🕒 Chờ chuyển khoản",
+        label: "🕒 Chờ xác nhận",
         cls: "bg-amber-100 text-amber-800 border border-amber-300",
-        desc: "Quét QR chuyển khoản để hoàn tất đăng ký",
+        desc: "Đang chờ người dùng quét QR và upload biên lai đóng góp",
       };
     case "rejected":
       return {

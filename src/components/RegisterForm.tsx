@@ -246,7 +246,11 @@ export default function RegisterForm() {
         setError(data.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
         return;
       }
-      setCode(data.ticketCode);
+      if (amount > 0) {
+        window.location.href = `/xac-nhan-dong-gop?id=${data.ticketId}`;
+      } else {
+        window.location.href = `/thu-moi?id=${data.ticketId}`;
+      }
     } catch {
       setError("Có lỗi xảy ra, vui lòng thử lại.");
     } finally {
@@ -294,7 +298,7 @@ export default function RegisterForm() {
         ) : (
           <>
             {amount > 0
-              ? `Đăng ký & Thanh toán ${(amount).toLocaleString("vi-VN")}đ`
+              ? `Đăng ký & Xác nhận đóng góp ${(amount).toLocaleString("vi-VN")}đ`
               : "Xác nhận Đăng ký"}
           </>
         )}

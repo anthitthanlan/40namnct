@@ -242,6 +242,10 @@ html {
   background: transparent;
 }
 
+::-webkit-scrollbar-button {
+  display: none;
+}
+
 ::-webkit-scrollbar-thumb {
   background: rgba(15, 23, 42, 0.15);
   border-radius: 999px;
@@ -258,6 +262,8 @@ html {
 html {
   scrollbar-width: thin;
   scrollbar-color: rgba(15, 23, 42, 0.25) transparent;
+  overflow-y: overlay;
+  background-color: #f8fafc;
 }
 
 /* ===== Lightship Buttons (Refero Style) ===== */
@@ -616,4 +622,30 @@ input:-webkit-autofill:active {
   .t-check svg path {
     transition: none !important;
   }
+}.prata-regular { font-family: 'Prata', serif; font-weight: 400; font-style: normal; } .beau-rivage-regular { font-family: 'Beau Rivage', cursive; font-weight: 400; font-style: normal; }
+
+/* Shimmer animation — dùng cho AI OCR loading state */
+@keyframes shimmer {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* ===== School Build Loader Animation ===== */
+.anim-build {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: dash-build 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.anim-build-1 { animation-delay: 0s; }    /* Mái */
+.anim-build-2 { animation-delay: 0.3s; }  /* Tường */
+.anim-build-3 { animation-delay: 0.6s; }  /* Chái nhà */
+.anim-build-4 { animation-delay: 0.9s; }  /* Cửa */
+.anim-build-5 { animation-delay: 1.2s; }  /* Cửa sổ */
+
+@keyframes dash-build {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  10% { opacity: 1; }
+  40%, 60% { stroke-dashoffset: 0; opacity: 1; }
+  90%, 100% { stroke-dashoffset: 1; opacity: 0; }
 }

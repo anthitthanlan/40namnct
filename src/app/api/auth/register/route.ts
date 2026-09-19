@@ -96,6 +96,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const nienKhoa =
+    typeof body.nienKhoa === "string" ? body.nienKhoa.trim().slice(0, 50) : "";
+
   // --- 1. Tạo Member ---
   const memberResult = await createMember(name, phone, email);
   if (!memberResult.ok) {
@@ -108,6 +111,7 @@ export async function POST(req: NextRequest) {
   // --- 2. Tạo Ticket (chứa combo) ---
   const ticket = await createTicket(memberResult.member.id, {
     type,
+    nienKhoa,
     attendeeName: name,
     size,
     quantity,
@@ -119,7 +123,8 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(
     {
       ok: true,
-      ticketCode: ticket.code, // Trả về ticketCode cho UI
+      ticketCode: ticket.code, // Trả về ticketCode cho UI (nếu cần)
+      ticketId: ticket.id,     // Trả về UUID để dùng làm index trên URL
       memberCode: memberResult.member.code,
     },
     { status: 201 },

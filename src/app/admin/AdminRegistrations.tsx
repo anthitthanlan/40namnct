@@ -425,6 +425,78 @@ export default function AdminRegistrations({
                     </div>
                   </div>
 
+                  {/* Ảnh biên lai & Kết quả OCR */}
+                  {t.receiptUrl && (
+                    <div className="mt-4 flex flex-col sm:flex-row gap-4 border-t border-slate-100 pt-4">
+                      {/* Thumbnail ảnh */}
+                      <a
+                        href={t.receiptUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="shrink-0 group relative block h-24 w-16 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-32 sm:w-24 shadow-sm"
+                        title="Bấm để xem ảnh lớn"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={t.receiptUrl}
+                          alt="Biên lai"
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10 flex items-center justify-center">
+                          <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md">🔍</span>
+                        </div>
+                      </a>
+
+                      {/* Thông tin OCR */}
+                      <div className="flex-1 space-y-2 text-xs">
+                        {t.ocrResult ? (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-700">AI trích xuất:</span>
+                              <span
+                                className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                  t.ocrResult.confidence === "high"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : t.ocrResult.confidence === "low"
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-rose-100 text-rose-700"
+                                }`}
+                              >
+                                {t.ocrResult.confidence} MATCH
+                              </span>
+                            </div>
+                            <div className="grid gap-1.5 sm:grid-cols-2">
+                              <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
+                                <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Số tiền đọc được</span>
+                                <span className={`font-mono font-bold ${t.ocrResult.amount === t.amount ? "text-emerald-600" : "text-rose-600"}`}>
+                                  {t.ocrResult.amount !== null ? formatVnd(t.ocrResult.amount) : "Không đọc được"}
+                                </span>
+                              </p>
+                              <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
+                                <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Thời gian CK</span>
+                                <span className="font-mono text-slate-700 font-semibold">{t.ocrResult.time || "Không rõ"}</span>
+                              </p>
+                              <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100 sm:col-span-2">
+                                <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Nội dung CK</span>
+                                <span className="font-mono text-slate-800 break-all font-semibold">
+                                  {t.ocrResult.content || "Không đọc được"}
+                                </span>
+                              </p>
+                            </div>
+                            <p className="text-[11px] text-slate-500 italic mt-1 leading-relaxed">
+                              {t.ocrResult.note}
+                            </p>
+                          </>
+                        ) : (
+                          <div className="flex h-full items-center text-slate-400 italic">
+                            Biên lai chưa được phân tích OCR
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Thanh nút hành động duyệt vé */}
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
                     <span className="text-[11px] text-slate-400">

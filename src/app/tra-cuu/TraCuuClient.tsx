@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import DynamicTicketQr from "@/components/DynamicTicketQr";
 import {
   ticketStatusInfo,
   formatVnd,
@@ -171,10 +170,7 @@ export default function TraCuuClient() {
               Xin chào, {result.member.name}!
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Mã định danh:{" "}
-              <span className="font-mono font-bold text-emerald-700">
-                {result.member.code}
-              </span>
+              Thông tin tra cứu hợp lệ.
             </p>
             <button
               type="button"
@@ -223,9 +219,6 @@ export default function TraCuuClient() {
                         >
                           {status.label}
                         </span>
-                        <span className="font-mono text-xs font-bold text-slate-500">
-                          {ticket.code}
-                        </span>
                       </div>
                       <p className="mt-1.5 text-sm font-semibold text-slate-700">
                         {ticket.type === "individual"
@@ -259,20 +252,57 @@ export default function TraCuuClient() {
                         <p className="text-xs text-slate-500">{status.desc}</p>
                       )}
                       {ticket.note && (
-                        <p className="text-xs text-slate-600">
+                        <p className="text-xs text-slate-600 mb-4">
                           <strong>Ghi chú:</strong> {ticket.note}
                         </p>
                       )}
 
-                      {/* QR code cho vé đã xác nhận */}
-                      {ticket.status === "confirmed" && (
-                        <div className="flex justify-center pt-2">
-                          <DynamicTicketQr
-                            ticketId={ticket.id}
-                            ticketCode={ticket.code}
-                          />
+                      <div className="space-y-3 pt-2 border-t border-slate-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[13px] font-medium text-slate-600">Trạng thái thanh toán</span>
+                          {ticket.status === "confirmed" ? (
+                            <span className="text-[13px] font-bold text-emerald-600">Đã thanh toán</span>
+                          ) : ticket.status === "pending_approval" ? (
+                            <span className="text-[13px] font-bold text-blue-600">Đang chờ xác thực</span>
+                          ) : (
+                            <span className="text-[13px] font-bold text-amber-600">Chưa thanh toán</span>
+                          )}
                         </div>
-                      )}
+                        <div className="flex items-center justify-between">
+                          <span className="text-[13px] font-medium text-slate-600">Trạng thái nhận áo</span>
+                          {(!ticket.sizes || Object.keys(ticket.sizes).length === 0) ? (
+                            <span className="text-[13px] font-medium text-slate-500">Không đăng ký</span>
+                          ) : (
+                            <span className="text-[13px] font-medium text-amber-600">Chưa nhận</span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[13px] font-medium text-slate-600">Điểm danh sự kiện</span>
+                          {ticket.checkedIn ? (
+                            <span className="text-[13px] font-bold text-emerald-600">Đã check-in</span>
+                          ) : (
+                            <span className="text-[13px] font-medium text-slate-500">Chưa điểm danh</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center pt-4 mt-2">
+                        {ticket.status === "pending_payment" ? (
+                          <Link
+                            href={`/payment-legacy?id=${ticket.id}`}
+                            className="w-full text-center rounded-xl bg-[#1d4ed8] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+                          >
+                            Thanh toán ngay
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/thu-moi?id=${ticket.id}`}
+                            className="w-full text-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+                          >
+                            Xem & Tải thư mời
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

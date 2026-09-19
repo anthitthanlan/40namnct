@@ -183,6 +183,9 @@ export default function SiteFooter() {
 
         {/* Bottom bar */}
         <div className="mt-12 border-t border-slate-200/60 pt-6 text-center">
+          <p className="text-[11px] text-slate-400/80 leading-relaxed max-w-lg mx-auto mb-3">
+            Đây là trang thông tin đăng ký nội bộ dành riêng cho Cựu học sinh THPT Nguyễn Công Trứ tham dự sự kiện Lễ kỷ niệm 40 năm thành lập trường (1986 - 2026). Mọi khoản đóng góp được sử dụng hoàn toàn cho công tác tổ chức sự kiện.
+          </p>
           <p className="text-xs text-slate-400">
             © 1986 - 2026 {siteConfig.school.name} · 40 năm trồng người
           </p>

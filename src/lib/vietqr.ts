@@ -2,9 +2,9 @@
 export const BANK = {
   /** Mã BIN Vietcombank */
   bin: "970436",
-  account: "1067816889",
+  account: "2772998715",
   shortName: "Vietcombank",
-  accountName: "TRUONG THPT NGUYEN CONG TRU",
+  accountName: "LAI NHAT PHONG",
 } as const;
 
 /**

@@ -20,11 +20,36 @@ export type Member = {
   createdAt: string;
 };
 
+export type OcrResult = {
+  /** Số tiền AI trích xuất từ biên lai */
+  amount: number | null;
+  /** Nội dung CK AI trích xuất */
+  content: string | null;
+  /** Thời gian giao dịch AI trích xuất */
+  time: string | null;
+  /** Trạng thái giao dịch trích xuất (mới thêm) */
+  transactionStatus?: "success" | "pending" | "failed" | "unknown";
+  /** Mức độ tin cậy kết quả so khớp */
+  confidence: "high" | "low" | "mismatch" | "system_error";
+  /** Ghi chú chi tiết cho Admin */
+  note: string;
+  /** Provider AI đã dùng */
+  provider: string;
+};
+
+export type ReceiptAttempt = {
+  url: string;
+  ocrResult: OcrResult;
+  createdAt: string;
+};
+
+
 export type Ticket = {
   id: string;
   /** Mã vé - ghi trong nội dung chuyển khoản khi quét QR */
   code: string;
   memberId: string;
+  nienKhoa?: string;
   type: TicketType;
   /** Cá nhân: tên người tham dự (mặc định = tên tài khoản) */
   attendeeName: string;
@@ -43,6 +68,12 @@ export type Ticket = {
   note: string;
   lastSessionId?: string;
   paymentClaimedAt?: string;
+  /** URL ảnh biên lai chuyển khoản (Cloudflare R2 hoặc local fallback) - Bản mới nhất */
+  receiptUrl?: string;
+  /** Kết quả AI OCR từ ảnh biên lai - Bản mới nhất */
+  ocrResult?: OcrResult;
+  /** Lịch sử các lần tải ảnh (Tối đa 3 lần) */
+  receiptAttempts?: ReceiptAttempt[];
   checkedIn?: boolean;
   checkedInAt?: string | null;
   createdAt: string;
@@ -51,6 +82,7 @@ export type Ticket = {
 
 export type TicketInput = {
   type: TicketType;
+  nienKhoa?: string;
   attendeeName: string;
   size: Size | null; // Size áo
   quantity: number;
@@ -174,8 +206,9 @@ export async function getMemberById(id: string): Promise<Member | null> {
   return members.find((m) => m.id === id) ?? null;
 }
 
-function randomTicketCode(): string {
-  return `VE-${randomCode(6)}`;
+function generateTicketCode(order: number): string {
+  const orderStr = String(order).padStart(3, "0");
+  return `NCT19862026-${orderStr}${randomCode(5)}`;
 }
 
 /** Tạo vé tham dự. Combo tính phí 500k/suất (lưu vào biến snacks) */
@@ -184,9 +217,10 @@ export async function createTicket(
   input: TicketInput,
 ): Promise<Ticket> {
   const tickets = await listTickets();
-  let code = randomTicketCode();
+  const order = tickets.length + 1;
+  let code = generateTicketCode(order);
   while (tickets.some((t) => t.code === code)) {
-    code = randomTicketCode();
+    code = generateTicketCode(order);
   }
   const now = new Date().toISOString();
   const ticket: Ticket =
@@ -195,6 +229,7 @@ export async function createTicket(
           id: randomUUID(),
           code,
           memberId,
+          nienKhoa: input.nienKhoa,
           type: "individual",
           attendeeName: input.attendeeName,
           size: input.size,
@@ -213,6 +248,7 @@ export async function createTicket(
           id: randomUUID(),
           code,
           memberId,
+          nienKhoa: input.nienKhoa,
           type: "group",
           attendeeName: "",
           size: null,
@@ -276,6 +312,53 @@ export async function claimPayment(
     paymentClaimedAt: now,
     updatedAt: now,
   };
+  await writeJson(TICKETS_FILE, tickets);
+  return tickets[index];
+}
+
+/**
+ * Lưu kết quả AI OCR và URL ảnh biên lai vào vé
+ * Đồng thời cập nhật trạng thái dựa trên confidence
+ */
+export async function updateTicketReceipt(
+  id: string,
+  receiptUrl: string,
+  ocrResult: OcrResult,
+): Promise<Ticket | null> {
+  const tickets = await listTickets();
+  const index = tickets.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const now = new Date().toISOString();
+  
+  const attempt: ReceiptAttempt = {
+    url: receiptUrl,
+    ocrResult,
+    createdAt: now,
+  };
+  const newAttempts = [...(tickets[index].receiptAttempts || []), attempt];
+
+  let newStatus = tickets[index].status;
+  if (ocrResult.confidence === "high") {
+    newStatus = "confirmed";
+  } else if (
+    ocrResult.confidence === "low" ||
+    ocrResult.confidence === "system_error" ||
+    newAttempts.length >= 3 // Quá 3 lần sai -> Bắt buộc chuyển chờ duyệt
+  ) {
+    newStatus = "pending_approval";
+  }
+
+  tickets[index] = {
+    ...tickets[index],
+    receiptUrl, // Bản mới nhất để hiển thị nhanh
+    ocrResult,
+    receiptAttempts: newAttempts,
+    status: newStatus,
+    ...(newStatus !== tickets[index].status ? { paymentClaimedAt: now } : {}),
+    updatedAt: now,
+  };
+
   await writeJson(TICKETS_FILE, tickets);
   return tickets[index];
 }

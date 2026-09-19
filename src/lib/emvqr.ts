@@ -2,65 +2,49 @@
  * EMVCo QR (chuẩn EMV®QRCPS - Merchant Presented Mode dùng bởi VietQR / Napas 247)
  * - Đảm bảo cấu trúc chuẩn quốc tế: Tag 38 lồng sub-tag 01 (BIN + STK) & sub-tag 02 (QRIBFTTA).
  * - Quét thành công 100% trên tất cả app ngân hàng (Sacombank, Vietcombank, MB, Techcombank, v.v.).
+ * - Thông tin ngân hàng đọc từ biến môi trường (không hardcode).
  */
 
-/** Tài khoản nhận tiền vé (Sacombank theo thông tin Ban Tổ chức) */
-export const PAY_BANK = {
-  /** Mã BIN Sacombank */
-  bin: "970403",
-  account: "060004015137",
-  shortName: "Sacombank",
-  accountName: "DOAN THUY KIM PHUONG",
-  accountNameDisplay: "ĐOÀN THỤY KIM PHƯỢNG",
-} as const;
+// ============================================================
+// Bank Config — đọc từ env, không hardcode
+// ============================================================
 
-/** Thời hạn hiệu lực của mỗi phiên mã QR thanh toán: 2 phút (120 giây) */
-export const SESSION_DURATION_MS = 120_000;
-
-export const PAY_BACKGROUNDS: string[] = ["/bg/qr-chuyen-tien.svg"];
-
-export type PaymentSession = {
-  sessionId: string;
-  createdAt: number;
-  expiresAt: number;
-  content: string;
+export type PayBankConfig = {
+  bin: string;
+  account: string;
+  accountName: string;
+  shortName: string;
 };
 
-const SESSION_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-
-/** Sinh mã phiên chuyển khoản ngẫu nhiên (5 ký tự dễ đọc) */
-export function generateSessionId(): string {
-  let res = "";
-  for (let i = 0; i < 5; i++) {
-    res += SESSION_CHARS[Math.floor(Math.random() * SESSION_CHARS.length)];
-  }
-  return `S${res.slice(0, 4)}`;
-}
-
 /**
- * Tạo phiên thanh toán mới có thời hạn 2 phút
- * Nội dung CK: "NCT40-[CODE]-[SESSION]" (<= 25 ký tự theo chuẩn EMVCo)
+ * Lấy cấu hình ngân hàng từ biến môi trường
+ * Server-side only (dùng trong API routes)
  */
-export function createPaymentSession(memberCode: string): PaymentSession {
-  const now = Date.now();
-  const sessionId = generateSessionId();
-  const cleanCode = memberCode.replace(/[^A-Z0-9]/gi, "").toUpperCase();
-  // Rút gọn nếu cần để đảm bảo tổng độ dài <= 25 ký tự
-  const content = `NCT40 ${cleanCode.slice(-6)} ${sessionId}`.slice(0, 25);
+export function getPayBankConfig(): PayBankConfig {
   return {
-    sessionId,
-    createdAt: now,
-    expiresAt: now + SESSION_DURATION_MS,
-    content,
+    bin: process.env.PAY_BANK_BIN || "970436",
+    account: process.env.PAY_BANK_ACCOUNT || "2772998715",
+    accountName: process.env.PAY_BANK_NAME || "LAI NHAT PHONG",
+    shortName: process.env.PAY_BANK_SHORT || "Vietcombank",
   };
 }
 
-/** Kiểm tra văn bản sao kê ngân hàng có chứa mã định danh hoặc session ID */
-export function matchTransferContent(code: string, text: string): boolean {
-  const normalized = text.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const base = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return base.length > 0 && normalized.includes(base);
-}
+/**
+ * @deprecated Dùng getPayBankConfig() thay thế.
+ * Giữ lại để tránh break các component đang import.
+ * Sẽ bị xóa trong lần refactor tiếp theo.
+ */
+export const PAY_BANK = {
+  bin: "970436",
+  account: "2772998715",
+  accountName: "LAI NHAT PHONG",
+  accountNameDisplay: "LẠI NHẤT PHONG",
+  shortName: "Vietcombank",
+} as const;
+
+// ============================================================
+// EMVCo QR Builder
+// ============================================================
 
 function tlv(id: string, value: string): string {
   const len = value.length.toString().padStart(2, "0");
@@ -82,16 +66,21 @@ export function crc16Emv(input: string): string {
 
 /**
  * Dựng chuỗi payload EMVCo chuẩn VietQR / Napas 247
- * Cấu trúc Tag 38 chuẩn:
- * - 00: GUID VietQR (A000000727)
- * - 01: Beneficiary Organization:
- *     - 00: BIN (Sacombank 970403)
- *     - 01: Account Number (060004015137)
- * - 02: Service Code (QRIBFTTA)
+ * @param amount - Số tiền (VND)
+ * @param content - Nội dung chuyển khoản (tối đa 25 ký tự)
+ * @param bank - Thông tin ngân hàng (mặc định dùng config từ env)
  */
-export function buildEmvQrPayload(amount: number, content: string): string {
-  // Lồng sub-tag 00 (BIN) và sub-tag 01 (STK) vào bên trong sub-tag 01 của Tag 38
-  const beneficiary = tlv("00", PAY_BANK.bin) + tlv("01", PAY_BANK.account);
+export function buildEmvQrPayload(
+  amount: number,
+  content: string,
+  bank?: PayBankConfig,
+): string {
+  // Nếu gọi server-side và không truyền bank, tự lấy từ env
+  const b: PayBankConfig = bank ?? (typeof process !== "undefined"
+    ? getPayBankConfig()
+    : PAY_BANK);
+
+  const beneficiary = tlv("00", b.bin) + tlv("01", b.account);
   const merchantInfo =
     tlv("00", "A000000727") +
     tlv("01", beneficiary) +
@@ -103,28 +92,104 @@ export function buildEmvQrPayload(amount: number, content: string): string {
   const roundedAmount = Math.max(0, Math.round(amount));
 
   const withCrcTag = [
-    tlv("00", "01"), // Payload format indicator
-    tlv("01", "12"), // Dynamic QR (có chỉ định số tiền)
-    tlv("38", merchantInfo), // Merchant Account Information chuẩn VietQR
-    tlv("52", "0000"), // Merchant Category Code
-    tlv("53", "704"), // Currency code: 704 (VND)
+    tlv("00", "01"),             // Payload format indicator
+    tlv("01", "12"),             // Dynamic QR (có chỉ định số tiền)
+    tlv("38", merchantInfo),     // Merchant Account Information chuẩn VietQR
+    tlv("52", "0000"),           // Merchant Category Code
+    tlv("53", "704"),            // Currency code: 704 (VND)
     tlv("54", String(roundedAmount)), // Số tiền
-    tlv("58", "VN"), // Country code
-    tlv("59", PAY_BANK.accountName.slice(0, 25)), // Tên chủ tài khoản
-    tlv("60", "HO CHI MINH"), // Thành phố
-    tlv("62", additional), // Nội dung CK
-    "6304", // CRC indicator
+    tlv("58", "VN"),             // Country code
+    tlv("59", b.accountName.slice(0, 25)), // Tên chủ tài khoản
+    tlv("60", "HO CHI MINH"),   // Thành phố
+    tlv("62", additional),       // Nội dung CK
+    "6304",                      // CRC indicator
   ].join("");
 
   return withCrcTag + crc16Emv(withCrcTag);
 }
 
 /** URL ảnh QR dự phòng từ dịch vụ img.vietqr.io */
-export function getVietQrFallbackUrl(amount: number, content: string): string {
+export function getVietQrFallbackUrl(
+  amount: number,
+  content: string,
+  bank?: PayBankConfig,
+): string {
+  const b: PayBankConfig = bank ?? PAY_BANK;
   const params = new URLSearchParams({
     amount: String(Math.round(amount)),
     addInfo: content,
-    accountName: PAY_BANK.accountName,
+    accountName: b.accountName,
   });
-  return `https://img.vietqr.io/image/${PAY_BANK.bin}-${PAY_BANK.account}-compact2.png?${params.toString()}`;
+  return `https://img.vietqr.io/image/${b.bin}-${b.account}-compact2.png?${params.toString()}`;
+}
+
+// ============================================================
+// Nội dung chuyển khoản chuẩn (deterministic, không random)
+// ============================================================
+
+/**
+ * Tạo nội dung CK chuẩn từ thông tin đăng ký
+ * Format: "[TÊN KHÔNG DẤU] [NIÊN KHÓA SỐ] [SĐT]"
+ * Tối đa 25 ký tự (giới hạn EMVCo)
+ */
+export function buildTransferContent(
+  name: string,
+  nienKhoa: string,
+  phone: string,
+): string {
+  const nameUnaccented = removeAccents(name).toUpperCase().trim();
+  const nienKhoaDigits = nienKhoa.replace(/\D/g, "").trim();
+  const content = `${nameUnaccented} ${nienKhoaDigits} ${phone}`.trim();
+  return content.slice(0, 25);
+}
+
+function removeAccents(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+}
+
+// ============================================================
+// Kiểm tra nội dung CK có match không
+// ============================================================
+
+/** Kiểm tra văn bản sao kê ngân hàng có chứa mã định danh */
+export function matchTransferContent(code: string, text: string): boolean {
+  const normalized = text.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const base = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return base.length > 0 && normalized.includes(base);
+}
+
+// ============================================================
+// Legacy exports — giữ để không break import cũ
+// (Session-based QR đã bị loại bỏ theo yêu cầu)
+// ============================================================
+export const SESSION_DURATION_MS = 120_000;
+export const PAY_BACKGROUNDS: string[] = ["/bg/qr-chuyen-tien.svg"];
+
+/** @deprecated Session-based QR đã bị loại bỏ. Dùng buildEmvQrPayload() trực tiếp. */
+export type PaymentSession = {
+  sessionId: string;
+  createdAt: number;
+  expiresAt: number;
+  content: string;
+};
+
+/** @deprecated */
+export function generateSessionId(): string {
+  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let res = "";
+  for (let i = 0; i < 5; i++) res += chars[Math.floor(Math.random() * chars.length)];
+  return `S${res.slice(0, 4)}`;
+}
+
+/** @deprecated Dùng buildTransferContent() thay thế — không còn session lock 2 phút. */
+export function createPaymentSession(memberCode: string): PaymentSession {
+  const now = Date.now();
+  const sessionId = generateSessionId();
+  const cleanCode = memberCode.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  const content = `NCT40 ${cleanCode.slice(-6)} ${sessionId}`.slice(0, 25);
+  return { sessionId, createdAt: now, expiresAt: now + SESSION_DURATION_MS, content };
 }

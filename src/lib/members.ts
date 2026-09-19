@@ -27,6 +27,8 @@ export type OcrResult = {
   content: string | null;
   /** Thời gian giao dịch AI trích xuất */
   time: string | null;
+  /** Mã giao dịch / Số tham chiếu */
+  transactionId?: string | null;
   /** Trạng thái giao dịch trích xuất (mới thêm) */
   transactionStatus?: "success" | "pending" | "failed" | "unknown";
   /** Mức độ tin cậy kết quả so khớp */

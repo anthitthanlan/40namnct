@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { findTicketById, getMemberById, updateTicketReceipt } from "@/lib/members";
+import { findTicketById, getMemberById, updateTicketReceipt, listTickets } from "@/lib/members";
 import { buildTransferContent } from "@/lib/emvqr";
 import { uploadReceipt } from "@/lib/r2";
 import { verifyReceipt } from "@/lib/ocr";
@@ -201,11 +201,32 @@ export async function POST(req: NextRequest) {
     amount: ocrResult.amount,
     content: ocrResult.content,
     time: ocrResult.time,
+    transactionId: ocrResult.transactionId,
     transactionStatus: ocrResult.transactionStatus,
     confidence: matchResult.confidence,
     note: matchResult.note,
     provider: ocrResult.provider,
   };
+
+  // --- Kiểm tra chống dùng chung biên lai ---
+  if (ocrResult.transactionId && matchResult.confidence !== "mismatch") {
+    const allTickets = await listTickets();
+    const isDuplicate = allTickets.some((t) => {
+      // Bỏ qua chính vé đang kiểm tra
+      if (t.id === ticketId) return false;
+      // Chỉ check các vé đã đóng góp hoặc đang chờ duyệt
+      if (t.status !== "confirmed" && t.status !== "pending_approval") return false;
+      // Trùng mã giao dịch
+      return t.ocrResult?.transactionId === ocrResult.transactionId;
+    });
+
+    if (isDuplicate) {
+      matchResult.confidence = "mismatch";
+      matchResult.note = "Phát hiện biên lai tái sử dụng: Mã giao dịch đã được dùng cho vé khác.";
+      ocrRecord.confidence = "mismatch";
+      ocrRecord.note = matchResult.note;
+    }
+  }
 
   // --- Cập nhật ticket ---
   const updated = await updateTicketReceipt(ticketId, receiptUrl || "", ocrRecord);
@@ -281,5 +302,5 @@ function buildMismatchMessage(
   if (!amountMatch) {
     return `Số tiền không khớp: AI đọc được ${extractedAmount?.toLocaleString("vi-VN") ?? "không rõ"}đ, cần chuyển ${expectedAmount.toLocaleString("vi-VN")}đ. Vui lòng kiểm tra lại giao dịch.`;
   }
-  return "Nội dung chuyển khoản không khớp. Vui lòng đảm bảo chuyển đúng nội dung được hiển thị và upload lại biên lai.";
+  return "Nội dung chuyển khoản hoặc Mã giao dịch không hợp lệ. Vui lòng đảm bảo bạn chụp đúng biên lai của mình và chưa từng sử dụng trước đây.";
 }

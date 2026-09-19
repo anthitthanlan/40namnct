@@ -23,7 +23,13 @@ export async function GET(req: Request) {
 
   // Sample/Dev mode
   if (ticketId === "SAMPLE" || ticketId === "DEV") {
-    const bank = getPayBankConfig();
+    // Giữ nguyên tài khoản test cho DEV/SAMPLE
+    const bank = {
+      bin: "970436",
+      account: "2772998715",
+      accountName: "LAI NHAT PHONG",
+      shortName: "Vietcombank",
+    };
     return NextResponse.json({
       ok: true,
       bank,

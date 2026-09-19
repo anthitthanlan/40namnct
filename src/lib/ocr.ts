@@ -19,6 +19,8 @@ export type OcrRawResult = {
   content: string | null;
   /** Thời gian giao dịch (chuỗi gốc từ biên lai) */
   time: string | null;
+  /** Mã giao dịch / Số tham chiếu (nếu có) */
+  transactionId: string | null;
   /** Trạng thái giao dịch */
   transactionStatus: "success" | "pending" | "failed" | "unknown";
   /** Toàn bộ text OCR thô (debug) */
@@ -52,18 +54,19 @@ export type ReceiptVerifyResult = {
 // ============================================================
 
 const SYSTEM_PROMPT = `Bạn là hệ thống OCR chuyên trích xuất thông tin từ ảnh biên lai chuyển khoản ngân hàng Việt Nam.
-Nhiệm vụ: Đọc ảnh và trả về JSON với đúng 3 trường bên dưới.
+Nhiệm vụ: Đọc ảnh và trả về JSON với đúng 4 trường bên dưới.
 Quy tắc bắt buộc:
 - CHỈ trả về JSON thuần túy, không thêm markdown, không giải thích, không text khác.
 - Nếu không đọc được một trường nào, trả về null cho trường đó (không được đoán mò).
 - Trường "amount": chỉ lấy số nguyên VND, bỏ tất cả ký tự không phải số (dấu chấm, dấu phẩy, chữ "VND", "đ", "VNĐ").
 - Trường "content": sao chép chính xác chuỗi nội dung chuyển khoản như hiển thị trong biên lai.
 - Trường "time": sao chép chính xác chuỗi thời gian giao dịch như hiển thị trong biên lai.
+- Trường "transactionId": quét tìm và trả về chuỗi 'Mã giao dịch' hoặc 'Số tham chiếu' (VD: 681006, 6259BIDVE26ELVUF) như trong ảnh biên lai. Trả về null nếu không thấy.
 - Trường "transactionStatus": xác định trạng thái giao dịch trong ảnh. Trả về "success" nếu là biên lai đã chuyển tiền thành công, "pending" nếu là màn hình xác nhận trước khi bấm chuyển, "failed" nếu chuyển lỗi, hoặc "unknown" nếu không rõ.`;
 
 const USER_PROMPT = `Trích xuất thông tin từ ảnh biên lai chuyển khoản này.
 Trả về JSON có đúng cấu trúc:
-{"amount": <số nguyên VND hoặc null>, "content": "<nội dung CK hoặc null>", "time": "<thời gian hoặc null>", "transactionStatus": "<success|pending|failed|unknown>"}`;
+{"amount": <số nguyên VND hoặc null>, "content": "<nội dung CK hoặc null>", "time": "<thời gian hoặc null>", "transactionId": "<mã giao dịch hoặc null>", "transactionStatus": "<success|pending|failed|unknown>"}`;
 
 // ============================================================
 // Config helpers
@@ -301,6 +304,7 @@ function parseOcrJson(
       amount?: unknown;
       content?: unknown;
       time?: unknown;
+      transactionId?: unknown;
       transactionStatus?: unknown;
     };
 
@@ -323,15 +327,20 @@ function parseOcrJson(
         ? parsed.time.trim()
         : null;
 
+    const transactionId =
+      typeof parsed.transactionId === "string" && parsed.transactionId !== "null"
+        ? parsed.transactionId.trim()
+        : null;
+
     const transactionStatus =
       typeof parsed.transactionStatus === "string" && ["success", "pending", "failed", "unknown"].includes(parsed.transactionStatus)
         ? (parsed.transactionStatus as "success" | "pending" | "failed" | "unknown")
         : "unknown";
 
-    return { amount, content, time, transactionStatus, rawText, provider };
+    return { amount, content, time, transactionId, transactionStatus, rawText, provider };
   } catch {
     console.warn("[OCR] Failed to parse JSON from model output:", rawText.slice(0, 200));
-    return { amount: null, content: null, time: null, transactionStatus: "unknown", rawText, provider };
+    return { amount: null, content: null, time: null, transactionId: null, transactionStatus: "unknown", rawText, provider };
   }
 }
 
@@ -395,7 +404,7 @@ async function extractReceipt(
   }
 
   console.error("[OCR] All providers failed. Last error:", lastErr);
-  return { amount: null, content: null, time: null, transactionStatus: "unknown", rawText: "", provider: "openrouter" };
+  return { amount: null, content: null, time: null, transactionId: null, transactionStatus: "unknown", rawText: "", provider: "openrouter" };
 }
 
 // ============================================================

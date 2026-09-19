@@ -22,7 +22,32 @@ export default function MobileNavMorph() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const resolveHref = (href: string) => 
-    href.startsWith("#") && pathname !== "/" ? `/#${href.slice(1)}` : href;
+    href.startsWith("#") && pathname !== "/" && !pathname.startsWith("/admin") ? `/#${href.slice(1)}` : href;
+
+  const isAdmin = pathname.startsWith("/admin");
+  const adminGroups = [
+    {
+      title: "Quản lý bài đăng",
+      items: [
+        { href: "/admin?tab=pending", label: "Bài viết chờ duyệt" },
+        { href: "/admin?tab=published", label: "Bài đã đăng" },
+        { href: "/admin?tab=all", label: "Tất cả bài viết" },
+      ],
+    },
+    {
+      title: "Hệ thống",
+      items: [
+        { href: "/admin?tab=tickets", label: "Thư mời" },
+        { href: "/admin?tab=media", label: "Media cộng đồng" },
+        { href: "/admin?tab=accounts", label: "Quản lý tài khoản" },
+      ],
+    },
+  ];
+
+  const handleLogout = () => {
+    document.cookie = "nct_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.reload();
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -156,28 +181,76 @@ export default function MobileNavMorph() {
           </div>
           <div className="border-t-2 border-dashed border-gray-200 w-full mb-4"></div>
           <nav className="flex flex-col gap-4">
-            {links.map((link) => {
-              const isCurrent = pathname === link.href || (pathname === "/" && link.href === "/");
-              return (
-                <Link 
-                  key={link.href} 
-                  href={resolveHref(link.href)}
-                  onClick={() => setIsOpen(false)}
-                  className={`group relative w-fit text-[17px] font-semibold transition-colors flex items-center gap-2 ${
-                    isCurrent ? "text-[#1d4ed8]" : "text-slate-700 hover:text-slate-900"
-                  }`}
-                >
-                  <span>{link.label}</span>
-                  <span
-                    className={`absolute -bottom-1 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
-                      isCurrent
-                        ? "opacity-100 scale-x-100"
-                        : "opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-75"
+            {!isAdmin ? (
+              links.map((link) => {
+                const isCurrent = pathname === link.href || (pathname === "/" && link.href === "/");
+                return (
+                  <Link 
+                    key={link.href} 
+                    href={resolveHref(link.href)}
+                    onClick={() => setIsOpen(false)}
+                    className={`group relative w-fit text-[17px] font-semibold transition-colors flex items-center gap-2 ${
+                      isCurrent ? "text-[#1d4ed8]" : "text-slate-700 hover:text-slate-900"
                     }`}
-                  />
-                </Link>
-              );
-            })}
+                  >
+                    <span>{link.label}</span>
+                    <span
+                      className={`absolute -bottom-1 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
+                        isCurrent
+                          ? "opacity-100 scale-x-100"
+                          : "opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-75"
+                      }`}
+                    />
+                  </Link>
+                );
+              })
+            ) : (
+              <div className="flex flex-col gap-6">
+                {adminGroups.map((group) => (
+                  <div key={group.title} className="flex flex-col gap-3">
+                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                      {group.title}
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                      {group.items.map((link) => {
+                        const isCurrent = typeof window !== "undefined" && window.location.search.includes(link.href.split("?")[1]);
+                        return (
+                          <Link 
+                            key={link.href} 
+                            href={link.href}
+                            onClick={() => setIsOpen(false)}
+                            className={`group relative w-fit text-[15px] font-extrabold transition-colors flex items-center gap-2 ${
+                              isCurrent ? "text-[#1d4ed8]" : "text-slate-700 hover:text-slate-900"
+                            }`}
+                          >
+                            <span>{link.label}</span>
+                            <span
+                              className={`absolute -bottom-1 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
+                                isCurrent
+                                  ? "opacity-100 scale-x-100"
+                                  : "opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-75"
+                              }`}
+                            />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {isAdmin && (
+              <div className="mt-2 pt-4 border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-fit text-left text-[15px] font-extrabold text-rose-500 hover:text-rose-700 transition-colors"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            )}
           </nav>
         </motion.div>
       </div>

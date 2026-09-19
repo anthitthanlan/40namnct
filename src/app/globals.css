@@ -66,6 +66,17 @@ h6,
   font-optical-sizing: auto;
 }
 
+/* Override fonts in admin panel to strictly use Google Sans Flex */
+.admin-scope h1,
+.admin-scope h2,
+.admin-scope h3,
+.admin-scope h4,
+.admin-scope h5,
+.admin-scope h6,
+.admin-scope .font-title {
+  font-family: inherit !important;
+}
+
 /* ===== Animated Hero Slideshow (fade + Ken Burns) ===== */
 .hero-slide {
   position: absolute;
@@ -445,6 +456,37 @@ html {
   --stagger-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.t-page-slide {
+  position: relative;
+  width: 100%;
+}
+
+.t-page-slide .t-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--t-page-from-x, 0px) * var(--page-exit-enabled)));
+  filter: blur(calc(var(--page-blur) * var(--page-exit-enabled)));
+  transition:
+    opacity   var(--page-fade-dur)  var(--page-fade-ease),
+    transform var(--page-slide-dur) var(--page-slide-ease),
+    filter    var(--page-slide-dur) var(--page-slide-ease);
+  will-change: opacity, transform, filter;
+}
+
+.t-page-slide .t-page[data-active="true"] {
+  position: relative; /* <-- Allows parent to grow to height of active tab */
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+  filter: blur(0);
+  transition-delay: var(--page-stagger);
+  z-index: 10;
+}
+
 .t-stagger-line {
   display: block;
   opacity: 0;
@@ -648,4 +690,51 @@ input:-webkit-autofill:active {
   10% { opacity: 1; }
   40%, 60% { stroke-dashoffset: 0; opacity: 1; }
   90%, 100% { stroke-dashoffset: 1; opacity: 0; }
+}
+
+/* Transitions.dev — Page side-by-side */
+:root {
+  --page-slide-dur: 300ms;
+  --page-fade-dur: 300ms;
+  --page-slide-distance: 24px;
+  --page-blur: 4px;
+  --page-stagger: 0ms;
+  --page-exit-enabled: 1;
+  --page-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --page-fade-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-page-slide {
+  position: relative;
+  width: 100%;
+}
+
+.t-page-slide .t-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(calc(var(--t-page-from-x, 0px) * var(--page-exit-enabled)));
+  filter: blur(calc(var(--page-blur) * var(--page-exit-enabled)));
+  transition:
+    opacity   var(--page-fade-dur)  var(--page-fade-ease),
+    transform var(--page-slide-dur) var(--page-slide-ease),
+    filter    var(--page-slide-dur) var(--page-slide-ease);
+  will-change: opacity, transform, filter;
+}
+
+.t-page-slide .t-page[data-active="true"] {
+  position: relative; /* <-- Allows parent to grow to height of active tab */
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+  filter: blur(0);
+  transition-delay: var(--page-stagger);
+  z-index: 10;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-page-slide .t-page { transition: none !important; }
 }

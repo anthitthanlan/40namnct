@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAdminRequest } from "@/lib/auth";
+import { getAdminFromRequest } from "@/lib/auth";
 import { checkInTicket, findTicketById } from "@/lib/members";
 import { verifyDynamicTicketPayload } from "@/lib/ticket-view";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  if (!isAdminRequest(req)) {
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role === "editor") {
     return NextResponse.json(
       { ok: false, message: "Yêu cầu quyền Quản trị viên." },
       { status: 401 },

@@ -1,0 +1,36 @@
+[
+  {
+    "id": "01314cdc-dec5-4f1a-b737-df837b1e026a",
+    "username": "kimphuong-totinhoc",
+    "fullName": "Đoàn Thụy Kim Phượng",
+    "title": "Cô",
+    "role": "system_manager",
+    "passwordHash": "23738d75eebc8fb4a208a5ad3ae54fc9:67dc883417f8693aadb132ec9d79a074f90f1207cfd1af1e1f701d046f22ade8040d21755675d2b8dda2e1c5cbf2a01c2b4a519c697bdbeec09753ef8bfd1586",
+    "logs": [
+      {
+        "action": "account_created",
+        "detail": "Tài khoản được tạo bởi Super Admin",
+        "timestamp": "2026-09-19T08:55:52.220Z"
+      }
+    ],
+    "createdAt": "2026-09-19T08:55:52.220Z",
+    "updatedAt": "2026-09-19T08:55:52.220Z"
+  },
+  {
+    "id": "e9229000-92ca-4933-96c4-fc3397d9cfbf",
+    "username": "testuser2",
+    "fullName": "Test User",
+    "title": "Bạn",
+    "role": "editor",
+    "passwordHash": "651229fb0a1002d81c48b1df2e6dc26e:42552921bdd1a3dae232799d34e52138ba40c5e743699fc84a6ac2e39c87cf9d9cb766416a1d8d6eae5399cf6b152f8afb42e269eb0ae3083bfcc2c7830e0810",
+    "logs": [
+      {
+        "action": "account_created",
+        "detail": "Tài khoản được tạo bởi Super Admin",
+        "timestamp": "2026-09-19T08:59:31.164Z"
+      }
+    ],
+    "createdAt": "2026-09-19T08:59:31.164Z",
+    "updatedAt": "2026-09-19T08:59:31.164Z"
+  }
+]

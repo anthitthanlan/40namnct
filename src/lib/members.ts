@@ -401,3 +401,11 @@ export async function checkInTicket(
 
 export { vietqrUrl } from "./vietqr";
 
+export async function deleteTicket(id: string): Promise<boolean> {
+  const tickets = await listTickets();
+  const index = tickets.findIndex((t) => t.id === id);
+  if (index === -1) return false;
+  tickets.splice(index, 1);
+  await writeJson(TICKETS_FILE, tickets);
+  return true;
+}

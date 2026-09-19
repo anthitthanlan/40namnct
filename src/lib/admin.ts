@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { randomUUID, createHash } from "node:crypto";
+import { randomUUID, createHash, scryptSync, randomBytes } from "node:crypto";
 
 // ============================================================
 // Hệ thống tài khoản quản trị phân quyền
@@ -34,6 +34,8 @@ export type AdminAccount = {
   updatedAt: string;
 };
 
+export type SafeAdminAccount = Omit<AdminAccount, "passwordHash">;
+
 /** Thông tin Super Admin từ biến môi trường */
 const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || "nctitc@1986-2026";
 const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD || "NCT@1986";
@@ -49,8 +51,20 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-function hashPassword(password: string): string {
-  return createHash("sha256").update(password).digest("hex");
+function hashPassword(password: string, salt?: string): string {
+  const s = salt || randomBytes(16).toString("hex");
+  const derivedKey = scryptSync(password, s, 64).toString("hex");
+  return `${s}:${derivedKey}`;
+}
+
+function verifyPassword(password: string, hash: string): boolean {
+  if (!hash.includes(":")) {
+    // Fallback if there are any old hashes
+    return createHash("sha256").update(password).digest("hex") === hash;
+  }
+  const [salt, key] = hash.split(":");
+  const derivedKey = scryptSync(password, salt, 64).toString("hex");
+  return key === derivedKey;
 }
 
 async function readAdmins(): Promise<AdminAccount[]> {
@@ -119,7 +133,7 @@ export async function authenticateAdmin(
     return { ok: false, message: "Tên đăng nhập không tồn tại." };
   }
 
-  if (account.passwordHash !== hashPassword(password)) {
+  if (!verifyPassword(password, account.passwordHash)) {
     return { ok: false, message: "Mật khẩu không đúng." };
   }
 
@@ -181,8 +195,9 @@ export async function createAdminAccount(
 }
 
 /** Lấy danh sách tài khoản admin (không bao gồm super admin) */
-export async function listAdminAccounts(): Promise<AdminAccount[]> {
-  return readAdmins();
+export async function listAdminAccounts(): Promise<SafeAdminAccount[]> {
+  const admins = await readAdmins();
+  return admins.map(({ passwordHash, ...safe }) => safe);
 }
 
 /** Xóa tài khoản admin (chỉ Super Admin) */

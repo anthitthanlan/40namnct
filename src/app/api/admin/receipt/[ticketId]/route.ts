@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAdminRequest, unauthorized } from "@/lib/auth";
+import { getAdminFromRequest, unauthorized } from "@/lib/auth";
 import { findTicketById } from "@/lib/members";
 import { getLocalReceiptBuffer } from "@/lib/r2";
 
@@ -16,7 +16,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ ticketId: string }> },
 ) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role === "editor") return unauthorized();
 
   const { ticketId } = await params;
 

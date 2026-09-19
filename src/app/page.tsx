@@ -357,27 +357,36 @@ export default async function Home() {
                 Quỹ học bổng hỗ trợ học sinh và tổ chức những hoạt động kỷ niệm
                 ý nghĩa, thiết thực.
               </p>
-              <div className="mt-6 flex flex-wrap justify-center gap-6 text-sm font-bold text-white">
-                <span className="flex items-center gap-1.5"><span className="material-symbols-rounded text-emerald-400">volunteer_activism</span> Mỗi sự đóng góp là một lời tri ân.</span>
-                <span className="flex items-center gap-1.5"><span className="material-symbols-rounded text-rose-400">volunteer_activism</span> Mỗi kỷ vật là một mảnh ghép ký ức.</span>
-                <span className="flex items-center gap-1.5"><span className="material-symbols-rounded text-blue-400">volunteer_activism</span> Mỗi lần trở về là một lần viết tiếp câu chuyện.</span>
+              <div className="mt-8 flex flex-col md:flex-row flex-wrap justify-center items-start md:items-center gap-4 md:gap-8 text-[15px] font-bold text-white mx-auto w-fit">
+                <div className="flex items-start gap-2.5 text-left">
+                  <span className="material-symbols-rounded text-[22px] text-emerald-400 shrink-0 mt-[2px]">volunteer_activism</span> 
+                  <span>Mỗi sự đóng góp là một lời tri ân.</span>
+                </div>
+                <div className="flex items-start gap-2.5 text-left">
+                  <span className="material-symbols-rounded text-[22px] text-rose-400 shrink-0 mt-[2px]">volunteer_activism</span> 
+                  <span>Mỗi kỷ vật là một mảnh ghép ký ức.</span>
+                </div>
+                <div className="flex items-start gap-2.5 text-left">
+                  <span className="material-symbols-rounded text-[22px] text-blue-400 shrink-0 mt-[2px]">volunteer_activism</span> 
+                  <span className="max-w-[280px] md:max-w-none">Mỗi lần trở về là một lần viết tiếp câu chuyện.</span>
+                </div>
               </div>
             </div>
           </Reveal>
 
           {/* Thông tin tiếp nhận đóng góp */}
           <Reveal variant="up" delay={180}>
-            <div className="mt-12 flex flex-wrap justify-center gap-12 text-center">
+            <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-x-2 gap-y-8 text-center justify-items-center">
               <a
                 href="tel:02838941546"
-                className="group icon-hover-morph flex flex-col items-center gap-3 transition-all hover:opacity-80 hover:-translate-y-1"
+                className="group icon-hover-morph flex flex-col items-center gap-2 lg:gap-3 transition-all hover:opacity-80 hover:-translate-y-1"
               >
-                <span className="material-symbols-rounded text-[2.5rem] drop-shadow-lg">call</span>
-                <span>
-                  <span className="block text-xs font-semibold text-blue-200">
+                <span className="material-symbols-rounded text-3xl lg:text-[2.5rem] drop-shadow-lg">call</span>
+                <span className="max-w-[150px] lg:max-w-none">
+                  <span className="block text-[10px] lg:text-xs font-semibold text-blue-200">
                     Số điện thoại
                   </span>
-                  <span className="block mt-1 text-sm font-extrabold text-white">
+                  <span className="block mt-1 text-[11px] lg:text-sm font-extrabold text-white">
                     (028) 38941546
                   </span>
                 </span>
@@ -386,39 +395,39 @@ export default async function Home() {
                 href="https://thptnguyencongtru.hcm.edu.vn"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group icon-hover-morph flex flex-col items-center gap-3 transition-all hover:opacity-80 hover:-translate-y-1"
+                className="group icon-hover-morph flex flex-col items-center gap-2 lg:gap-3 transition-all hover:opacity-80 hover:-translate-y-1 w-full px-1"
               >
-                <span className="material-symbols-rounded text-[2.5rem] drop-shadow-lg">language</span>
-                <span>
-                  <span className="block text-xs font-semibold text-blue-200">
+                <span className="material-symbols-rounded text-3xl lg:text-[2.5rem] drop-shadow-lg">language</span>
+                <span className="w-full">
+                  <span className="block text-[10px] lg:text-xs font-semibold text-blue-200">
                     Website
                   </span>
-                  <span className="block mt-1 text-sm font-extrabold text-white">
+                  <span className="block mt-1 text-[11px] lg:text-sm font-extrabold text-white break-words">
                     thptnguyencongtru.hcm.edu.vn
                   </span>
                 </span>
               </a>
-              <div className="group icon-hover-morph flex flex-col items-center gap-3 transition-all hover:opacity-80 hover:-translate-y-1">
-                <span className="material-symbols-rounded text-[2.5rem] drop-shadow-lg">location_on</span>
-                <span>
-                  <span className="block text-xs font-semibold text-blue-200">
+              <div className="group icon-hover-morph flex flex-col items-center gap-2 lg:gap-3 transition-all hover:opacity-80 hover:-translate-y-1 w-full px-1">
+                <span className="material-symbols-rounded text-3xl lg:text-[2.5rem] drop-shadow-lg">location_on</span>
+                <span className="w-full">
+                  <span className="block text-[10px] lg:text-xs font-semibold text-blue-200">
                     Địa chỉ
                   </span>
-                  <span className="block mt-1 text-sm font-extrabold text-white">
+                  <span className="block mt-1 text-[11px] lg:text-sm font-extrabold text-white break-words">
                     97 Quang Trung, P. Thông Tây Hội, Gò Vấp
                   </span>
                 </span>
               </div>
               <a
                 href="mailto:thptnguyencongtru@hcm.edu.vn"
-                className="group icon-hover-morph flex flex-col items-center gap-3 transition-all hover:opacity-80 hover:-translate-y-1"
+                className="group icon-hover-morph flex flex-col items-center gap-2 lg:gap-3 transition-all hover:opacity-80 hover:-translate-y-1 w-full px-1"
               >
-                <span className="material-symbols-rounded text-[2.5rem] drop-shadow-lg">mail</span>
-                <span>
-                  <span className="block text-xs font-semibold text-blue-200">
+                <span className="material-symbols-rounded text-3xl lg:text-[2.5rem] drop-shadow-lg">mail</span>
+                <span className="w-full">
+                  <span className="block text-[10px] lg:text-xs font-semibold text-blue-200">
                     Hộp thư tư liệu
                   </span>
-                  <span className="block mt-1 text-sm font-extrabold text-white">
+                  <span className="block mt-1 text-[11px] lg:text-sm font-extrabold text-white break-words">
                     thptnguyencongtru@hcm.edu.vn
                   </span>
                 </span>

@@ -50,6 +50,7 @@ export default function AdminRegistrations({
   const [filterTab, setFilterTab] = useState<
     "all" | "pending_approval" | "confirmed" | "pending_payment"
   >("all");
+  const [mainTab, setMainTab] = useState<"approve" | "sizes" | "transactions">("approve");
   const [showScanner, setShowScanner] = useState(false);
 
   const flash = useCallback((ok: boolean, text: string) => {
@@ -103,6 +104,31 @@ export default function AdminRegistrations({
           : prev,
       );
       flash(true, okText);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDeleteTicket(t: TicketRow) {
+    if (!window.confirm(`Xoá vé "${t.code}" của ${t.memberName}? Thao tác không thể hoàn tác.`)) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/registrations/${t.id}`, {
+        method: "DELETE",
+      });
+      if (res.status === 401) {
+        onAuthError?.();
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        flash(false, data.message || "Xóa vé thất bại.");
+        return;
+      }
+      setTickets((prev) => prev ? prev.filter((x) => x.id !== t.id) : prev);
+      flash(true, "Đã xóa vé.");
     } finally {
       setBusy(false);
     }
@@ -185,9 +211,33 @@ export default function AdminRegistrations({
         </div>
       )}
 
-      {/* ===================================================================
-          1. BẢNG SAO KÊ TÀI CHÍNH TỰ ĐỘNG (CHỈ TÍNH VÉ ĐÃ DUYỆT)
-          =================================================================== */}
+      {/* Main Tabs */}
+      <div className="flex flex-wrap gap-2 border-b border-slate-100 pb-4 text-sm font-bold">
+        {[
+          { id: "approve", label: "Quản lý & Phê duyệt" },
+          { id: "sizes", label: "Bảng tính Size áo" },
+          { id: "transactions", label: "Thống kê Giao dịch" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setMainTab(tab.id as typeof mainTab)}
+            className={`rounded-xl px-4 py-2.5 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
+              mainTab === tab.id
+                ? "bg-[#1d4ed8] text-white shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {mainTab === "approve" && (
+        <>
+          {/* ===================================================================
+              1. BẢNG SAO KÊ TÀI CHÍNH TỰ ĐỘNG (CHỈ TÍNH VÉ ĐÃ DUYỆT)
+              =================================================================== */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5">
           <div>
@@ -209,7 +259,7 @@ export default function AdminRegistrations({
             onClick={() => setShowScanner(!showScanner)}
             className="btn-lightship rounded-2xl bg-[#16a34a] px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700"
           >
-            {showScanner ? "✕ Đóng Camera Quét" : "📷 Bật Camera Quét Vé (Check-in)"}
+            {showScanner ? "✕ Đóng Camera Quét" : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">photo_camera</span> Bật Camera Quét Vé (Check-in)</>}
           </button>
         </div>
 
@@ -229,7 +279,7 @@ export default function AdminRegistrations({
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
-              💰 Thực nhận (Đã duyệt)
+              <span className="material-symbols-rounded inline-block align-middle text-[1em]">payments</span> Thực nhận (Đã duyệt)
             </span>
             <p className="mt-2 text-2xl font-black text-emerald-700 sm:text-3xl">
               {formatVnd(totalConfirmedRevenue)}
@@ -241,7 +291,7 @@ export default function AdminRegistrations({
 
           <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-800">
-              🎟 Số người tham dự đã duyệt
+              <span className="material-symbols-rounded inline-block align-middle text-[1em]">confirmation_number</span> Số người tham dự đã duyệt
             </span>
             <p className="mt-2 text-2xl font-black text-blue-700 sm:text-3xl">
               {totalConfirmedPeople} <span className="text-sm font-bold">suất</span>
@@ -253,7 +303,7 @@ export default function AdminRegistrations({
 
           <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
-              ⏳ Vé chờ đối soát (24h)
+              <span className="material-symbols-rounded inline-block align-middle text-[1em]">hourglass_empty</span> Vé chờ đối soát (24h)
             </span>
             <p className="mt-2 text-2xl font-black text-amber-700 sm:text-3xl">
               {pendingApprovalTickets.length} <span className="text-sm font-bold">vé</span>
@@ -265,7 +315,7 @@ export default function AdminRegistrations({
 
           <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-purple-800">
-              🎯 Đã Check-in vào cổng
+              <span className="material-symbols-rounded inline-block align-middle text-[1em]">gps_fixed</span> Đã Check-in vào cổng
             </span>
             <p className="mt-2 text-2xl font-black text-purple-700 sm:text-3xl">
               {totalCheckedIn} <span className="text-sm font-bold">vé</span>
@@ -284,10 +334,10 @@ export default function AdminRegistrations({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-extrabold text-slate-900">
-              📋 Quản lý &amp; Phê duyệt vé ({tickets.length})
+              <span className="material-symbols-rounded inline-block align-middle text-[1em]">content_paste</span> Quản lý &amp; Phê duyệt vé ({tickets.length})
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Đối chiếu nội dung CK với app Sacombank để duyệt cấp vé 40 năm.
+              Hệ thống tự động duyệt nếu AI đọc đúng (Khớp hoàn toàn). Cần đối soát thủ công các vé cảnh báo.
             </p>
           </div>
 
@@ -307,21 +357,21 @@ export default function AdminRegistrations({
             { id: "all", label: `Tất cả (${tickets.length})` },
             {
               id: "pending_approval",
-              label: `⏳ Chờ duyệt 24h (${pendingApprovalTickets.length})`,
+              label: <><span className="material-symbols-rounded inline-block align-middle text-[1em]">hourglass_empty</span> Chờ duyệt 24h ({pendingApprovalTickets.length})</>,
             },
             {
               id: "confirmed",
-              label: `✅ Đã phát hành (${confirmedTickets.length})`,
+              label: <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Đã phát hành ({confirmedTickets.length})</>,
             },
             {
               id: "pending_payment",
-              label: `🕒 Chờ chuyển khoản (${
+              label: <><span className="material-symbols-rounded inline-block align-middle text-[1em]">schedule</span> Chờ chuyển khoản ({
                 tickets.filter(
                   (t) =>
                     t.status === "pending_payment" ||
                     (t.status as string) === "pending",
                 ).length
-              })`,
+              })</>,
             },
           ].map((tab) => (
             <button
@@ -373,11 +423,11 @@ export default function AdminRegistrations({
                         {status.label}
                       </span>
                       <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
-                        {isGroup ? `👥 Tập thể (${t.quantity} suất)` : "👤 Cá nhân"}
+                        {isGroup ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">group</span> Tập thể ({t.quantity} suất)</> : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">person</span> Cá nhân</>}
                       </span>
                       {t.checkedIn && (
                         <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-extrabold text-purple-700">
-                          🎯 Đã vào cổng
+                          <span className="material-symbols-rounded inline-block align-middle text-[1em]">gps_fixed</span> Đã vào cổng
                         </span>
                       )}
                     </div>
@@ -444,7 +494,7 @@ export default function AdminRegistrations({
                           loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10 flex items-center justify-center">
-                          <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md">🔍</span>
+                          <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md"><span className="material-symbols-rounded inline-block align-middle text-[1em]">search</span></span>
                         </div>
                       </a>
 
@@ -453,20 +503,20 @@ export default function AdminRegistrations({
                         {t.ocrResult ? (
                           <>
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-700">AI trích xuất:</span>
+                              <span className="font-bold text-slate-700 uppercase tracking-wide">Trạng thái AI OCR:</span>
                               <span
-                                className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
                                   t.ocrResult.confidence === "high"
-                                    ? "bg-emerald-100 text-emerald-700"
+                                    ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
                                     : t.ocrResult.confidence === "low"
-                                      ? "bg-amber-100 text-amber-700"
-                                      : "bg-rose-100 text-rose-700"
+                                      ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                      : "bg-rose-100 text-rose-700 border border-rose-200"
                                 }`}
                               >
-                                {t.ocrResult.confidence} MATCH
+                                {t.ocrResult.confidence === "high" ? "Khớp hoàn toàn" : t.ocrResult.confidence === "low" ? "Khớp 1 phần (Cần xem lại)" : "Không khớp"}
                               </span>
                             </div>
-                            <div className="grid gap-1.5 sm:grid-cols-2">
+                            <div className="grid gap-2 sm:grid-cols-2">
                               <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
                                 <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Số tiền đọc được</span>
                                 <span className={`font-mono font-bold ${t.ocrResult.amount === t.amount ? "text-emerald-600" : "text-rose-600"}`}>
@@ -498,13 +548,15 @@ export default function AdminRegistrations({
                   )}
 
                   {/* Thanh nút hành động duyệt vé */}
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                    <span className="text-[11px] text-slate-400">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                    <span className="text-[11px] font-medium text-slate-500">
                       {isConfirmed
-                        ? "✅ Vé đã được tính vào sao kê tự động và kích hoạt mã QR động 30s."
+                        ? (t.ocrResult?.confidence === "high" 
+                            ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> AI đã phê duyệt tự động. Vé đã vào sao kê và có mã QR động 30s.</>
+                            : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Vé đã được admin duyệt thủ công. Kích hoạt mã QR động 30s.</>)
                         : t.status === "pending_approval"
-                          ? "⏳ Người mua đã xác nhận chuyển khoản. Vui lòng kiểm tra sao kê ngân hàng rồi duyệt."
-                          : "🕒 Đang chờ người mua quét QR thanh toán."}
+                          ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">warning</span> Chờ duyệt thủ công do AI phát hiện rủi ro (lệch tiền/nội dung).</>
+                          : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">schedule</span> Đang chờ thành viên thực hiện chuyển khoản.</>}
                     </span>
 
                     <div className="flex gap-2">
@@ -519,9 +571,9 @@ export default function AdminRegistrations({
                               `Đã duyệt & phát hành vé ${t.code}`,
                             )
                           }
-                          className="rounded-xl bg-[#16a34a] px-4 py-2 text-xs font-black text-white shadow-xs hover:bg-emerald-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50"
+                          className="rounded-xl bg-[#16a34a] px-5 py-2.5 text-xs font-black text-white shadow-xs hover:bg-emerald-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50"
                         >
-                          ✅ Duyệt &amp; Phát hành vé
+                          Duyệt thủ công &amp; Cấp vé
                         </button>
                       )}
 
@@ -554,6 +606,36 @@ export default function AdminRegistrations({
                           Hoàn tác về chờ duyệt
                         </button>
                       )}
+
+                      {t.receiptUrl && (
+                        <a
+                          href={t.receiptUrl}
+                          target="_blank"
+                          download
+                          className="rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-[14px]">download</span> Biên lai
+                        </a>
+                      )}
+                      
+                      {isConfirmed && (
+                        <a
+                          href={`/tra-cuu/${t.code}`}
+                          target="_blank"
+                          className="rounded-xl bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-600 hover:bg-blue-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-[14px]">visibility</span> Thẻ vé
+                        </a>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => handleDeleteTicket(t)}
+                        className="rounded-xl bg-rose-50 px-3 py-1.5 text-[11px] font-bold text-rose-600 hover:bg-rose-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                      >
+                        <span className="material-symbols-rounded text-[14px]">delete</span> Xóa vé
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -568,7 +650,7 @@ export default function AdminRegistrations({
           =================================================================== */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="text-xl font-extrabold text-slate-900">
-          👥 Danh sách tài khoản thành viên ({members.length})
+          <span className="material-symbols-rounded inline-block align-middle text-[1em]">group</span> Danh sách tài khoản thành viên ({members.length})
         </h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {members.map((m) => (
@@ -584,7 +666,7 @@ export default function AdminRegistrations({
                   {m.code}
                 </span>
               </div>
-              <p className="mt-1 text-slate-500">📞 {m.phone}</p>
+              <p className="mt-1 text-slate-500"><span className="material-symbols-rounded inline-block align-middle text-[1em]">call</span> {m.phone}</p>
               <div className="mt-2.5 flex flex-wrap gap-1.5 font-bold">
                 <span className="rounded-md bg-white px-2 py-0.5 border border-slate-200 text-slate-700">
                   {m.ticketCount} vé
@@ -597,6 +679,69 @@ export default function AdminRegistrations({
           ))}
         </div>
       </section>
+        </>
+      )}
+
+      {mainTab === "sizes" && (
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="text-xl font-extrabold text-slate-900">Bảng tính Size Áo Đăng ký</h2>
+          <p className="mt-2 text-sm text-slate-500">Thống kê chi tiết các size áo đã được đăng ký (chỉ tính vé đã duyệt).</p>
+          <div className="mt-6">
+            <table className="min-w-full divide-y divide-slate-200 border border-slate-200 rounded-xl overflow-hidden">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Size</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Số lượng</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {Object.entries(
+                  confirmedTickets.reduce((acc, t) => {
+                    if (t.type === "individual" && t.size) {
+                      acc[t.size] = (acc[t.size] || 0) + 1;
+                    } else if (t.type === "group" && t.sizes) {
+                      Object.entries(t.sizes).forEach(([size, qty]) => {
+                        acc[size] = (acc[size] || 0) + qty;
+                      });
+                    }
+                    return acc;
+                  }, {} as Record<string, number>)
+                ).sort((a, b) => {
+                  const order = { S: 1, M: 2, L: 3, XL: 4, "2XL": 5, "3XL": 6 };
+                  return (order[a[0] as keyof typeof order] || 99) - (order[b[0] as keyof typeof order] || 99);
+                }).map(([size, count]) => (
+                  <tr key={size}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">{size}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{count} áo</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {mainTab === "transactions" && (
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="text-xl font-extrabold text-slate-900">Thống kê Giao dịch</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Tổng thu dự kiến</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">{formatVnd(tickets.reduce((sum, t) => sum + (t.status !== "rejected" && t.status !== "cancelled" ? t.amount : 0), 0))}</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Đã thu (Khớp OCR/Duyệt tay)</p>
+              <p className="mt-2 text-2xl font-black text-emerald-700">{formatVnd(totalConfirmedRevenue)}</p>
+            </div>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Chờ chuyển khoản</p>
+              <p className="mt-2 text-2xl font-black text-amber-700">
+                {formatVnd(tickets.filter(t => t.status === "pending" || t.status === "pending_payment").reduce((sum, t) => sum + t.amount, 0))}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

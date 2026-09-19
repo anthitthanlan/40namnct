@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAdminRequest, unauthorized } from "@/lib/auth";
+import { getAdminFromRequest, unauthorized } from "@/lib/auth";
 import {
   listMembers,
   listTickets,
@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 
 /** Admin: danh sách thành viên (kèm mã định danh) + toàn bộ vé đăng ký */
 export async function GET(req: NextRequest) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role === "editor") return unauthorized();
 
   const [members, tickets] = await Promise.all([listMembers(), listTickets()]);
   const byId = new Map(members.map((m) => [m.id, m]));
@@ -66,7 +67,8 @@ const ALLOWED: TicketStatus[] = [
 
 /** Admin: đổi trạng thái vé - xác nhận đã nhận tiền / hủy */
 export async function PATCH(req: NextRequest) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role === "editor") return unauthorized();
 
   let body: Body;
   try {

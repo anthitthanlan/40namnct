@@ -151,7 +151,7 @@ export default function DynamicNavbar() {
           </Link>
 
           {/* Desktop nav content */}
-          {!isMobileNav && (
+          {!isMobileNav && !pathname.startsWith("/admin") && (
             <>
               <span className="mx-1 block h-5 w-px bg-slate-300" />
 
@@ -224,7 +224,7 @@ export default function DynamicNavbar() {
 
         {/* Nút Đăng kí ngay cho Mobile (Bên phải) */}
         <div
-          className={`pointer-events-auto ${isMobileNav ? "block" : "hidden"}`}
+          className={`pointer-events-auto ${isMobileNav && !pathname.startsWith("/admin") ? "block" : "hidden"}`}
         >
           <Link
             href="/dang-ky"

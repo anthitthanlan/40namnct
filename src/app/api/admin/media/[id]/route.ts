@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAdminRequest, unauthorized } from "@/lib/auth";
+import { getAdminFromRequest, unauthorized } from "@/lib/auth";
 import { deleteMedia, setMediaStatus, type MediaStatus } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role === "editor") return unauthorized();
   const { id } = await params;
 
   let body: Record<string, unknown>;
@@ -46,7 +47,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role === "editor") return unauthorized();
   const { id } = await params;
   const removed = await deleteMedia(id);
   if (!removed) {

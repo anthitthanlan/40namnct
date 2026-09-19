@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
-import { isAdminRequest } from "@/lib/auth";
+import { getAdminFromRequest } from "@/lib/auth";
 import {
   addMediaItem,
   extOf,
@@ -24,7 +24,8 @@ function str(v: FormDataEntryValue | null, max: number): string {
 
 /** Danh sách media: công khai chỉ thấy mục đã duyệt, admin thấy tất cả */
 export async function GET(req: NextRequest) {
-  const items = isAdminRequest(req)
+  const admin = getAdminFromRequest(req);
+  const items = (admin && admin.role !== "editor")
     ? await listAllMedia()
     : await listApprovedMedia();
   return NextResponse.json({

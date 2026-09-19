@@ -31,11 +31,13 @@ function prettySize(bytes: number): string {
     : `${Math.round(bytes / 1024)}KB`;
 }
 
-const STATUS_INFO: Record<MediaRow["status"], { label: string; cls: string }> =
+import React from "react";
+
+const STATUS_INFO: Record<MediaRow["status"], { label: React.ReactNode; cls: string }> =
   {
-    pending: { label: "⏳ Chờ duyệt", cls: "bg-amber-100 text-amber-700" },
-    approved: { label: "✅ Đã duyệt", cls: "bg-emerald-100 text-emerald-700" },
-    rejected: { label: "🚫 Đã từ chối", cls: "bg-rose-100 text-rose-600" },
+    pending: { label: <><span className="material-symbols-rounded inline-block align-middle text-[1em]">hourglass_empty</span> Chờ duyệt</>, cls: "bg-amber-100 text-amber-700" },
+    approved: { label: <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Đã duyệt</>, cls: "bg-emerald-100 text-emerald-700" },
+    rejected: { label: <><span className="material-symbols-rounded inline-block align-middle text-[1em]">cancel</span> Đã từ chối</>, cls: "bg-rose-100 text-rose-600" },
   };
 
 export default function AdminMedia({
@@ -197,7 +199,7 @@ export default function AdminMedia({
                         onClick={() => act(m, "approved", "Đã duyệt media.")}
                         className="rounded-full bg-emerald-600 px-4 py-2 text-xs font-extrabold text-white disabled:opacity-50"
                       >
-                        ✅ Duyệt
+                        <span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Duyệt
                       </button>
                     )}
                     {m.status !== "rejected" && (

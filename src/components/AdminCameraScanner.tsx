@@ -156,7 +156,7 @@ export default function AdminCameraScanner({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-            <span>📷</span>
+            <span><span className="material-symbols-rounded inline-block align-middle text-[1em]">photo_camera</span></span>
             <span>Duyệt Vé Bằng Camera (Check-in 08/11)</span>
           </h3>
           <p className="mt-0.5 text-xs text-slate-500">
@@ -172,7 +172,7 @@ export default function AdminCameraScanner({
               onClick={startCamera}
               className="btn-lightship rounded-xl bg-[#16a34a] px-5 py-2.5 text-xs font-extrabold text-white shadow-md hover:bg-emerald-700"
             >
-              🎥 Bật Camera Quét Vé
+              <span className="material-symbols-rounded inline-block align-middle text-[1em]">videocam</span> Bật Camera Quét Vé
             </button>
           ) : (
             <button
@@ -180,7 +180,7 @@ export default function AdminCameraScanner({
               onClick={stopCamera}
               className="rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-bold text-white transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] hover:bg-slate-900"
             >
-              ⏹ Tắt Camera
+              <span className="material-symbols-rounded inline-block align-middle text-[1em]">stop_circle</span> Tắt Camera
             </button>
           )}
         </div>
@@ -188,7 +188,7 @@ export default function AdminCameraScanner({
 
       {cameraError && (
         <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700">
-          ⚠️ {cameraError}
+          <span className="material-symbols-rounded inline-block align-middle text-[1em]">warning</span> {cameraError}
         </div>
       )}
 
@@ -218,7 +218,7 @@ export default function AdminCameraScanner({
 
             {busy && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs text-white text-xs font-extrabold">
-                ⏳ Đang xác thực mã…
+                <span className="material-symbols-rounded inline-block align-middle text-[1em]">hourglass_empty</span> Đang xác thực mã…
               </div>
             )}
           </div>
@@ -234,8 +234,8 @@ export default function AdminCameraScanner({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">
-                    {scanResult.ok ? "✅" : "❌"}
+                  <span className="text-2xl flex items-center">
+                    {scanResult.ok ? <span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> : <span className="material-symbols-rounded inline-block align-middle text-[1em]">cancel</span>}
                   </span>
                   <p className="text-sm font-black">
                     {scanResult.ok

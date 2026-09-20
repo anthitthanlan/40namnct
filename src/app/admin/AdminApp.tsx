@@ -10,9 +10,10 @@ import type { AdminRole } from "@/lib/admin";
 import AdminRegistrations from "./AdminRegistrations";
 import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
+import AdminEditPost from "./AdminEditPost";
 
 type View = "checking" | "anon" | "admin";
-type Tab = "pending" | "published" | "all" | "tickets" | "media" | "accounts";
+type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "media" | "accounts" | "edit";
 
 type Draft = {
   id: string | null;
@@ -69,11 +70,13 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const [view, setView] = useState<View>("checking");
   const [posts, setPosts] = useState<Post[]>([]);
-  
-  const urlTab = searchParams.get("tab") as Tab | null;
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const editPostId = searchParams.get("edit");
+  const urlTab = editPostId ? "edit" : (searchParams.get("tab") as Tab | null);
   const [tab, setTab] = useState<Tab>(urlTab || initialTab);
 
   useEffect(() => {
@@ -85,12 +88,22 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const [visited, setVisited] = useState<Set<string>>(new Set([tab]));
   useEffect(() => {
     setVisited((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)));
+    
+    // Unmount inactive tabs after animation completes to prevent giant scrollbars
+    const timer = setTimeout(() => {
+      setVisited(new Set([tab]));
+    }, 450);
+    return () => clearTimeout(timer);
   }, [tab]);
 
   const handleTabChange = (newTab: Tab) => {
+    if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) {
+      return;
+    }
     setTab(newTab);
     const params = new URLSearchParams(searchParams);
     params.set("tab", newTab);
+    params.delete("edit");
     router.replace(`${pathname}?${params.toString()}`);
   };
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -104,6 +117,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [panelOpen, setPanelOpen] = useState(false);
   const [adminInfo, setAdminInfo] = useState<{
     fullName: string;
     role: AdminRole;
@@ -127,6 +141,16 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   }, []);
 
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (editPostId) {
+      // Delay slightly so the CSS transition triggers
+      const t = setTimeout(() => setPanelOpen(true), 10);
+      return () => clearTimeout(t);
+    } else {
+      setPanelOpen(false);
+    }
+  }, [editPostId]);
 
   useEffect(() => {
     async function check() {
@@ -193,12 +217,23 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const isEditor = adminInfo?.role === "editor";
 
   function openEdit(post: Post) {
-    router.push(`/admin/posts/${post.id}`);
+    if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
+    const params = new URLSearchParams(searchParams);
+    params.set("edit", post.id);
+    router.push(`${pathname}?${params.toString()}`);
   }
 
   function openNew() {
-    router.push(`/admin/posts/new`);
+    if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
+    const params = new URLSearchParams(searchParams);
+    params.set("edit", "new");
+    router.push(`${pathname}?${params.toString()}`);
   }
+
+  const handleLogout = () => {
+    if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
+    logout();
+  };
 
   async function act(
     post: Post,
@@ -359,22 +394,20 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                 >
                   <span className="relative block h-6 w-6 overflow-hidden">
                     <span
-                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${
-                        showPassword
+                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${showPassword
                           ? "opacity-100 rotate-0 scale-100"
                           : "opacity-0 -rotate-90 scale-50"
-                      }`}
+                        }`}
                     >
                       <span className="material-symbols-rounded">
                         visibility
                       </span>
                     </span>
                     <span
-                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${
-                        !showPassword
+                      className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${!showPassword
                           ? "opacity-100 rotate-0 scale-100"
                           : "opacity-0 rotate-90 scale-50"
-                      }`}
+                        }`}
                     >
                       <span className="material-symbols-rounded">
                         visibility_off
@@ -428,12 +461,15 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
   const pendingCount = posts.filter((p) => p.status === "pending").length;
   const publishedCount = posts.filter((p) => p.status === "published").length;
+  const draftCount = posts.filter((p) => p.status === "draft").length;
   const filtered =
     tab === "pending"
       ? posts.filter((p) => p.status === "pending")
       : tab === "published"
         ? posts.filter((p) => p.status === "published")
-        : posts;
+        : tab === "draft"
+          ? posts.filter((p) => p.status === "draft")
+          : posts;
 
   const isSuperAdmin = adminInfo?.role === "super_admin";
 
@@ -443,43 +479,43 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
       items: [
         { key: "pending", label: `Chờ duyệt (${pendingCount})` },
         { key: "published", label: `Đã đăng (${publishedCount})` },
+        { key: "draft", label: `Bản nháp (${draftCount})` },
         { key: "all", label: `Tất cả (${posts.length})` },
       ],
     },
     {
       title: "Hệ thống",
       items: [
-        ...(!isEditor ? [{ key: "tickets", label: "Thư mời" } as const] : []),
+        ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
         ...(!isEditor ? [{ key: "media", label: "Media cộng đồng" } as const] : []),
         ...(isSuperAdmin ? [{ key: "accounts", label: "Quản lý tài khoản" } as const] : []),
       ],
     },
   ].filter((g) => g.items.length > 0);
 
-  const ALL_TABS = ["pending", "published", "all", "tickets", "media", "accounts"];
+  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "invitations", "media", "accounts", "edit"];
   const activeIndex = ALL_TABS.indexOf(tab);
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
-      <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
+      <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-8 lg:gap-16">
         {/* SIDEBAR */}
         <aside className="md:w-[280px] shrink-0">
-          <div className="md:sticky md:top-28 space-y-8">
+          <div className="md:sticky md:top-20 space-y-4 md:space-y-8">
             {/* Header Info */}
-            <div>
+            <div className={tab === "edit" ? "hidden md:block" : ""}>
               <h1 className="text-3xl font-extrabold text-slate-900">
                 Bảng quản trị
               </h1>
               <p className="mt-2 text-sm text-slate-500 flex flex-wrap items-center gap-2">
                 {adminInfo?.fullName || "Admin"}
                 <span
-                  className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
-                    adminInfo?.role === "super_admin"
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${adminInfo?.role === "super_admin"
                       ? "bg-red-100 text-red-700"
                       : adminInfo?.role === "system_manager"
                         ? "bg-blue-100 text-blue-700"
                         : "bg-emerald-100 text-emerald-700"
-                  }`}
+                    }`}
                 >
                   {adminInfo?.role === "super_admin"
                     ? "Quản trị tối cao"
@@ -491,13 +527,15 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
             </div>
 
             {/* Mobile & Desktop Action Buttons */}
-            <div className="flex flex-row md:flex-col gap-3 hidden md:flex">
+            <div className="flex flex-row md:flex-col gap-3 hidden md:flex pt-2">
               <button
                 type="button"
                 onClick={openNew}
-                className="btn-lightship flex-1 md:flex-none rounded-2xl bg-[#1d4ed8] px-6 py-3.5 text-sm font-extrabold text-white"
+                className="btn-lightship w-full rounded-2xl bg-[#1d4ed8] px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#1d4ed8]/30 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#1d4ed8]/40"
               >
-                Viết bài mới
+                <span className={tab === "edit" && editPostId === "new" ? "underline underline-offset-4 decoration-2" : ""}>
+                  Viết bài mới
+                </span>
               </button>
             </div>
 
@@ -506,7 +544,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
               <button
                 type="button"
                 onClick={openNew}
-                className="md:hidden fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#1d4ed8] text-white shadow-lg shadow-blue-500/40 hover:bg-blue-700 transition-colors"
+                className="md:hidden fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-[#1d4ed8] text-white shadow-lg shadow-blue-500/40 hover:bg-blue-700 transition-transform duration-300"
                 title="Viết bài mới"
               >
                 <span className="material-symbols-rounded text-3xl">add</span>
@@ -528,19 +566,17 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                           key={key}
                           type="button"
                           onClick={() => handleTabChange(key as Tab)}
-                          className={`group/link relative py-2 text-left text-[15px] font-extrabold transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center ${
-                            isCurrent
+                          className={`group/link relative py-2 text-left text-[15px] font-extrabold transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center ${isCurrent
                               ? "text-[#1d4ed8]"
                               : "text-slate-600 hover:text-slate-900"
-                          }`}
+                            }`}
                         >
                           <span>{label}</span>
                           <span
-                            className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] origin-left ${
-                              isCurrent
+                            className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] origin-left ${isCurrent
                                 ? "opacity-100 scale-x-100"
                                 : "opacity-0 scale-x-0 group-hover/link:opacity-60 group-hover/link:scale-x-75"
-                            }`}
+                              }`}
                           />
                         </button>
                       );
@@ -548,11 +584,11 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                   </div>
                 </div>
               ))}
-              
+
               <div className="pt-4 border-t border-slate-200 mt-2 w-full">
                 <button
                   type="button"
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="group/link relative py-2 text-left text-[15px] font-extrabold text-rose-500 hover:text-rose-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center"
                 >
                   <span>Đăng xuất</span>
@@ -569,11 +605,10 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
         <div className="flex-1 min-w-0">
           {banner && (
             <div
-              className={`mb-8 rounded-3xl px-6 py-4 text-sm font-bold ${
-                banner.ok
+              className={`mb-8 rounded-3xl px-6 py-4 text-sm font-bold ${banner.ok
                   ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                   : "bg-rose-100 text-rose-800 border border-rose-200"
-              }`}
+                }`}
             >
               {banner.text}
             </div>
@@ -581,24 +616,39 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
 
 
-          <div className="t-page-slide">
+          <div className="t-page-slide relative">
             {ALL_TABS.map((k, i) => {
               if (!visited.has(k)) return null;
               const isActive = tab === k;
               const fromX = i < activeIndex ? "calc(var(--page-slide-distance) * -1)" : "var(--page-slide-distance)";
 
               let content = null;
-              if (k === "tickets") {
+              if (k === "invitations") {
                 content = <AdminRegistrations onAuthError={() => setView("anon")} />;
               } else if (k === "media") {
                 content = <AdminMedia onAuthError={() => setView("anon")} />;
               } else if (k === "accounts" && isSuperAdmin) {
                 content = <AdminAccounts onAuthError={() => setView("anon")} />;
-              } else if (k === "pending" || k === "published" || k === "all") {
+              } else if (k === "edit") {
+                content = (
+                  <AdminEditPost
+                    key={editPostId || "new"}
+                    postId={editPostId}
+                    onBack={() => {
+                      if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
+                      const params = new URLSearchParams(searchParams);
+                      params.delete("edit");
+                      router.push(`${pathname}?${params.toString()}`);
+                    }}
+                    adminInfo={adminInfo!}
+                  />
+                );
+              } else if (k === "pending" || k === "published" || k === "draft" || k === "all") {
                 const tabPosts = posts
                   .filter((p) => {
                     if (k === "pending") return p.status === "pending";
                     if (k === "published") return p.status === "published";
+                    if (k === "draft") return p.status === "draft";
                     return true;
                   })
                   .filter((p) => filterSource === "all" || p.source === filterSource)
@@ -606,12 +656,12 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                     if (!searchQuery) return true;
                     const q = searchQuery.toLowerCase();
                     return p.title.toLowerCase().includes(q) ||
-                           p.author.toLowerCase().includes(q) ||
-                           (p.authorRole && p.authorRole.toLowerCase().includes(q));
+                      p.author.toLowerCase().includes(q) ||
+                      (p.authorRole && p.authorRole.toLowerCase().includes(q));
                   })
                   .sort((a, b) => {
-                    return sortOrder === "desc" 
-                      ? b.createdAt.localeCompare(a.createdAt) 
+                    return sortOrder === "desc"
+                      ? b.createdAt.localeCompare(a.createdAt)
                       : a.createdAt.localeCompare(b.createdAt);
                   });
 
@@ -647,153 +697,152 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                       const status = statusInfo(post.status);
                       return (
                         <div key={post.id} className="rounded-3xl bg-white p-5 shadow-sm border border-slate-100">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${status.cls}`}
-                          >
-                            {status.label}
-                          </span>
-                          <span
-                            className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${
-                              post.source === "admin"
-                                ? "bg-[#1d4ed8]/10 text-[#1d4ed8]"
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}
-                          >
-                            {post.source === "admin"
-                              ? "Ban Biên tập"
-                              : "Cộng đồng"}
-                          </span>
-                          {post.pinned && (
-                            <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-700">
-                              Ghim
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="mt-2.5 truncate text-lg font-extrabold text-slate-900">
-                          {post.title}
-                        </h3>
-                        <p className="mt-0.5 truncate text-sm text-slate-500">
-                          {post.author} · {post.authorRole} · {vi(post.createdAt)}
-                        </p>
-                        {post.status === "pending" && (
-                          <p className="mt-2.5 line-clamp-2 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800">
-                            {post.excerpt}
-                          </p>
-                        )}
-                      </div>
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${status.cls}`}
+                                >
+                                  {status.label}
+                                </span>
+                                <span
+                                  className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${post.source === "admin"
+                                      ? "bg-[#1d4ed8]/10 text-[#1d4ed8]"
+                                      : "bg-emerald-100 text-emerald-700"
+                                    }`}
+                                >
+                                  {post.source === "admin"
+                                    ? "Ban Biên tập"
+                                    : "Cộng đồng"}
+                                </span>
+                                {post.pinned && (
+                                  <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-700">
+                                    Ghim
+                                  </span>
+                                )}
+                              </div>
+                              <h3 className="mt-2.5 truncate text-lg font-extrabold text-slate-900">
+                                {post.title}
+                              </h3>
+                              <p className="mt-0.5 truncate text-sm text-slate-500">
+                                {post.author} · {post.authorRole} · {vi(post.createdAt)}
+                              </p>
+                              {post.status === "pending" && (
+                                <p className="mt-2.5 line-clamp-2 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800">
+                                  {post.excerpt}
+                                </p>
+                              )}
+                            </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        {post.status === "pending" && (
-                          <>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() =>
-                                act(
-                                  post,
-                                  { status: "published" },
-                                  "Đã duyệt và đăng bài viết.",
-                                )
-                              }
-                              className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
-                            >
-                              Duyệt đăng
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() =>
-                                act(
-                                  post,
-                                  { status: "rejected" },
-                                  "Đã từ chối bài viết.",
-                                )
-                              }
-                              className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
-                            >
-                              Từ chối
-                            </button>
-                          </>
-                        )}
-                        {post.status === "published" && (
-                          <>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() =>
-                                act(
-                                  post,
-                                  { pinned: !post.pinned },
-                                  post.pinned
-                                    ? "Đã bỏ ghim bài viết."
-                                    : "Đã ghim bài viết lên đầu.",
-                                )
-                              }
-                              className="rounded-xl bg-amber-100 px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 disabled:opacity-50"
-                            >
-                              {post.pinned ? "Bỏ ghim" : "Ghim"}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() =>
-                                act(
-                                  post,
-                                  { status: "draft" },
-                                  "Đã hạ bài về bản nháp.",
-                                )
-                              }
-                              className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
-                            >
-                              Hạ bài
-                            </button>
-                          </>
-                        )}
-                        {(post.status === "draft" ||
-                          post.status === "rejected") && (
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() =>
-                              act(
-                                post,
-                                { status: "published" },
-                                "Đã đăng bài viết.",
-                              )
-                            }
-                            className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
-                          >
-                            Đăng bài
-                          </button>
-                        )}
-                        <Link
-                          href={`/bai-viet/${post.slug}`}
-                          className="rounded-xl bg-[#1d4ed8]/10 px-3.5 py-2 text-xs font-bold text-[#1d4ed8] hover:bg-[#1d4ed8]/20"
-                        >
-                          Xem
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => openEdit(post)}
-                          className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
-                        >
-                          Sửa
-                        </button>
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => remove(post)}
-                          className="rounded-xl bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 disabled:opacity-50"
-                        >
-                          Xoá
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
+                            <div className="flex flex-wrap gap-2">
+                              {post.status === "pending" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      act(
+                                        post,
+                                        { status: "published" },
+                                        "Đã duyệt và đăng bài viết.",
+                                      )
+                                    }
+                                    className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
+                                  >
+                                    Duyệt đăng
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      act(
+                                        post,
+                                        { status: "rejected" },
+                                        "Đã từ chối bài viết.",
+                                      )
+                                    }
+                                    className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                                  >
+                                    Từ chối
+                                  </button>
+                                </>
+                              )}
+                              {post.status === "published" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      act(
+                                        post,
+                                        { pinned: !post.pinned },
+                                        post.pinned
+                                          ? "Đã bỏ ghim bài viết."
+                                          : "Đã ghim bài viết lên đầu.",
+                                      )
+                                    }
+                                    className="rounded-xl bg-amber-100 px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 disabled:opacity-50"
+                                  >
+                                    {post.pinned ? "Bỏ ghim" : "Ghim"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      act(
+                                        post,
+                                        { status: "draft" },
+                                        "Đã hạ bài về bản nháp.",
+                                      )
+                                    }
+                                    className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                                  >
+                                    Hạ bài
+                                  </button>
+                                </>
+                              )}
+                              {(post.status === "draft" ||
+                                post.status === "rejected") && (
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() =>
+                                      act(
+                                        post,
+                                        { status: "published" },
+                                        "Đã đăng bài viết.",
+                                      )
+                                    }
+                                    className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
+                                  >
+                                    Đăng bài
+                                  </button>
+                                )}
+                              <Link
+                                href={`/bai-viet/${post.slug}`}
+                                className="rounded-xl bg-[#1d4ed8]/10 px-3.5 py-2 text-xs font-bold text-[#1d4ed8] hover:bg-[#1d4ed8]/20"
+                              >
+                                Xem
+                              </Link>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(post)}
+                                className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                              >
+                                Sửa
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => remove(post)}
+                                className="rounded-xl bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 disabled:opacity-50"
+                              >
+                                Xoá
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
                     })}
                     {tabPosts.length === 0 && (
                       <div className="rounded-3xl bg-white p-10 text-center text-sm text-slate-400">
@@ -820,7 +869,9 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
               );
             })}
           </div>
-      </div>
+
+
+        </div>
       </div>
 
       <p className="mt-10 text-center text-xs text-slate-400">

@@ -53,9 +53,9 @@ const MIME_TO_EXT: Record<string, string> = {
   "image/heif": "heif",
 };
 
-export function receiptKey(ticketId: string, mimeType: string): string {
+export function receiptKey(invitationId: string, mimeType: string): string {
   const ext = MIME_TO_EXT[mimeType] || "jpg";
-  return `receipts/${ticketId}.${ext}`;
+  return `receipts/${invitationId}.${ext}`;
 }
 
 // ============================================================
@@ -68,23 +68,23 @@ export type UploadResult =
 
 /**
  * Upload ảnh biên lai lên Cloudflare R2
- * @param ticketId - ID vé (dùng làm tên file)
+ * @param invitationId - ID vé (dùng làm tên file)
  * @param buffer - Buffer ảnh
  * @param mimeType - MIME type (image/jpeg, image/png, image/webp)
  * @returns URL public của ảnh, hoặc lỗi nếu R2 chưa cấu hình
  */
 export async function uploadReceipt(
-  ticketId: string,
+  invitationId: string,
   buffer: Buffer,
   mimeType: string,
 ): Promise<UploadResult> {
   if (!isR2Configured()) {
     // Chế độ fallback: Khi R2 chưa được cấu hình, lưu local
-    return uploadReceiptLocal(ticketId, buffer, mimeType);
+    return uploadReceiptLocal(invitationId, buffer, mimeType);
   }
 
   const cfg = getR2Config();
-  const key = receiptKey(ticketId, mimeType);
+  const key = receiptKey(invitationId, mimeType);
 
   const input: PutObjectCommandInput = {
     Bucket: cfg.bucketName,
@@ -93,7 +93,7 @@ export async function uploadReceipt(
     ContentType: mimeType,
     // Metadata để dễ tìm kiếm sau này
     Metadata: {
-      "ticket-id": ticketId,
+      "invitation-id": invitationId,
       "uploaded-at": new Date().toISOString(),
     },
   };
@@ -125,18 +125,18 @@ import path from "node:path";
 const LOCAL_RECEIPTS_DIR = path.join(process.cwd(), "data", "receipts");
 
 async function uploadReceiptLocal(
-  ticketId: string,
+  invitationId: string,
   buffer: Buffer,
   mimeType: string,
 ): Promise<UploadResult> {
   try {
     await fs.mkdir(LOCAL_RECEIPTS_DIR, { recursive: true });
     const ext = MIME_TO_EXT[mimeType] || "jpg";
-    const filename = `${ticketId}.${ext}`;
+    const filename = `${invitationId}.${ext}`;
     const filepath = path.join(LOCAL_RECEIPTS_DIR, filename);
     await fs.writeFile(filepath, buffer);
-    // URL cục bộ — serve qua API route /api/admin/receipt/[ticketId]
-    const url = `/api/admin/receipt/${ticketId}`;
+    // URL cục bộ — serve qua API route /api/admin/receipt/[invitationId]
+    const url = `/api/admin/receipt/${invitationId}`;
     return { ok: true, url, key: `local/${filename}` };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -148,11 +148,11 @@ async function uploadReceiptLocal(
  * Đọc ảnh biên lai local (dùng cho admin API route khi R2 chưa cấu hình)
  */
 export async function getLocalReceiptBuffer(
-  ticketId: string,
+  invitationId: string,
 ): Promise<{ buffer: Buffer; mimeType: string } | null> {
   const exts = ["jpg", "png", "webp", "heic", "heif"];
   for (const ext of exts) {
-    const filepath = path.join(LOCAL_RECEIPTS_DIR, `${ticketId}.${ext}`);
+    const filepath = path.join(LOCAL_RECEIPTS_DIR, `${invitationId}.${ext}`);
     try {
       const buffer = await fs.readFile(filepath);
       const mime = ext === "jpg" ? "image/jpeg" : `image/${ext}`;

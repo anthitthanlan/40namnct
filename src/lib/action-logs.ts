@@ -2,11 +2,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
+export type ActionLogGroup = "posts" | "registrations";
+
 export type ActionLog = {
   id: string;
-  action: "delete_ticket";
+  action: "delete_invitation" | "update_status" | "checkin" | "shirt_received" | "create_post" | "update_post" | "delete_post" | "account_created";
+  group: ActionLogGroup;
   entityId: string;
   adminName: string;
+  adminUsername: string; // Thêm trường này để dễ filter theo username (quan trọng)
   adminRole: string;
   details: string;
   createdAt: string;
@@ -52,17 +56,26 @@ export async function listActionLogs(): Promise<ActionLog[]> {
 
 export async function logAction(
   action: ActionLog["action"],
+  group: ActionLogGroup,
   entityId: string,
   adminName: string,
+  adminUsername: string,
   adminRole: string,
   details: string
-): Promise<ActionLog> {
+): Promise<ActionLog | null> {
+  // Không lưu log cho các thư mời mẫu dev
+  if (entityId === "sample" || entityId === "sample-group") {
+    return null;
+  }
+
   const logs = await listActionLogs();
   const log: ActionLog = {
     id: randomUUID(),
     action,
+    group,
     entityId,
     adminName,
+    adminUsername,
     adminRole,
     details,
     createdAt: new Date().toISOString(),

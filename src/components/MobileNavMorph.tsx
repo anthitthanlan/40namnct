@@ -37,7 +37,7 @@ export default function MobileNavMorph() {
     {
       title: "Hệ thống",
       items: [
-        { href: "/admin?tab=tickets", label: "Thư mời" },
+        { href: "/admin?tab=invitations", label: "Thư mời" },
         { href: "/admin?tab=media", label: "Media cộng đồng" },
         { href: "/admin?tab=accounts", label: "Quản lý tài khoản" },
       ],

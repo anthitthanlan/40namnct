@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createMember, createTicket, normalizePhone, SIZES, type Size } from "@/lib/members";
+import { createMember, createInvitation, normalizePhone, SIZES, type Size } from "@/lib/members";
 
 export const dynamic = "force-dynamic";
 
@@ -108,8 +108,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // --- 2. Tạo Ticket (chứa combo) ---
-  const ticket = await createTicket(memberResult.member.id, {
+  const lop = typeof body.lop === "string" ? body.lop.trim().slice(0, 50) : "";
+  const userNote = typeof body.note === "string" ? body.note.trim().slice(0, 500) : "";
+  const finalNote = [lop ? `Lớp: ${lop}` : "", userNote ? `Lời nhắn: ${userNote}` : ""].filter(Boolean).join(" | ");
+
+  // --- 2. Tạo Invitation (chứa combo) ---
+  const invitation = await createInvitation(memberResult.member.id, {
     type,
     nienKhoa,
     attendeeName: name,
@@ -117,15 +121,14 @@ export async function POST(req: NextRequest) {
     quantity,
     sizes,
     snacks: comboCount,
-    note: "", // có thể thêm field note nếu cần, tạm để trống
+    note: finalNote,
   });
 
   return NextResponse.json(
     {
       ok: true,
-      ticketCode: ticket.code, // Trả về ticketCode cho UI (nếu cần)
-      ticketId: ticket.id,     // Trả về UUID để dùng làm index trên URL
-      memberCode: memberResult.member.code,
+      invitationCode: invitation.code, // Trả về invitationCode cho UI (nếu cần)
+      invitationId: invitation.id,     // Trả về UUID để dùng làm index trên URL
     },
     { status: 201 },
   );

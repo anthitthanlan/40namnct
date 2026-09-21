@@ -3,22 +3,24 @@ import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
 import {
   listMembers,
-  listTickets,
-  setTicketStatus,
-  type TicketStatus,
+  listInvitations,
+  setInvitationStatus,
+  setShirtReceived,
+  type InvitationStatus,
 } from "@/lib/members";
+import { logAction, listActionLogs } from "@/lib/action-logs";
 
 export const dynamic = "force-dynamic";
 
-/** Admin: danh sách thành viên (kèm mã định danh) + toàn bộ vé đăng ký */
+/** Admin: danh sách thành viên + toàn bộ thư mời + logs */
 export async function GET(req: NextRequest) {
   const admin = getAdminFromRequest(req);
   if (!admin || admin.role === "editor") return unauthorized();
 
-  const [members, tickets] = await Promise.all([listMembers(), listTickets()]);
+  const [members, invitations] = await Promise.all([listMembers(), listInvitations()]);
   const byId = new Map(members.map((m) => [m.id, m]));
 
-  const ticketViews = tickets
+  const invitationViews = invitations
     .slice()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((t) => {
@@ -27,21 +29,19 @@ export async function GET(req: NextRequest) {
         ...t,
         memberName: m?.name ?? "(đã xoá)",
         memberPhone: m?.phone ?? "",
-        memberCode: m?.code ?? "",
       };
     });
 
   const memberViews = members.map((m) => {
-    const mine = tickets.filter(
+    const mine = invitations.filter(
       (t) => t.memberId === m.id && t.status !== "cancelled",
     );
     return {
       id: m.id,
       name: m.name,
       phone: m.phone,
-      code: m.code,
       createdAt: m.createdAt,
-      ticketCount: mine.length,
+      invitationCount: mine.length,
       peopleCount: mine.reduce((sum, t) => sum + t.quantity, 0),
       confirmedAmount: mine
         .filter((t) => t.status === "confirmed")
@@ -52,11 +52,19 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  return NextResponse.json({ ok: true, members: memberViews, tickets: ticketViews });
+  const logs = admin.role === "super_admin" ? await listActionLogs() : [];
+
+  return NextResponse.json({ 
+    ok: true, 
+    role: admin.role,
+    members: memberViews, 
+    invitations: invitationViews,
+    logs 
+  });
 }
 
 type Body = Record<string, unknown>;
-const ALLOWED: TicketStatus[] = [
+const ALLOWED: InvitationStatus[] = [
   "pending",
   "pending_payment",
   "pending_approval",
@@ -81,20 +89,56 @@ export async function PATCH(req: NextRequest) {
   }
 
   const id = typeof body.id === "string" ? body.id : "";
-  const status = body.status as TicketStatus;
-  if (!id || !ALLOWED.includes(status)) {
+  const action = (body as any).action || "update_status";
+
+  if (!id) {
     return NextResponse.json(
-      { ok: false, message: "Yêu cầu không hợp lệ." },
+      { ok: false, message: "Thiếu id thư mời." },
       { status: 400 },
     );
   }
 
-  const ticket = await setTicketStatus(id, status);
-  if (!ticket) {
+  if (action === "update_shirt") {
+    const shirtReceived = typeof (body as any).shirtReceived === "boolean" ? (body as any).shirtReceived : false;
+    const invitation = await setShirtReceived(id, shirtReceived);
+    if (!invitation) return NextResponse.json({ ok: false, message: "Không tìm thấy thư mời." }, { status: 404 });
+    await logAction(
+      "update_status",
+      "registrations",
+      id,
+      admin.fullName || admin.username,
+      admin.username,
+      admin.role,
+      `Cập nhật nhận áo thành: ${shirtReceived ? "Đã nhận" : "Chưa nhận"}`,
+    );
+    return NextResponse.json({ ok: true, invitation });
+  }
+
+  const status = body.status as InvitationStatus;
+  if (!ALLOWED.includes(status)) {
     return NextResponse.json(
-      { ok: false, message: "Không tìm thấy vé." },
+      { ok: false, message: "Trạng thái không hợp lệ." },
+      { status: 400 },
+    );
+  }
+
+  const invitation = await setInvitationStatus(id, status);
+  if (!invitation) {
+    return NextResponse.json(
+      { ok: false, message: "Không tìm thấy thư mời." },
       { status: 404 },
     );
   }
-  return NextResponse.json({ ok: true, ticket });
+
+  await logAction(
+    "update_status",
+    "registrations",
+    id,
+    admin.fullName || admin.username,
+    admin.username,
+    admin.role,
+    `Cập nhật trạng thái thành: ${status}`,
+  );
+
+  return NextResponse.json({ ok: true, invitation });
 }

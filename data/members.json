@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "sample",
+    "name": "Lại Nhất Phong (Cá nhân)",
+    "phone": "0909000900",
+    "email": "phong@test.com",
+    "createdAt": "2026-09-20T17:32:16.927Z"
+  },
+  {
+    "id": "sample-group",
+    "name": "Lại Nhất Phong (Tập thể)",
+    "phone": "0909000900",
+    "email": "phong2@test.com",
+    "createdAt": "2026-09-20T17:32:16.928Z"
+  }
+]

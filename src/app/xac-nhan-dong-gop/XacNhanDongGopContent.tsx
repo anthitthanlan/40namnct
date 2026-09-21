@@ -19,7 +19,8 @@ type BankInfo = {
   bank: PayBankConfig;
   amount: number;
   addInfo: string;
-  ticketCode: string;
+  invitationCode: string;
+  id: string;
   status: string;
 };
 
@@ -45,7 +46,7 @@ function copyToClipboard(text: string, onCopied: () => void) {
   navigator.clipboard.writeText(text).then(onCopied).catch(() => {});
 }
 
-const SESSION_KEY = "nct40_xacnhan_ticketId";
+const SESSION_KEY = "nct40_xacnhan_invitationId";
 
 // ============================================================
 // Sub-components
@@ -192,7 +193,7 @@ export default function XacNhanDongGopContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [ticketId, setTicketId] = useState<string>(() => {
+  const [invitationId, setInvitationId] = useState<string>(() => {
     const fromUrl = searchParams.get("id") || "";
     if (fromUrl) {
       if (typeof window !== "undefined") {
@@ -215,20 +216,20 @@ export default function XacNhanDongGopContent() {
   const [uploadState, setUploadState] = useState<UploadState>({ phase: "idle" });
 
   useEffect(() => {
-    if (!ticketId) {
+    if (!invitationId) {
       setLoadError("Không tìm thấy mã phiếu đăng ký. Vui lòng quay lại trang đăng ký.");
       setLoading(false);
       return;
     }
 
-    fetch(`/api/payment/bank-info?ticketId=${ticketId}`)
+    fetch(`/api/payment/bank-info?invitationId=${invitationId}`)
       .then((r) => r.json())
       .then((data) => {
         if (!data.ok) {
           setLoadError(data.message || "Không tải được thông tin đóng góp.");
         } else {
           setBankInfo(data);
-          if (ticketId !== "DEV") {
+          if (invitationId !== "DEV") {
             if (data.status === "confirmed") {
               setUploadState({
                 phase: "success",
@@ -248,7 +249,7 @@ export default function XacNhanDongGopContent() {
       })
       .catch(() => setLoadError("Lỗi kết nối. Vui lòng thử lại."))
       .finally(() => setLoading(false));
-  }, [ticketId, router]);
+  }, [invitationId, router]);
 
   function handleFileSelected(file: File) {
     const objectUrl = URL.createObjectURL(file);
@@ -264,7 +265,7 @@ export default function XacNhanDongGopContent() {
     try {
       const formData = new FormData();
       formData.append("receipt", file);
-      formData.append("ticketId", ticketId);
+      formData.append("invitationId", invitationId);
 
       const res = await fetch("/api/payment/verify-receipt", {
         method: "POST",
@@ -308,10 +309,10 @@ export default function XacNhanDongGopContent() {
             : "Giao dịch đã được đưa vào hàng chờ. Ban Tổ chức sẽ đối soát và xác nhận trong vòng 24 giờ."),
       });
       
-      // Auto redirect to ticket after 3 seconds on success (if not dev mode)
-      if (ticketId !== "DEV" && data.confidence === "high") {
+      // Auto redirect to invitation after 3 seconds on success (if not dev mode)
+      if (invitationId !== "DEV" && data.confidence === "high") {
         setTimeout(() => {
-          router.replace(`/thu-moi?id=${ticketId}`);
+          router.replace(`/thu-moi?id=${invitationId}`);
         }, 3000);
       }
     } catch (err) {
@@ -436,7 +437,7 @@ export default function XacNhanDongGopContent() {
               onClick={() => {
                 setIsMobileModalOpen(false);
                 setIsExiting(true);
-                router.push(`/thu-moi?id=${ticketId === "DEV" ? "sample" : ticketId}`);
+                router.push(`/thu-moi?id=${invitationId === "DEV" ? "sample" : invitationId}`);
               }}
               className="inline-block text-center mt-4 w-full py-3.5 rounded-xl font-bold text-white bg-slate-900 hover:bg-black transition-colors"
             >
@@ -482,20 +483,20 @@ export default function XacNhanDongGopContent() {
               {uploadState.message}
             </p>
             <div className="flex gap-3 mt-4">
-              {(ticketId === "DEV" || uploadState.attemptsLeft > 0) && (
+              {(invitationId === "DEV" || uploadState.attemptsLeft > 0) && (
                 <button
                   type="button"
                   onClick={() => setUploadState({ phase: "idle" })}
                   className="flex-1 py-3.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors"
                 >
-                  Thử lại {ticketId !== "DEV" && `(Còn ${uploadState.attemptsLeft} lần)`}
+                  Thử lại {invitationId !== "DEV" && `(Còn ${uploadState.attemptsLeft} lần)`}
                 </button>
               )}
               <button
                 onClick={() => {
                   setIsMobileModalOpen(false);
                   setIsExiting(true);
-                  router.push(`/thu-moi?id=${ticketId === "DEV" ? "sample" : ticketId}`);
+                  router.push(`/thu-moi?id=${invitationId === "DEV" ? "sample" : invitationId}`);
                 }}
                 className="flex-1 py-3.5 rounded-xl bg-gray-200 text-gray-800 font-bold hover:bg-gray-300 transition-colors flex items-center justify-center"
               >
@@ -542,7 +543,7 @@ export default function XacNhanDongGopContent() {
     </div>
   );
 
-  const isConfirmed = ticketId !== "DEV" && bankInfo?.status === "confirmed";
+  const isConfirmed = invitationId !== "DEV" && bankInfo?.status === "confirmed";
 
   return (
     <main className="min-h-screen bg-gray-50 pt-24 pb-32 md:pb-24 px-4 md:px-6">
@@ -552,8 +553,11 @@ export default function XacNhanDongGopContent() {
           <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
             Chuyển khoản Đóng góp
           </h1>
-          <p className="text-gray-500 mt-1.5 text-sm font-medium">
-            Mã phiếu: <span className="font-mono text-gray-900">{info.ticketCode}</span>
+          <p className="text-gray-500 mt-1.5 text-sm font-medium relative inline-block group">
+            Mã phiếu: <span className="font-mono text-gray-900">{info.id}</span>
+            <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-gray-800 text-white text-xs px-2 py-1 rounded shadow-md pointer-events-none z-10">
+              Đây là mã index công khai của Thư mời
+            </span>
           </p>
         </motion.div>
 
@@ -654,7 +658,7 @@ export default function XacNhanDongGopContent() {
             ? () => {
                 setIsMobileModalOpen(false);
                 setIsExiting(true);
-                router.push(`/thu-moi?id=${ticketId}`);
+                router.push(`/thu-moi?id=${invitationId}`);
               }
             : undefined
         }

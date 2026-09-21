@@ -1,13 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { UNIT_PRICE, type Size, type TicketStatus } from "./ticket-view";
+import { UNIT_PRICE, type Size, type InvitationStatus } from "./invitation-view";
 
-export { SIZES, UNIT_PRICE } from "./ticket-view";
-export type { Size, TicketStatus } from "./ticket-view";
+export { SIZES, UNIT_PRICE } from "./invitation-view";
+export type { Size, InvitationStatus } from "./invitation-view";
 export const MAX_GROUP_QUANTITY = 500;
 
-export type TicketType = "individual" | "group";
+export type InvitationType = "individual" | "group";
 
 export type Member = {
   id: string;
@@ -15,8 +15,6 @@ export type Member = {
   /** SĐT chuẩn hoá (bắt đầu 0) */
   phone: string;
   email: string;
-  /** Mã định danh - xuất trình tại cổng 08/11 */
-  code: string;
   createdAt: string;
 };
 
@@ -31,6 +29,8 @@ export type OcrResult = {
   transactionId?: string | null;
   /** Trạng thái giao dịch trích xuất (mới thêm) */
   transactionStatus?: "success" | "pending" | "failed" | "unknown";
+  /** Điểm tin cậy OCR */
+  trustScore?: number | null;
   /** Mức độ tin cậy kết quả so khớp */
   confidence: "high" | "low" | "mismatch" | "system_error";
   /** Ghi chú chi tiết cho Admin */
@@ -46,13 +46,13 @@ export type ReceiptAttempt = {
 };
 
 
-export type Ticket = {
+export type Invitation = {
   id: string;
-  /** Mã vé - ghi trong nội dung chuyển khoản khi quét QR */
+  /** Mã thư mời - ghi trong nội dung chuyển khoản khi quét QR */
   code: string;
   memberId: string;
   nienKhoa?: string;
-  type: TicketType;
+  type: InvitationType;
   /** Cá nhân: tên người tham dự (mặc định = tên tài khoản) */
   attendeeName: string;
   /** Cá nhân: 1 size áo */
@@ -65,7 +65,7 @@ export type Ticket = {
   snacks: number;
   /** Vé tham gia miễn phí. Tiền = snacks × UNIT_PRICE */
   amount: number;
-  status: TicketStatus;
+  status: InvitationStatus;
   /** Ghi chú tự do (VD: Lớp 12A2 - khóa 2005) */
   note: string;
   lastSessionId?: string;
@@ -78,12 +78,14 @@ export type Ticket = {
   receiptAttempts?: ReceiptAttempt[];
   checkedIn?: boolean;
   checkedInAt?: string | null;
+  shirtReceived?: boolean;
+  shirtReceivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-export type TicketInput = {
-  type: TicketType;
+export type InvitationInput = {
+  type: InvitationType;
   nienKhoa?: string;
   attendeeName: string;
   size: Size | null; // Size áo
@@ -95,7 +97,7 @@ export type TicketInput = {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const MEMBERS_FILE = path.join(DATA_DIR, "members.json");
-const TICKETS_FILE = path.join(DATA_DIR, "tickets.json");
+const INVITATIONS_FILE = path.join(DATA_DIR, "invitations.json");
 
 /** Khóa ghi file đơn giản - tránh ghi đè song song */
 let queue: Promise<unknown> = Promise.resolve();
@@ -127,8 +129,8 @@ export async function listMembers(): Promise<Member[]> {
   return readJson<Member[]>(MEMBERS_FILE, []);
 }
 
-export async function listTickets(): Promise<Ticket[]> {
-  return readJson<Ticket[]>(TICKETS_FILE, []);
+export async function listInvitations(): Promise<Invitation[]> {
+  return readJson<Invitation[]>(INVITATIONS_FILE, []);
 }
 
 async function writeJson<T>(file: string, value: T): Promise<void> {
@@ -164,12 +166,6 @@ export async function findMemberByPhone(phone: string): Promise<Member | null> {
   return members.find((m) => m.phone === phone) ?? null;
 }
 
-export async function findMemberByCode(code: string): Promise<Member | null> {
-  const normalized = code.trim().toUpperCase();
-  const members = await listMembers();
-  return members.find((m) => m.code === normalized) ?? null;
-}
-
 /** Tạo tài khoản thành viên mới - trùng SĐT sẽ bị từ chối */
 export async function createMember(
   name: string,
@@ -184,16 +180,11 @@ export async function createMember(
         "Số điện thoại này đã đăng ký tham gia. Vui lòng sử dụng mã định danh đã được cấp.",
     };
   }
-  let code = "";
-  do {
-    code = `NCT40-${randomCode(6)}`;
-  } while (members.some((m) => m.code === code));
   const member: Member = {
     id: randomUUID(),
     name,
     phone,
     email,
-    code,
     createdAt: new Date().toISOString(),
   };
   members.push(member);
@@ -208,24 +199,30 @@ export async function getMemberById(id: string): Promise<Member | null> {
   return members.find((m) => m.id === id) ?? null;
 }
 
-function generateTicketCode(order: number): string {
+export async function findInvitationByCode(code: string): Promise<Invitation | null> {
+  const normalized = code.trim().toUpperCase();
+  const invitations = await listInvitations();
+  return invitations.find((i) => i.code === normalized) ?? null;
+}
+
+function generateInvitationCode(order: number): string {
   const orderStr = String(order).padStart(3, "0");
   return `NCT19862026-${orderStr}${randomCode(5)}`;
 }
 
 /** Tạo vé tham dự. Combo tính phí 500k/suất (lưu vào biến snacks) */
-export async function createTicket(
+export async function createInvitation(
   memberId: string,
-  input: TicketInput,
-): Promise<Ticket> {
-  const tickets = await listTickets();
-  const order = tickets.length + 1;
-  let code = generateTicketCode(order);
-  while (tickets.some((t) => t.code === code)) {
-    code = generateTicketCode(order);
+  input: InvitationInput,
+): Promise<Invitation> {
+  const invitations = await listInvitations();
+  const order = invitations.length + 1;
+  let code = generateInvitationCode(order);
+  while (invitations.some((t) => t.code === code)) {
+    code = generateInvitationCode(order);
   }
   const now = new Date().toISOString();
-  const ticket: Ticket =
+  const invitation: Invitation =
     input.type === "individual"
       ? {
           id: randomUUID(),
@@ -265,70 +262,86 @@ export async function createTicket(
           createdAt: now,
           updatedAt: now,
         };
-  tickets.push(ticket);
-  await writeJson(TICKETS_FILE, tickets);
-  return ticket;
+  invitations.push(invitation);
+  await writeJson(INVITATIONS_FILE, invitations);
+  return invitation;
 }
 
-export async function listTicketsByMember(memberId: string): Promise<Ticket[]> {
-  const tickets = await listTickets();
-  return tickets
+export async function listInvitationsByMember(memberId: string): Promise<Invitation[]> {
+  const invitations = await listInvitations();
+  return invitations
     .filter((t) => t.memberId === memberId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function findTicketById(id: string): Promise<Ticket | null> {
-  const tickets = await listTickets();
-  return tickets.find((t) => t.id === id) ?? null;
+export async function findInvitationById(id: string): Promise<Invitation | null> {
+  const invitations = await listInvitations();
+  return invitations.find((t) => t.id === id) ?? null;
 }
 
-export async function setTicketStatus(
+export async function setInvitationStatus(
   id: string,
-  status: TicketStatus,
-): Promise<Ticket | null> {
-  const tickets = await listTickets();
-  const index = tickets.findIndex((t) => t.id === id);
+  status: InvitationStatus,
+): Promise<Invitation | null> {
+  const invitations = await listInvitations();
+  const index = invitations.findIndex((t) => t.id === id);
   if (index === -1) return null;
-  tickets[index] = {
-    ...tickets[index],
+  invitations[index] = {
+    ...invitations[index],
     status,
     updatedAt: new Date().toISOString(),
   };
-  await writeJson(TICKETS_FILE, tickets);
-  return tickets[index];
+  await writeJson(INVITATIONS_FILE, invitations);
+  return invitations[index];
+}
+
+export async function setShirtReceived(
+  id: string,
+  shirtReceived: boolean,
+): Promise<Invitation | null> {
+  const invitations = await listInvitations();
+  const index = invitations.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+  invitations[index] = {
+    ...invitations[index],
+    shirtReceived,
+    updatedAt: new Date().toISOString(),
+  };
+  await writeJson(INVITATIONS_FILE, invitations);
+  return invitations[index];
 }
 
 /** Người dùng xác nhận đã chuyển khoản -> chuyển sang chờ duyệt (24h) kèm Session ID */
 export async function claimPayment(
   id: string,
   sessionId?: string,
-): Promise<Ticket | null> {
-  const tickets = await listTickets();
-  const index = tickets.findIndex((t) => t.id === id);
+): Promise<Invitation | null> {
+  const invitations = await listInvitations();
+  const index = invitations.findIndex((t) => t.id === id);
   if (index === -1) return null;
   const now = new Date().toISOString();
-  tickets[index] = {
-    ...tickets[index],
+  invitations[index] = {
+    ...invitations[index],
     status: "pending_approval",
-    lastSessionId: sessionId || tickets[index].lastSessionId,
+    lastSessionId: sessionId || invitations[index].lastSessionId,
     paymentClaimedAt: now,
     updatedAt: now,
   };
-  await writeJson(TICKETS_FILE, tickets);
-  return tickets[index];
+  await writeJson(INVITATIONS_FILE, invitations);
+  return invitations[index];
 }
 
 /**
  * Lưu kết quả AI OCR và URL ảnh biên lai vào vé
  * Đồng thời cập nhật trạng thái dựa trên confidence
  */
-export async function updateTicketReceipt(
+export async function updateInvitationReceipt(
   id: string,
   receiptUrl: string,
   ocrResult: OcrResult,
-): Promise<Ticket | null> {
-  const tickets = await listTickets();
-  const index = tickets.findIndex((t) => t.id === id);
+): Promise<Invitation | null> {
+  const invitations = await listInvitations();
+  const index = invitations.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
   const now = new Date().toISOString();
@@ -338,9 +351,9 @@ export async function updateTicketReceipt(
     ocrResult,
     createdAt: now,
   };
-  const newAttempts = [...(tickets[index].receiptAttempts || []), attempt];
+  const newAttempts = [...(invitations[index].receiptAttempts || []), attempt];
 
-  let newStatus = tickets[index].status;
+  let newStatus = invitations[index].status;
   if (ocrResult.confidence === "high") {
     newStatus = "confirmed";
   } else if (
@@ -351,30 +364,30 @@ export async function updateTicketReceipt(
     newStatus = "pending_approval";
   }
 
-  tickets[index] = {
-    ...tickets[index],
+  invitations[index] = {
+    ...invitations[index],
     receiptUrl, // Bản mới nhất để hiển thị nhanh
     ocrResult,
     receiptAttempts: newAttempts,
     status: newStatus,
-    ...(newStatus !== tickets[index].status ? { paymentClaimedAt: now } : {}),
+    ...(newStatus !== invitations[index].status ? { paymentClaimedAt: now } : {}),
     updatedAt: now,
   };
 
-  await writeJson(TICKETS_FILE, tickets);
-  return tickets[index];
+  await writeJson(INVITATIONS_FILE, invitations);
+  return invitations[index];
 }
 
 /** Check-in vé tại cổng bằng camera scanner */
-export async function checkInTicket(
+export async function checkInInvitation(
   id: string,
-): Promise<{ ok: boolean; ticket?: Ticket; message?: string }> {
-  const tickets = await listTickets();
-  const index = tickets.findIndex((t) => t.id === id);
+): Promise<{ ok: boolean; invitation?: Invitation; message?: string }> {
+  const invitations = await listInvitations();
+  const index = invitations.findIndex((t) => t.id === id);
   if (index === -1) {
     return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
   }
-  const t = tickets[index];
+  const t = invitations[index];
   if (t.status !== "confirmed") {
     return {
       ok: false,
@@ -384,28 +397,62 @@ export async function checkInTicket(
   if (t.checkedIn) {
     return {
       ok: false,
-      ticket: t,
+      invitation: t,
       message: `Vé này đã được quét vào cổng lúc ${new Date(t.checkedInAt || "").toLocaleTimeString("vi-VN")}`,
     };
   }
   const now = new Date().toISOString();
-  tickets[index] = {
+  invitations[index] = {
     ...t,
     checkedIn: true,
     checkedInAt: now,
     updatedAt: now,
   };
-  await writeJson(TICKETS_FILE, tickets);
-  return { ok: true, ticket: tickets[index] };
+  await writeJson(INVITATIONS_FILE, invitations);
+  return { ok: true, invitation: invitations[index] };
+}
+
+/** Quét QR trao áo tại sự kiện — chỉ áp dụng cho vé đã duyệt */
+export async function shirtCheckInByQr(
+  id: string,
+): Promise<{ ok: boolean; invitation?: Invitation; message?: string }> {
+  const invitations = await listInvitations();
+  const index = invitations.findIndex((t) => t.id === id);
+  if (index === -1) {
+    return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
+  }
+  const t = invitations[index];
+  if (t.status !== "confirmed") {
+    return {
+      ok: false,
+      message: `Vé chưa được duyệt phát hành (trạng thái: ${t.status})`,
+    };
+  }
+  if (t.shirtReceived) {
+    return {
+      ok: false,
+      invitation: t,
+      message: `Vé này đã được trao áo lúc ${new Date(t.shirtReceivedAt || "").toLocaleTimeString("vi-VN")}`,
+    };
+  }
+  const now = new Date().toISOString();
+  invitations[index] = {
+    ...t,
+    shirtReceived: true,
+    shirtReceivedAt: now,
+    updatedAt: now,
+  };
+  await writeJson(INVITATIONS_FILE, invitations);
+  return { ok: true, invitation: invitations[index] };
 }
 
 export { vietqrUrl } from "./vietqr";
 
-export async function deleteTicket(id: string): Promise<boolean> {
-  const tickets = await listTickets();
-  const index = tickets.findIndex((t) => t.id === id);
+export async function deleteInvitation(id: string): Promise<boolean> {
+  const invitations = await listInvitations();
+  const index = invitations.findIndex((t) => t.id === id);
   if (index === -1) return false;
-  tickets.splice(index, 1);
-  await writeJson(TICKETS_FILE, tickets);
+  invitations.splice(index, 1);
+  await writeJson(INVITATIONS_FILE, invitations);
   return true;
 }

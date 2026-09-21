@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getMemberById, listTickets } from "@/lib/members";
+import { getMemberById, listInvitations } from "@/lib/members";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   if (id?.toUpperCase() === "SAMPLE") {
     return NextResponse.json({
       ok: true,
-      ticket: {
+      invitation: {
         code: "NCT19862026-000POLN7",
         amount: 500000,
         status: "pending_payment",
@@ -42,8 +42,8 @@ export async function GET(req: NextRequest) {
   if (id?.toUpperCase() === "SAMPLE-GROUP") {
     return NextResponse.json({
       ok: true,
-      ticket: {
-        code: "NCT19862026-GROUP",
+      invitation: {
+        code: "NCT19862026-000GROUP",
         amount: 5000000,
         status: "pending_payment",
         type: "group",
@@ -58,37 +58,37 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  // Find ticket by id
-  const tickets = await listTickets();
-  const ticket = tickets.find(t => t.id === id);
+  // Find invitation by id
+  const invitations = await listInvitations();
+  const invitation = invitations.find(t => t.id === id);
   
-  if (!ticket) {
+  if (!invitation) {
     return NextResponse.json({ ok: false, message: "Không tìm thấy vé." }, { status: 404 });
   }
 
-  const member = await getMemberById(ticket.memberId);
+  const member = await getMemberById(invitation.memberId);
   if (!member) {
     return NextResponse.json({ ok: false, message: "Không tìm thấy thông tin thành viên." }, { status: 404 });
   }
 
   // Generate addInfo: [Họ Tên Không Dấu] [Niên Khóa] [SĐT]
   const nameUnaccented = removeAccents(member.name).toUpperCase().trim();
-  const nienKhoaFormatted = (ticket.nienKhoa || "").replace(/\D/g, "").trim(); // Remove space and dash
+  const nienKhoaFormatted = (invitation.nienKhoa || "").replace(/\D/g, "").trim(); // Remove space and dash
   const addInfo = `${nameUnaccented} ${nienKhoaFormatted} ${member.phone}`.trim();
 
   return NextResponse.json({
     ok: true,
-    ticket: {
-      code: ticket.code,
-      amount: ticket.amount,
-      status: ticket.status,
-      sizes: ticket.sizes,
-      snacks: ticket.snacks,
-      checkedIn: ticket.checkedIn,
+    invitation: {
+      code: invitation.code,
+      amount: invitation.amount,
+      status: invitation.status,
+      sizes: invitation.sizes,
+      snacks: invitation.snacks,
+      checkedIn: invitation.checkedIn,
     },
     member: {
       name: member.name,
-      nienKhoa: ticket.nienKhoa,
+      nienKhoa: invitation.nienKhoa,
       phone: member.phone,
     },
     addInfo,

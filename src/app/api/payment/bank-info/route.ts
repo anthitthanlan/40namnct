@@ -1,28 +1,28 @@
 import { NextResponse } from "next/server";
 import { getPayBankConfig, buildTransferContent } from "@/lib/emvqr";
-import { findTicketById, getMemberById } from "@/lib/members";
+import { findInvitationById, getMemberById } from "@/lib/members";
 
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/payment/bank-info?ticketId=xxx
+ * GET /api/payment/bank-info?invitationId=xxx
  *
  * Trả về thông tin ngân hàng + nội dung CK cho client render QR động.
  * Không hardcode — đọc từ biến môi trường.
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const ticketId = searchParams.get("ticketId");
+  const invitationId = searchParams.get("invitationId");
 
-  if (!ticketId) {
+  if (!invitationId) {
     return NextResponse.json(
-      { ok: false, message: "Thiếu ticketId." },
+      { ok: false, message: "Thiếu invitationId." },
       { status: 400 },
     );
   }
 
   // Sample/Dev mode
-  if (ticketId === "SAMPLE" || ticketId === "DEV") {
+  if (invitationId === "SAMPLE" || invitationId === "DEV") {
     // Giữ nguyên tài khoản test cho DEV/SAMPLE
     const bank = {
       bin: "970436",
@@ -33,22 +33,23 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       bank,
-      amount: ticketId === "DEV" ? 20_000 : 500_000,
-      addInfo: ticketId === "DEV" ? "DEV AI TEST" : "LAI NHAT PHONG 20052008 0909000900",
-      ticketCode: ticketId,
+      amount: invitationId === "DEV" ? 20_000 : 500_000,
+      addInfo: invitationId === "DEV" ? "DEV AI TEST" : "LAI NHAT PHONG 20052008 0909000900",
+      invitationCode: invitationId,
+      id: invitationId,
       status: "pending_payment",
     });
   }
 
-  const ticket = await findTicketById(ticketId);
-  if (!ticket) {
+  const invitation = await findInvitationById(invitationId);
+  if (!invitation) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy vé." },
       { status: 404 },
     );
   }
 
-  const member = await getMemberById(ticket.memberId);
+  const member = await getMemberById(invitation.memberId);
   if (!member) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy thông tin đăng ký." },
@@ -59,16 +60,17 @@ export async function GET(req: Request) {
   const bank = getPayBankConfig();
   const addInfo = buildTransferContent(
     member.name,
-    ticket.nienKhoa || "",
+    invitation.nienKhoa || "",
     member.phone,
   );
 
   return NextResponse.json({
     ok: true,
     bank,
-    amount: ticket.amount,
+    amount: invitation.amount,
     addInfo,
-    ticketCode: ticket.code,
-    status: ticket.status,
+    invitationCode: invitation.code,
+    id: invitation.id,
+    status: invitation.status,
   });
 }

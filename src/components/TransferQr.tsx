@@ -10,19 +10,19 @@ import {
   getVietQrFallbackUrl,
   type PaymentSession,
 } from "@/lib/emvqr";
-import { formatVnd } from "@/lib/ticket-view";
+import { formatVnd } from "@/lib/invitation-view";
 
 export default function TransferQr({
   amount,
   memberCode,
-  ticketId,
+  invitationId,
   size = 180,
   admin = false,
   onClaimed,
 }: {
   amount: number;
   memberCode: string;
-  ticketId?: string;
+  invitationId?: string;
   size?: number;
   admin?: boolean;
   onClaimed?: () => void;
@@ -92,18 +92,18 @@ export default function TransferQr({
   }
 
   async function handleClaimPayment() {
-    if (!ticketId) {
+    if (!invitationId) {
       setClaimMessage("Đã ghi nhận thanh toán cho mã phiên: " + session.sessionId);
       return;
     }
     setClaiming(true);
     setClaimMessage("");
     try {
-      const res = await fetch("/api/tickets/claim", {
+      const res = await fetch("/api/invitations/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ticketId,
+          invitationId,
           sessionId: session.sessionId,
         }),
       });

@@ -11,9 +11,10 @@ import AdminRegistrations from "./AdminRegistrations";
 import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
 import AdminEditPost from "./AdminEditPost";
+import AdminCameraScanner from "@/components/AdminCameraScanner";
 
 type View = "checking" | "anon" | "admin";
-type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "media" | "accounts" | "edit";
+type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "media" | "accounts" | "scanner" | "edit";
 
 type Draft = {
   id: string | null;
@@ -121,6 +122,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const [adminInfo, setAdminInfo] = useState<{
     fullName: string;
     role: AdminRole;
+    username: string;
   } | null>(null);
 
   const flash = useCallback((ok: boolean, text: string) => {
@@ -161,6 +163,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
           setAdminInfo({
             fullName: data.admin?.fullName || "Admin",
             role: data.admin?.role || "editor",
+            username: data.admin?.username || "",
           });
           setView("admin");
           await loadPosts();
@@ -195,6 +198,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
       setAdminInfo({
         fullName: data.admin?.fullName || "Admin",
         role: data.admin?.role || "editor",
+        username: data.admin?.username || "",
       });
       setTab("pending"); // Reset tab
       setView("admin");
@@ -329,7 +333,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                   className="h-16 w-auto object-contain drop-shadow-sm"
                 />
               </div>
-              <h1 className="t-stagger is-shown mt-8 flex flex-wrap justify-center gap-[0.3em] md:flex-col md:gap-0 text-2xl font-black tracking-tight text-blue-900 sm:text-3xl">
+              <h1 className="t-stagger is-shown mt-8 flex flex-row flex-nowrap whitespace-nowrap justify-center gap-[0.3em] text-2xl font-black tracking-tight text-blue-900 sm:text-3xl">
                 <span className="t-stagger-line t-stagger-line--1">
                   Quản trị
                 </span>
@@ -487,13 +491,14 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
       title: "Hệ thống",
       items: [
         ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
+        ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
         ...(!isEditor ? [{ key: "media", label: "Media cộng đồng" } as const] : []),
-        ...(isSuperAdmin ? [{ key: "accounts", label: "Quản lý tài khoản" } as const] : []),
+        { key: "accounts", label: "Quản lý tài khoản" },
       ],
     },
   ].filter((g) => g.items.length > 0);
 
-  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "invitations", "media", "accounts", "edit"];
+  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "invitations", "scanner", "media", "accounts", "edit"];
   const activeIndex = ALL_TABS.indexOf(tab);
 
   return (
@@ -501,7 +506,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
       <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-8 lg:gap-16">
         {/* SIDEBAR */}
         <aside className="md:w-[280px] shrink-0">
-          <div className="md:sticky md:top-20 space-y-4 md:space-y-8">
+          <div className="md:sticky md:top-10 space-y-4 md:space-y-6 max-h-[calc(100vh-40px)] overflow-y-auto pb-6 pr-2 custom-scrollbar">
             {/* Header Info */}
             <div className={tab === "edit" ? "hidden md:block" : ""}>
               <h1 className="text-3xl font-extrabold text-slate-900">
@@ -552,13 +557,13 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
             )}
 
             {/* Desktop Side Navigation Menu */}
-            <nav className="hidden md:flex flex-col items-start gap-8 pt-6">
+            <nav className="hidden md:flex flex-col items-start gap-6 pt-2">
               {menuGroups.map((group) => (
-                <div key={group.title} className="flex flex-col items-start gap-3">
+                <div key={group.title} className="flex flex-col items-start gap-2">
                   <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                     {group.title}
                   </h3>
-                  <div className="flex flex-col items-start gap-4">
+                  <div className="flex flex-col items-start gap-1.5">
                     {group.items.map(({ key, label }) => {
                       const isCurrent = tab === key;
                       return (
@@ -566,7 +571,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                           key={key}
                           type="button"
                           onClick={() => handleTabChange(key as Tab)}
-                          className={`group/link relative py-2 text-left text-[15px] font-extrabold transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center ${isCurrent
+                          className={`group/link relative py-1.5 text-left text-[15px] font-extrabold transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center ${isCurrent
                               ? "text-[#1d4ed8]"
                               : "text-slate-600 hover:text-slate-900"
                             }`}
@@ -585,11 +590,11 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                 </div>
               ))}
 
-              <div className="pt-4 border-t border-slate-200 mt-2 w-full">
+              <div className="pt-3 border-t border-slate-200 mt-2 w-full">
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="group/link relative py-2 text-left text-[15px] font-extrabold text-rose-500 hover:text-rose-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center"
+                  className="group/link relative py-1.5 text-left text-[15px] font-extrabold text-rose-500 hover:text-rose-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center"
                 >
                   <span>Đăng xuất</span>
                   <span
@@ -627,8 +632,10 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                 content = <AdminRegistrations onAuthError={() => setView("anon")} />;
               } else if (k === "media") {
                 content = <AdminMedia onAuthError={() => setView("anon")} />;
-              } else if (k === "accounts" && isSuperAdmin) {
-                content = <AdminAccounts onAuthError={() => setView("anon")} />;
+              } else if (k === "scanner") {
+                content = <AdminCameraScanner />;
+              } else if (k === "accounts") {
+                content = <AdminAccounts adminInfo={adminInfo!} onAuthError={() => setView("anon")} />;
               } else if (k === "edit") {
                 content = (
                   <AdminEditPost
@@ -640,7 +647,6 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                       params.delete("edit");
                       router.push(`${pathname}?${params.toString()}`);
                     }}
-                    adminInfo={adminInfo!}
                   />
                 );
               } else if (k === "pending" || k === "published" || k === "draft" || k === "all") {

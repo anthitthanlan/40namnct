@@ -7,7 +7,7 @@ export type Size = (typeof SIZES)[number];
 /** Giá Combo: Áo kỷ niệm + Đồ ăn nhẹ = 500.000đ */
 export const UNIT_PRICE = 500_000;
 
-export type TicketStatus =
+export type InvitationStatus =
   | "pending" // Đăng ký dùng, đang chờ chuyển khoản
   | "pending_payment" // Mới tạo, đang chờ chuyển khoản
   | "pending_approval" // Người dùng đã xác nhận chuyển khoản, chờ Admin duyệt cấp vé (24h)
@@ -15,19 +15,22 @@ export type TicketStatus =
   | "rejected" // Bị từ chối (chưa nhận được tiền)
   | "cancelled"; // Đã hủy
 
-export type TicketView = {
+export type InvitationView = {
   id: string;
   code: string;
   memberId: string;
+  memberPhone?: string;
+  memberEmail?: string;
   type: "individual" | "group";
   attendeeName: string;
+  nienKhoa?: string;
   size: string | null;
   quantity: number;
   sizes: Record<string, number>;
   /** Số lượng Combo (Áo + Ăn) */
   snacks: number;
   amount: number;
-  status: TicketStatus;
+  status: InvitationStatus;
   note: string;
   lastSessionId?: string;
   paymentClaimedAt?: string;
@@ -36,12 +39,17 @@ export type TicketView = {
     amount: number | null;
     content: string | null;
     time: string | null;
-    confidence: "high" | "low" | "mismatch";
+    transactionId?: string | null;
+    transactionStatus?: "success" | "pending" | "failed" | "unknown";
+    trustScore?: number | null;
+    confidence: "high" | "low" | "mismatch" | "system_error";
     note: string;
     provider: string;
   };
   checkedIn?: boolean;
   checkedInAt?: string | null;
+  shirtReceived?: boolean;
+  shirtReceivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -50,7 +58,7 @@ export function formatVnd(amount: number): string {
   return `${amount.toLocaleString("vi-VN")}đ`;
 }
 
-export function ticketStatusInfo(status: TicketStatus | string): {
+export function invitationStatusInfo(status: InvitationStatus | string): {
   label: string;
   cls: string;
   desc?: string;
@@ -91,7 +99,7 @@ export function ticketStatusInfo(status: TicketStatus | string): {
 
 /** "Size L" hoặc "M×2 · L×3 · XL×1" */
 export function sizesLabel(
-  type: TicketView["type"],
+  type: InvitationView["type"],
   size: string | null,
   sizes: Record<string, number>,
 ): string {
@@ -102,77 +110,3 @@ export function sizesLabel(
   return parts.join(" · ");
 }
 
-/* ==========================================================================
-   BẢO MẬT VÉ: MÃ QR ĐỘNG THAY ĐỔI MỖI 30 GIÂY (TIME-BASED DYNAMIC QR)
-   ========================================================================== */
-
-export const TICKET_ROTATION_MS = 30_000;
-
-function simpleHash(str: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) {
-    hash ^= str.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash >>> 0;
-}
-
-/**
- * Sinh chuỗi bảo mật QR động cho vé đã duyệt
- * Thay đổi mỗi 30s dựa trên thời gian thực
- */
-export function getDynamicTicketPayload(
-  ticketId: string,
-  ticketCode: string,
-  now = Date.now(),
-): { payload: string; remainingSeconds: number; windowIndex: number } {
-  const windowIndex = Math.floor(now / TICKET_ROTATION_MS);
-  const elapsedInWindow = now % TICKET_ROTATION_MS;
-  const remainingSeconds = Math.ceil(
-    (TICKET_ROTATION_MS - elapsedInWindow) / 1000,
-  );
-
-  const hashVal = simpleHash(`NCT40:${ticketId}:${ticketCode}:${windowIndex}`);
-  const sig = hashVal.toString(36).toUpperCase().padStart(6, "0").slice(-6);
-
-  // Payload định dạng chuẩn máy quét: "NCT40-PASS|[ticketId]|[ticketCode]|[windowIndex]|[sig]"
-  const payload = `NCT40-PASS|${ticketId}|${ticketCode}|${windowIndex}|${sig}`;
-  return { payload, remainingSeconds, windowIndex };
-}
-
-/**
- * Xác minh mã QR động (cho phép lệch ±1 cửa sổ 30s để xử lý độ trễ mạng)
- */
-export function verifyDynamicTicketPayload(
-  payloadStr: string,
-  now = Date.now(),
-): { valid: boolean; ticketId?: string; ticketCode?: string; message?: string } {
-  const parts = payloadStr.split("|");
-  if (parts.length !== 5 || parts[0] !== "NCT40-PASS") {
-    return { valid: false, message: "Mã QR không đúng định dạng vé NCT40" };
-  }
-
-  const [, ticketId, ticketCode, winStr, clientSig] = parts;
-  const clientWindow = parseInt(winStr, 10);
-  const currentWindow = Math.floor(now / TICKET_ROTATION_MS);
-
-  // Cho phép cửa sổ [hiện tại - 1, hiện tại, hiện tại + 1] (~90s an toàn)
-  if (Math.abs(currentWindow - clientWindow) > 1) {
-    return { valid: false, message: "Mã QR đã hết hạn 30s, vui lòng quét lại" };
-  }
-
-  const expectedHash = simpleHash(
-    `NCT40:${ticketId}:${ticketCode}:${clientWindow}`,
-  );
-  const expectedSig = expectedHash
-    .toString(36)
-    .toUpperCase()
-    .padStart(6, "0")
-    .slice(-6);
-
-  if (expectedSig !== clientSig) {
-    return { valid: false, message: "Chữ ký bảo mật mã QR không khớp" };
-  }
-
-  return { valid: true, ticketId, ticketCode };
-}

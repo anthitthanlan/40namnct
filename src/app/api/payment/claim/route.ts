@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { claimPayment, listTickets } from "@/lib/members";
+import { claimPayment, listInvitations } from "@/lib/members";
 
 export const dynamic = "force-dynamic";
 
@@ -17,16 +17,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: "Thiếu ID định danh." }, { status: 400 });
   }
 
-  // Find ticket by id
-  const tickets = await listTickets();
-  const ticket = tickets.find(t => t.id === id);
+  // Find invitation by id
+  const invitations = await listInvitations();
+  const invitation = invitations.find(t => t.id === id);
   
-  if (!ticket) {
+  if (!invitation) {
     return NextResponse.json({ ok: false, message: "Không tìm thấy vé." }, { status: 404 });
   }
 
   // Claim payment
-  const updated = await claimPayment(ticket.id);
+  const updated = await claimPayment(invitation.id);
   if (!updated) {
     return NextResponse.json({ ok: false, message: "Không thể cập nhật trạng thái vé." }, { status: 500 });
   }

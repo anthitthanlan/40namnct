@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAdminRequest, unauthorized } from "@/lib/auth";
+import { getAdminFromRequest, unauthorized } from "@/lib/auth";
 import { createPost, deriveExcerpt, listAll, sortAdmin } from "@/lib/posts";
+import { logAction } from "@/lib/action-logs";
 
 export const dynamic = "force-dynamic";
 
 /** Danh sách toàn bộ bài viết mọi trạng thái (chỉ admin) */
 export async function GET(req: NextRequest) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin) return unauthorized();
   const posts = await listAll();
   return NextResponse.json({ ok: true, posts: sortAdmin(posts) });
 }
@@ -18,7 +20,8 @@ function str(v: unknown, max: number): string {
 
 /** Admin viết bài mới - bài từ admin được đánh dấu huy hiệu "Ban Biên tập" */
 export async function POST(req: NextRequest) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin) return unauthorized();
 
   let body: Record<string, unknown>;
   try {
@@ -56,6 +59,16 @@ export async function POST(req: NextRequest) {
     pinned: body.pinned === true,
     cover: str(body.cover, 500) || null,
   });
+
+  await logAction(
+    "create_post",
+    "posts",
+    post.id,
+    admin.fullName || admin.username,
+    admin.username,
+    admin.role,
+    `Tạo bài viết mới: ${post.title}`,
+  );
 
   return NextResponse.json({ ok: true, post }, { status: 201 });
 }

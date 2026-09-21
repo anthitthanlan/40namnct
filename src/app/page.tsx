@@ -7,7 +7,7 @@ import Reveal from "@/components/Reveal";
 import CountdownBadge from "@/components/CountdownBadge";
 import ContributionCounter from "@/components/ContributionCounter";
 import { listPublished } from "@/lib/posts";
-import { listTickets } from "@/lib/members";
+import { listInvitations } from "@/lib/members";
 
 export const revalidate = 60;
 
@@ -18,14 +18,14 @@ export default async function Home() {
   const homePosts = [...pinnedPosts, ...nonPinnedPosts];
 
   // Sổ sao kê đóng góp: chỉ tính các đơn vé ĐÃ DUYỆT (giống AdminRegistrations)
-  const tickets = await listTickets();
-  const confirmedTickets = tickets.filter((t) => t.status === "confirmed");
-  const totalAmount = confirmedTickets.reduce((sum, t) => sum + t.amount, 0);
-  const attendeeCount = confirmedTickets.reduce(
+  const invitations = await listInvitations();
+  const confirmedInvitations = invitations.filter((t) => t.status === "confirmed");
+  const totalAmount = confirmedInvitations.reduce((sum, t) => sum + t.amount, 0);
+  const attendeeCount = confirmedInvitations.reduce(
     (sum, t) => sum + (t.quantity || 1),
     0,
   );
-  const memberCount = new Set(confirmedTickets.map((t) => t.memberId)).size;
+  const memberCount = new Set(confirmedInvitations.map((t) => t.memberId)).size;
 
   return (
     <main>
@@ -284,7 +284,7 @@ export default async function Home() {
 
       {/* Sổ sao kê đóng góp - tổng số tiền đã xác nhận */}
       <ContributionCounter
-        orderCount={confirmedTickets.length}
+        orderCount={confirmedInvitations.length}
         attendeeCount={attendeeCount}
         memberCount={memberCount}
       />

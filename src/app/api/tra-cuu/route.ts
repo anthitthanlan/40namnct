@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { normalizePhone, listMembers, listTickets } from "@/lib/members";
+import { normalizePhone, listMembers, listInvitations } from "@/lib/members";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Lấy danh sách vé của thành viên
-  const allTickets = await listTickets();
-  const memberTickets = allTickets
+  const allInvitations = await listInvitations();
+  const memberInvitations = allInvitations
     .filter((t) => t.memberId === member.id)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((t) => ({
@@ -77,8 +77,7 @@ export async function POST(req: NextRequest) {
     ok: true,
     member: {
       name: member.name,
-      code: member.code,
     },
-    tickets: memberTickets,
+    invitations: memberInvitations,
   });
 }

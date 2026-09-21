@@ -1,43 +1,43 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
-import { findTicketById } from "@/lib/members";
+import { findInvitationById } from "@/lib/members";
 import { getLocalReceiptBuffer } from "@/lib/r2";
 
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/admin/receipt/[ticketId]
+ * GET /api/admin/receipt/[invitationId]
  *
  * Serve ảnh biên lai local cho Admin dashboard (có auth check).
  * Dùng khi R2 chưa cấu hình (dev/test mode).
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ ticketId: string }> },
+  { params }: { params: Promise<{ invitationId: string }> },
 ) {
   const admin = getAdminFromRequest(req);
   if (!admin || admin.role === "editor") return unauthorized();
 
-  const { ticketId } = await params;
+  const { invitationId } = await params;
 
-  if (!ticketId) {
-    return NextResponse.json({ ok: false, message: "Thiếu ticketId." }, { status: 400 });
+  if (!invitationId) {
+    return NextResponse.json({ ok: false, message: "Thiếu invitationId." }, { status: 400 });
   }
 
-  // Kiểm tra ticket tồn tại
-  const ticket = await findTicketById(ticketId);
-  if (!ticket) {
+  // Kiểm tra invitation tồn tại
+  const invitation = await findInvitationById(invitationId);
+  if (!invitation) {
     return NextResponse.json({ ok: false, message: "Không tìm thấy vé." }, { status: 404 });
   }
 
-  // Nếu ticket có receiptUrl là R2 URL thực, redirect thẳng
-  if (ticket.receiptUrl && ticket.receiptUrl.startsWith("http")) {
-    return NextResponse.redirect(ticket.receiptUrl);
+  // Nếu invitation có receiptUrl là R2 URL thực, redirect thẳng
+  if (invitation.receiptUrl && invitation.receiptUrl.startsWith("http")) {
+    return NextResponse.redirect(invitation.receiptUrl);
   }
 
   // Fallback: đọc file local
-  const local = await getLocalReceiptBuffer(ticketId);
+  const local = await getLocalReceiptBuffer(invitationId);
   if (!local) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy ảnh biên lai." },

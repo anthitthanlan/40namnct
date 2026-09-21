@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isAdminRequest, unauthorized } from "@/lib/auth";
+import { getAdminFromRequest, unauthorized } from "@/lib/auth";
 import { deletePost, updatePost, type PostStatus } from "@/lib/posts";
+import { logAction } from "@/lib/action-logs";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,8 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin) return unauthorized();
   const { id } = await params;
 
   let body: Record<string, unknown>;
@@ -67,6 +69,17 @@ export async function PATCH(
       { status: 404 },
     );
   }
+
+  await logAction(
+    "update_post",
+    "posts",
+    id,
+    admin.fullName || admin.username,
+    admin.username,
+    admin.role,
+    `Cập nhật bài viết: ${post.title}`,
+  );
+
   return NextResponse.json({ ok: true, post });
 }
 
@@ -74,7 +87,8 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!isAdminRequest(req)) return unauthorized();
+  const admin = getAdminFromRequest(req);
+  if (!admin) return unauthorized();
   const { id } = await params;
   const deleted = await deletePost(id);
   if (!deleted) {
@@ -83,5 +97,16 @@ export async function DELETE(
       { status: 404 },
     );
   }
+
+  await logAction(
+    "delete_post",
+    "posts",
+    id,
+    admin.fullName || admin.username,
+    admin.username,
+    admin.role,
+    `Xóa bài viết ID: ${id}`,
+  );
+
   return NextResponse.json({ ok: true });
 }

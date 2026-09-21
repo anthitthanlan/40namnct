@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "d1db0074-c3eb-46d1-a330-698e530b71ae",
+    "action": "shirt_received",
+    "entityId": "sample",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminRole": "super_admin",
+    "details": "Trao áo: Lại Nhất Phong (Cá nhân) (Size L)",
+    "createdAt": "2026-09-20T17:54:19.341Z"
+  },
+  {
+    "id": "06683b7f-2c8d-42eb-a4a4-f040162e1874",
+    "action": "update_status",
+    "entityId": "sample",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminRole": "super_admin",
+    "details": "Cập nhật nhận áo thành: Chưa nhận",
+    "createdAt": "2026-09-20T17:55:37.366Z"
+  }
+]

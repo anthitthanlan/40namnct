@@ -9,18 +9,18 @@ import QRCode from "qrcode";
 import * as htmlToImage from "html-to-image";
 import { createPortal } from "react-dom";
 
-function TicketContent() {
+function InvitationContent() {
   const searchParams = useSearchParams();
   const rawId = searchParams.get("id");
   const [id] = useState(rawId);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [ticketQrUrl, setTicketQrUrl] = useState("");
+  const [invitationQrUrl, setInvitationQrUrl] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [scale, setScale] = useState(1);
   const [isIosSafari, setIsIosSafari] = useState(false);
-  const ticketRef = useRef<HTMLDivElement>(null);
+  const invitationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Detect iOS Safari
@@ -52,7 +52,7 @@ function TicketContent() {
       return;
     }
 
-    fetch(`/api/payment/ticket?id=${id}`)
+    fetch(`/api/payment/invitation?id=${id}`)
       .then((res) => res.json())
       .then((res) => {
         if (!res.ok) {
@@ -66,32 +66,32 @@ function TicketContent() {
   }, [id]);
 
   useEffect(() => {
-    if (data?.ticket) {
-      const { ticket, member } = data;
+    if (data?.invitation) {
+      const { invitation, member } = data;
       const name = member?.name || "Khách";
       const phone = member?.phone || "";
-      const code = ticket?.code || "";
+      const code = invitation?.code || "";
       const text = `${name} - ${phone} - ${code}`;
       
       try {
         QRCode.toDataURL(text, { width: 300, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
-          .then(url => setTicketQrUrl(url))
+          .then(url => setInvitationQrUrl(url))
           .catch(err => {
             console.error("QR Gen error:", err);
-            setTicketQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`);
+            setInvitationQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`);
           });
       } catch (err) {
         console.error("QR Sync error:", err);
-        setTicketQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`);
+        setInvitationQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`);
       }
     }
   }, [data]);
 
   const handleDownload = async () => {
-    if (!ticketRef.current) return;
+    if (!invitationRef.current) return;
     setDownloading(true);
     try {
-      const dataUrl = await htmlToImage.toPng(ticketRef.current, {
+      const dataUrl = await htmlToImage.toPng(invitationRef.current, {
         pixelRatio: 2,
         backgroundColor: "#ffffff",
         style: {
@@ -100,7 +100,7 @@ function TicketContent() {
       });
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = `thu-moi-${data.ticket.code}.png`;
+      a.download = `thu-moi-${data.invitation.code}.png`;
       a.click();
     } catch (err) {
       console.error("Download error:", err);
@@ -127,7 +127,7 @@ function TicketContent() {
     );
   }
 
-  const { ticket, member } = data;
+  const { invitation, member } = data;
 
   return (
     <main className="min-h-screen bg-gray-50 pt-28 pb-20 px-3 md:px-6">
@@ -144,7 +144,7 @@ function TicketContent() {
         </Reveal>
 
         <div className="flex flex-col-reverse lg:flex-row lg:items-start lg:justify-center gap-8 lg:gap-20 xl:gap-32 mt-6 w-full max-w-[1200px] mx-auto">
-          {/* Left Column: Ticket Card (~3 parts) */}
+          {/* Left Column: Invitation Card (~3 parts) */}
           <div className="w-full lg:w-[380px] flex flex-col items-center shrink-0" style={{ height: scale < 1 ? `calc(600px * ${scale})` : 'auto' }}>
             <Reveal delay={150} className="w-full flex justify-center">
               {/* Wrapper scale: tự thu nhỏ trên màn hình hẹp (<400px), giữ nguyên không gian, không làm bể bố cục */}
@@ -152,9 +152,9 @@ function TicketContent() {
                 className="origin-top flex justify-center"
                 style={{ transform: `scale(${scale})` }}
               >
-                {/* TICKET CARD - Cố định 380px, cấm OS tự zoom chữ */}
+                {/* INVITATION CARD - Cố định 380px, cấm OS tự zoom chữ */}
                 <div 
-                  ref={ticketRef}
+                  ref={invitationRef}
                   className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 relative w-[380px] shrink-0 mx-auto p-6"
                   style={{ WebkitTextSizeAdjust: "none", textSizeAdjust: "none" }}
                 >
@@ -187,9 +187,9 @@ function TicketContent() {
 
                     {/* QR Code */}
                     <div className="flex justify-center mb-5 mt-3">
-                      {ticketQrUrl ? (
+                      {invitationQrUrl ? (
                         <div className="bg-white p-2.5 rounded-2xl shadow-sm border border-gray-200 inline-block">
-                          <img src={ticketQrUrl} alt="Ticket QR" className="w-44 h-44 rounded-lg" crossOrigin="anonymous" />
+                          <img src={invitationQrUrl} alt="Invitation QR" className="w-44 h-44 rounded-lg" crossOrigin="anonymous" />
                         </div>
                       ) : (
                         <div className="w-[196px] h-[196px] bg-gray-100 animate-pulse rounded-2xl border border-gray-200" />
@@ -200,7 +200,7 @@ function TicketContent() {
                       <p className="beau-rivage-regular text-[40px] text-emerald-700 leading-none pt-2">Memories Alive Again</p>
                     </div>
 
-                    {/* Ticket Info */}
+                    {/* Invitation Info */}
                     <div className="space-y-1.5 text-[15px] text-gray-800">
                       <p>
                         <span className="font-semibold text-gray-700 w-28 inline-block">Cựu học sinh:</span>
@@ -208,7 +208,7 @@ function TicketContent() {
                       </p>
                       <p>
                         <span className="font-semibold text-gray-700 w-28 inline-block">Niên khóa:</span>
-                        <span className="prata-regular font-bold">{ticket.nienKhoa || "Không rõ"}</span>
+                        <span className="prata-regular font-bold">{invitation.nienKhoa || "Không rõ"}</span>
                       </p>
                       <p>
                         <span className="font-semibold text-gray-700 w-28 inline-block">SĐT:</span>
@@ -277,14 +277,14 @@ function TicketContent() {
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200 gap-4">
                   <span className="text-gray-500 font-medium shrink-0">Loại đăng ký</span>
                   <span className="font-bold text-gray-900 text-base sm:text-lg text-right">
-                    {ticket.type === "individual" ? "Cá nhân" : "Tập thể"}
+                    {invitation.type === "individual" ? "Cá nhân" : "Tập thể"}
                   </span>
                 </div>
 
                 <div className="flex justify-between items-start pb-4 border-b border-gray-200 gap-4">
                   <span className="text-gray-500 font-medium shrink-0 sm:mt-0.5">Số lượng áo đăng ký</span>
                   <div className="text-right text-base sm:text-lg">
-                    {Object.entries(ticket.sizes || {}).map(([size, qty]) => (
+                    {Object.entries(invitation.sizes || {}).map(([size, qty]) => (
                       <div key={size} className="font-bold text-gray-900 mb-1">
                         Size {size} <span className="text-gray-400 font-normal ml-2">x {qty as number}</span>
                       </div>
@@ -295,7 +295,7 @@ function TicketContent() {
                 <div className="flex justify-between items-center pt-2 gap-4">
                   <span className="text-gray-900 font-bold text-base sm:text-lg shrink-0">Thành tiền</span>
                   <span className="font-black text-emerald-600 text-2xl sm:text-3xl tracking-tight text-right break-words max-w-[60%]">
-                    {ticket.amount.toLocaleString("vi-VN")}đ
+                    {invitation.amount.toLocaleString("vi-VN")}đ
                   </span>
                 </div>
               </div>
@@ -304,7 +304,7 @@ function TicketContent() {
               <div className="hidden lg:flex flex-row items-center justify-end gap-6 mt-10 pt-8 border-t border-gray-200 w-full">
                 <button
                   onClick={handleDownload}
-                  disabled={downloading || !ticketQrUrl}
+                  disabled={downloading || !invitationQrUrl}
                   className="group/btn relative overflow-hidden bg-[#1d4ed8] text-white rounded-xl px-6 py-3.5 font-bold inline-flex items-center justify-center shadow-lg hover:shadow-yellow-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                 >
                   <div className={`absolute inset-0 bg-live-gradient transition-opacity duration-300 pointer-events-none ${downloading ? 'opacity-100' : 'opacity-0 group-hover/btn:opacity-100'}`}></div>
@@ -337,7 +337,7 @@ function TicketContent() {
                   <div className={`fixed inset-x-0 bottom-0 z-[100] px-4 flex justify-center pointer-events-none lg:hidden ${isIosSafari ? "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]" : "pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"}`}>
                     <button
                       onClick={handleDownload}
-                      disabled={downloading || !ticketQrUrl}
+                      disabled={downloading || !invitationQrUrl}
                       className="pointer-events-auto bg-[#1d4ed8] text-white shadow-[0_10px_40px_rgba(29,78,216,0.3)] rounded-full w-[220px] h-[56px] flex items-center justify-center font-bold text-[15px] active:scale-95 transition-transform"
                     >
                       <svg className="w-5 h-5 shrink-0 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,10 +357,10 @@ function TicketContent() {
   );
 }
 
-export default function TicketPage() {
+export default function InvitationPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-gray-50"></div>}>
-      <TicketContent />
+      <InvitationContent />
     </Suspense>
   );
 }

@@ -4,13 +4,13 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import {
-  ticketStatusInfo,
+  invitationStatusInfo,
   formatVnd,
   sizesLabel,
-} from "@/lib/ticket-view";
-import type { TicketStatus } from "@/lib/ticket-view";
+} from "@/lib/invitation-view";
+import type { InvitationStatus } from "@/lib/invitation-view";
 
-type TicketResult = {
+type InvitationResult = {
   id: string;
   code: string;
   type: "individual" | "group";
@@ -18,15 +18,15 @@ type TicketResult = {
   quantity: number;
   sizes: Record<string, number>;
   amount: number;
-  status: TicketStatus;
+  status: InvitationStatus;
   note: string;
   checkedIn?: boolean;
   createdAt: string;
 };
 
 type LookupResult = {
-  member: { name: string; code: string };
-  tickets: TicketResult[];
+  member: { name: string };
+  invitations: InvitationResult[];
 };
 
 export default function TraCuuClient() {
@@ -35,7 +35,7 @@ export default function TraCuuClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<LookupResult | null>(null);
-  const [expandedTicket, setExpandedTicket] = useState<string | null>(null);
+  const [expandedInvitation, setExpandedInvitation] = useState<string | null>(null);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -61,7 +61,7 @@ export default function TraCuuClient() {
         setError(data.message || "Không tìm thấy thông tin.");
         return;
       }
-      setResult({ member: data.member, tickets: data.tickets });
+      setResult({ member: data.member, invitations: data.invitations });
     } catch {
       setError("Có lỗi xảy ra, vui lòng thử lại.");
     } finally {
@@ -72,7 +72,7 @@ export default function TraCuuClient() {
   function resetSearch() {
     setResult(null);
     setError("");
-    setExpandedTicket(null);
+    setExpandedInvitation(null);
   }
 
   return (
@@ -182,7 +182,7 @@ export default function TraCuuClient() {
           </div>
 
           {/* Danh sách vé */}
-          {result.tickets.length === 0 ? (
+          {result.invitations.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
               <p className="text-sm text-slate-500">
                 Bạn chưa có vé nào. Hãy{" "}
@@ -196,19 +196,19 @@ export default function TraCuuClient() {
               </p>
             </div>
           ) : (
-            result.tickets.map((ticket) => {
-              const status = ticketStatusInfo(ticket.status);
-              const isExpanded = expandedTicket === ticket.id;
+            result.invitations.map((invitation) => {
+              const status = invitationStatusInfo(invitation.status);
+              const isExpanded = expandedInvitation === invitation.id;
               return (
                 <div
-                  key={ticket.id}
+                  key={invitation.id}
                   className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden"
                 >
                   {/* Header vé */}
                   <button
                     type="button"
                     onClick={() =>
-                      setExpandedTicket(isExpanded ? null : ticket.id)
+                      setExpandedInvitation(isExpanded ? null : invitation.id)
                     }
                     className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-slate-50"
                   >
@@ -221,18 +221,18 @@ export default function TraCuuClient() {
                         </span>
                       </div>
                       <p className="mt-1.5 text-sm font-semibold text-slate-700">
-                        {ticket.type === "individual"
-                          ? `Vé cá nhân · ${ticket.attendeeName}`
-                          : `Vé tập thể · ${ticket.quantity} suất`}
+                        {invitation.type === "individual"
+                          ? `Vé cá nhân · ${invitation.attendeeName}`
+                          : `Vé tập thể · ${invitation.quantity} suất`}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-400">
-                        {formatVnd(ticket.amount)} ·{" "}
+                        {formatVnd(invitation.amount)} ·{" "}
                         {sizesLabel(
-                          ticket.type,
-                          ticket.type === "individual"
-                            ? Object.keys(ticket.sizes)[0] || null
+                          invitation.type,
+                          invitation.type === "individual"
+                            ? Object.keys(invitation.sizes)[0] || null
                             : null,
-                          ticket.sizes,
+                          invitation.sizes,
                         )}
                       </p>
                     </div>
@@ -251,18 +251,18 @@ export default function TraCuuClient() {
                       {status.desc && (
                         <p className="text-xs text-slate-500">{status.desc}</p>
                       )}
-                      {ticket.note && (
+                      {invitation.note && (
                         <p className="text-xs text-slate-600 mb-4">
-                          <strong>Ghi chú:</strong> {ticket.note}
+                          <strong>Ghi chú:</strong> {invitation.note}
                         </p>
                       )}
 
                       <div className="space-y-3 pt-2 border-t border-slate-200">
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-medium text-slate-600">Trạng thái thanh toán</span>
-                          {ticket.status === "confirmed" ? (
+                          {invitation.status === "confirmed" ? (
                             <span className="text-[13px] font-bold text-emerald-600">Đã thanh toán</span>
-                          ) : ticket.status === "pending_approval" ? (
+                          ) : invitation.status === "pending_approval" ? (
                             <span className="text-[13px] font-bold text-blue-600">Đang chờ xác thực</span>
                           ) : (
                             <span className="text-[13px] font-bold text-amber-600">Chưa thanh toán</span>
@@ -270,7 +270,7 @@ export default function TraCuuClient() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-medium text-slate-600">Trạng thái nhận áo</span>
-                          {(!ticket.sizes || Object.keys(ticket.sizes).length === 0) ? (
+                          {(!invitation.sizes || Object.keys(invitation.sizes).length === 0) ? (
                             <span className="text-[13px] font-medium text-slate-500">Không đăng ký</span>
                           ) : (
                             <span className="text-[13px] font-medium text-amber-600">Chưa nhận</span>
@@ -278,7 +278,7 @@ export default function TraCuuClient() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-medium text-slate-600">Điểm danh sự kiện</span>
-                          {ticket.checkedIn ? (
+                          {invitation.checkedIn ? (
                             <span className="text-[13px] font-bold text-emerald-600">Đã check-in</span>
                           ) : (
                             <span className="text-[13px] font-medium text-slate-500">Chưa điểm danh</span>
@@ -287,16 +287,16 @@ export default function TraCuuClient() {
                       </div>
 
                       <div className="flex justify-center pt-4 mt-2">
-                        {ticket.status === "pending_payment" ? (
+                        {invitation.status === "pending_payment" ? (
                           <Link
-                            href={`/payment-legacy?id=${ticket.id}`}
+                            href={`/payment-legacy?id=${invitation.id}`}
                             className="w-full text-center rounded-xl bg-[#1d4ed8] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700"
                           >
                             Thanh toán ngay
                           </Link>
                         ) : (
                           <Link
-                            href={`/thu-moi?id=${ticket.id}`}
+                            href={`/thu-moi?id=${invitation.id}`}
                             className="w-full text-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
                           >
                             Xem & Tải thư mời

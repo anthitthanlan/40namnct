@@ -15,22 +15,5 @@
     ],
     "createdAt": "2026-09-19T08:55:52.220Z",
     "updatedAt": "2026-09-19T08:55:52.220Z"
-  },
-  {
-    "id": "e9229000-92ca-4933-96c4-fc3397d9cfbf",
-    "username": "testuser2",
-    "fullName": "Test User",
-    "title": "Bạn",
-    "role": "editor",
-    "passwordHash": "651229fb0a1002d81c48b1df2e6dc26e:42552921bdd1a3dae232799d34e52138ba40c5e743699fc84a6ac2e39c87cf9d9cb766416a1d8d6eae5399cf6b152f8afb42e269eb0ae3083bfcc2c7830e0810",
-    "logs": [
-      {
-        "action": "account_created",
-        "detail": "Tài khoản được tạo bởi Super Admin",
-        "timestamp": "2026-09-19T08:59:31.164Z"
-      }
-    ],
-    "createdAt": "2026-09-19T08:59:31.164Z",
-    "updatedAt": "2026-09-19T08:59:31.164Z"
   }
 ]

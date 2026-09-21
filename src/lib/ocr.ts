@@ -23,6 +23,8 @@ export type OcrRawResult = {
   transactionId: string | null;
   /** Trạng thái giao dịch */
   transactionStatus: "success" | "pending" | "failed" | "unknown";
+  /** Điểm tin cậy (0-100) đánh giá độ chân thực của ảnh (không bị làm giả/cắt ghép) */
+  trustScore: number | null;
   /** Toàn bộ text OCR thô (debug) */
   rawText: string;
   /** Provider đã dùng */
@@ -62,11 +64,12 @@ Quy tắc bắt buộc:
 - Trường "content": sao chép chính xác chuỗi nội dung chuyển khoản như hiển thị trong biên lai.
 - Trường "time": sao chép chính xác chuỗi thời gian giao dịch như hiển thị trong biên lai.
 - Trường "transactionId": quét tìm và trả về chuỗi 'Mã giao dịch' hoặc 'Số tham chiếu' (VD: 681006, 6259BIDVE26ELVUF) như trong ảnh biên lai. Trả về null nếu không thấy.
-- Trường "transactionStatus": xác định trạng thái giao dịch trong ảnh. Trả về "success" nếu là biên lai đã chuyển tiền thành công, "pending" nếu là màn hình xác nhận trước khi bấm chuyển, "failed" nếu chuyển lỗi, hoặc "unknown" nếu không rõ.`;
+- Trường "transactionStatus": xác định trạng thái giao dịch trong ảnh. Trả về "success" nếu là biên lai đã chuyển tiền thành công, "pending" nếu là màn hình xác nhận trước khi bấm chuyển, "failed" nếu chuyển lỗi, hoặc "unknown" nếu không rõ.
+- Trường "trustScore": đánh giá độ chân thực của ảnh chụp (từ 0 đến 100). Trả về số điểm cao nếu đây là ảnh chụp màn hình ứng dụng ngân hàng nguyên bản. Trừ điểm nặng nếu phát hiện dấu hiệu chỉnh sửa, cắt ghép, độ phân giải mờ bất thường hoặc font chữ không đồng nhất.`;
 
 const USER_PROMPT = `Trích xuất thông tin từ ảnh biên lai chuyển khoản này.
 Trả về JSON có đúng cấu trúc:
-{"amount": <số nguyên VND hoặc null>, "content": "<nội dung CK hoặc null>", "time": "<thời gian hoặc null>", "transactionId": "<mã giao dịch hoặc null>", "transactionStatus": "<success|pending|failed|unknown>"}`;
+{"amount": <số nguyên VND hoặc null>, "content": "<nội dung CK hoặc null>", "time": "<thời gian hoặc null>", "transactionId": "<mã giao dịch hoặc null>", "transactionStatus": "<success|pending|failed|unknown>", "trustScore": <0-100>}`;
 
 // ============================================================
 // Config helpers
@@ -337,10 +340,15 @@ function parseOcrJson(
         ? (parsed.transactionStatus as "success" | "pending" | "failed" | "unknown")
         : "unknown";
 
-    return { amount, content, time, transactionId, transactionStatus, rawText, provider };
+    const trustScore =
+      typeof (parsed as any).trustScore === "number"
+        ? Math.round((parsed as any).trustScore)
+        : null;
+
+    return { amount, content, time, transactionId, transactionStatus, trustScore, rawText, provider };
   } catch {
     console.warn("[OCR] Failed to parse JSON from model output:", rawText.slice(0, 200));
-    return { amount: null, content: null, time: null, transactionId: null, transactionStatus: "unknown", rawText, provider };
+    return { amount: null, content: null, time: null, transactionId: null, transactionStatus: "unknown", trustScore: null, rawText, provider };
   }
 }
 
@@ -404,7 +412,7 @@ async function extractReceipt(
   }
 
   console.error("[OCR] All providers failed. Last error:", lastErr);
-  return { amount: null, content: null, time: null, transactionId: null, transactionStatus: "unknown", rawText: "", provider: "openrouter" };
+  return { amount: null, content: null, time: null, transactionId: null, transactionStatus: "unknown", trustScore: null, rawText: "", provider: "openrouter" };
 }
 
 // ============================================================
@@ -432,14 +440,14 @@ function normalizeForMatch(str: string): string {
  *   "low"      — Chỉ 1 trong 2 khớp → pending_approval (Admin duyệt)
  *   "mismatch" — Không khớp gì → yêu cầu upload lại
  */
-export function matchReceiptToTicket(
+export function matchReceiptToInvitation(
   ocr: OcrRawResult,
   expected: {
     amount: number;
     /** Nội dung CK dự kiến: tên + niên khóa + SĐT (đã loại dấu) */
     addInfo: string;
-    /** Mã vé để match thêm nếu có */
-    ticketCode: string;
+    /** Mã thư mời để match thêm nếu có */
+    invitationCode: string;
   },
 ): MatchResult {
   // --- So khớp số tiền ---
@@ -450,12 +458,12 @@ export function matchReceiptToTicket(
   // --- So khớp nội dung CK ---
   // Chuẩn hóa cả 2 phía, rồi kiểm tra xem:
   // - Nội dung biên lai chứa addInfo (tên+SĐT)
-  // - HOẶC chứa mã vé ticketCode
+  // - HOẶC chứa mã vé invitationCode
   let contentMatch = false;
   if (ocr.content) {
     const normalizedOcr = normalizeForMatch(ocr.content);
     const normalizedExpected = normalizeForMatch(expected.addInfo);
-    const normalizedCode = normalizeForMatch(expected.ticketCode);
+    const normalizedCode = normalizeForMatch(expected.invitationCode);
 
     // Match nếu OCR content chứa ít nhất 70% ký tự của addInfo
     // (đề phòng bank cắt bớt nội dung hiển thị)
@@ -482,8 +490,13 @@ export function matchReceiptToTicket(
     confidence = "mismatch";
     note = "Giao dịch chuyển tiền thất bại.";
   } else if (amountMatch && contentMatch) {
-    confidence = "high";
-    note = `Khớp hoàn toàn: ${ocr.amount?.toLocaleString("vi-VN")}đ · Nội dung CK hợp lệ`;
+    if (ocr.trustScore !== null && ocr.trustScore < 60) {
+      confidence = "low";
+      note = `Nội dung và số tiền khớp, nhưng ảnh có dấu hiệu bị làm giả/cắt ghép (Độ tin cậy: ${ocr.trustScore}%). Cần kiểm tra lại.`;
+    } else {
+      confidence = "high";
+      note = `Khớp hoàn toàn: ${ocr.amount?.toLocaleString("vi-VN")}đ · Nội dung CK hợp lệ${ocr.trustScore ? ` (Độ tin cậy: ${ocr.trustScore}%)` : ""}`;
+    }
   } else if (amountMatch && !contentMatch) {
     confidence = "low";
     note = `Số tiền khớp (${ocr.amount?.toLocaleString("vi-VN")}đ) nhưng nội dung CK không khớp. AI đọc: "${ocr.content || "không đọc được"}"`;
@@ -519,10 +532,10 @@ export async function verifyReceipt(
   expected: {
     amount: number;
     addInfo: string;
-    ticketCode: string;
+    invitationCode: string;
   },
 ): Promise<ReceiptVerifyResult> {
   const ocrResult = await extractReceipt(imageBase64, mimeType);
-  const matchResult = matchReceiptToTicket(ocrResult, expected);
+  const matchResult = matchReceiptToInvitation(ocrResult, expected);
   return { ocrResult, matchResult };
 }

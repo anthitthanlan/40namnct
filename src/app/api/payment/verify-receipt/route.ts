@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { findTicketById, getMemberById, updateTicketReceipt, listTickets } from "@/lib/members";
+import { findInvitationById, getMemberById, updateInvitationReceipt, listInvitations } from "@/lib/members";
 import { buildTransferContent } from "@/lib/emvqr";
 import { uploadReceipt } from "@/lib/r2";
 import { verifyReceipt } from "@/lib/ocr";
@@ -17,7 +17,7 @@ const ALLOWED_MIME = ["image/jpeg", "image/jpg", "image/png", "image/webp", "ima
  * Content-Type: multipart/form-data
  *
  * Body:
- *   - ticketId: string
+ *   - invitationId: string
  *   - receipt: File (ảnh biên lai, max 10MB)
  *
  * Luồng 2 song song:
@@ -36,12 +36,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ticketId = formData.get("ticketId");
+  const invitationId = formData.get("invitationId");
   const receiptFile = formData.get("receipt");
 
-  if (!ticketId || typeof ticketId !== "string") {
+  if (!invitationId || typeof invitationId !== "string") {
     return NextResponse.json(
-      { ok: false, message: "Thiếu ticketId." },
+      { ok: false, message: "Thiếu invitationId." },
       { status: 400 },
     );
   }
@@ -78,8 +78,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // --- Load ticket ---
-  if (ticketId === "DEV") {
+  // --- Load invitation ---
+  if (invitationId === "DEV") {
     const fileBuffer = Buffer.from(await receiptFile.arrayBuffer());
     const mimeType = receiptFile.type || "image/jpeg";
     const imageBase64 = fileBuffer.toString("base64");
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     const verifyResult = await verifyReceipt(imageBase64, mimeType, {
       amount: 20_000,
       addInfo: "DEV AI TEST",
-      ticketCode: "DEV",
+      invitationCode: "DEV",
     });
 
     const confidence = verifyResult.matchResult.confidence;
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       ok: confidence !== "mismatch" && confidence !== "system_error",
       confidence: confidence,
       message,
-      ticketStatus: confidence === "high" ? "confirmed" : "pending_approval",
+      invitationStatus: confidence === "high" ? "confirmed" : "pending_approval",
       ocrResult: {
         amount: verifyResult.ocrResult.amount,
         content: verifyResult.ocrResult.content,
@@ -119,22 +119,22 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const ticket = await findTicketById(ticketId);
-  if (!ticket) {
+  const invitation = await findInvitationById(invitationId);
+  if (!invitation) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy vé." },
       { status: 404 },
     );
   }
 
-  if (ticket.amount <= 0) {
+  if (invitation.amount <= 0) {
     return NextResponse.json(
       { ok: false, message: "Vé này không yêu cầu đóng góp." },
       { status: 400 },
     );
   }
 
-  if (ticket.status === "confirmed") {
+  if (invitation.status === "confirmed") {
     return NextResponse.json({
       ok: true,
       confidence: "high" as const,
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const member = await getMemberById(ticket.memberId);
+  const member = await getMemberById(invitation.memberId);
   if (!member) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy thông tin đăng ký." },
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if ((ticket.receiptAttempts?.length || 0) >= 3) {
+  if ((invitation.receiptAttempts?.length || 0) >= 3) {
     return NextResponse.json({
       ok: false,
       confidence: "mismatch_fallback",
@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
 
   const addInfo = buildTransferContent(
     member.name,
-    ticket.nienKhoa || "",
+    invitation.nienKhoa || "",
     member.phone,
   );
 
@@ -176,13 +176,13 @@ export async function POST(req: NextRequest) {
   // ============================================================
   const [uploadResult, verifyResult] = await Promise.all([
     // Luồng 1: Upload ảnh lên Cloudflare R2
-    uploadReceipt(ticketId, fileBuffer, mimeType),
+    uploadReceipt(invitationId, fileBuffer, mimeType),
 
     // Luồng 2: AI OCR trích xuất + so khớp
     verifyReceipt(imageBase64, mimeType, {
-      amount: ticket.amount,
+      amount: invitation.amount,
       addInfo,
-      ticketCode: ticket.code,
+      invitationCode: invitation.code,
     }),
   ]);
 
@@ -203,6 +203,7 @@ export async function POST(req: NextRequest) {
     time: ocrResult.time,
     transactionId: ocrResult.transactionId,
     transactionStatus: ocrResult.transactionStatus,
+    trustScore: ocrResult.trustScore,
     confidence: matchResult.confidence,
     note: matchResult.note,
     provider: ocrResult.provider,
@@ -210,10 +211,10 @@ export async function POST(req: NextRequest) {
 
   // --- Kiểm tra chống dùng chung biên lai ---
   if (ocrResult.transactionId && matchResult.confidence !== "mismatch") {
-    const allTickets = await listTickets();
-    const isDuplicate = allTickets.some((t) => {
+    const allInvitations = await listInvitations();
+    const isDuplicate = allInvitations.some((t) => {
       // Bỏ qua chính vé đang kiểm tra
-      if (t.id === ticketId) return false;
+      if (t.id === invitationId) return false;
       // Chỉ check các vé đã đóng góp hoặc đang chờ duyệt
       if (t.status !== "confirmed" && t.status !== "pending_approval") return false;
       // Trùng mã giao dịch
@@ -228,8 +229,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // --- Cập nhật ticket ---
-  const updated = await updateTicketReceipt(ticketId, receiptUrl || "", ocrRecord);
+  // --- Cập nhật invitation ---
+  const updated = await updateInvitationReceipt(invitationId, receiptUrl || "", ocrRecord);
   if (!updated) {
     return NextResponse.json(
       { ok: false, message: "Lỗi cập nhật trạng thái vé. Vui lòng thử lại." },
@@ -247,7 +248,7 @@ export async function POST(req: NextRequest) {
       confidence: isLocked ? "mismatch_fallback" : "mismatch",
       message: isLocked 
         ? "Đã gửi xét duyệt thủ công do ảnh không hợp lệ nhiều lần." 
-        : buildMismatchMessage(matchResult.amountMatch, matchResult.contentMatch, ocrResult.amount, ticket.amount),
+        : buildMismatchMessage(matchResult.amountMatch, matchResult.contentMatch, ocrResult.amount, invitation.amount),
       attemptsLeft,
       canRetry: !isLocked,
       ocrResult: ocrRecord,
@@ -271,7 +272,7 @@ export async function POST(req: NextRequest) {
       ok: true,
       confidence: "high" as const,
       message: "Xác nhận đóng góp thành công! Vé của bạn đã được phát hành.",
-      ticketStatus: "confirmed",
+      invitationStatus: "confirmed",
       ocrResult: ocrRecord,
     });
   } else {
@@ -281,7 +282,7 @@ export async function POST(req: NextRequest) {
       confidence: "low" as const,
       message:
         "Giao dịch đã được đưa vào hàng chờ. Ban Tổ chức sẽ đối soát và xác nhận trong vòng 24 giờ.",
-      ticketStatus: "pending_approval",
+      invitationStatus: "pending_approval",
       ocrResult: ocrRecord,
     });
   }

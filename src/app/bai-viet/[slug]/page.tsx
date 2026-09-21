@@ -103,9 +103,10 @@ export default async function PostDetailPage({ params }: Props) {
           />
         )}
 
-        <div className="mt-6">
-          <Markdown content={post.content} />
-        </div>
+        <div 
+          className="mt-6 prose prose-slate sm:prose-lg max-w-none prose-img:rounded-2xl prose-img:mx-auto prose-video:w-full prose-video:rounded-2xl" 
+          dangerouslySetInnerHTML={{ __html: post.content }} 
+        />
 
         <div className="mt-10 border-t border-slate-100 pt-8">
           <ShareButtons title={post.title} />

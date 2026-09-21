@@ -58,6 +58,7 @@ export default function RegisterForm() {
   const [name, setName] = useState("");
   const [nienKhoa, setNienKhoa] = useState("");
   const [lop, setLop] = useState("");
+  const [note, setNote] = useState("");
   const [phone, setPhone] = useState("");
 
   const handleNienKhoaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -226,6 +227,7 @@ export default function RegisterForm() {
         name,
         nienKhoa,
         lop,
+        note,
         phone,
         email,
         subscribeNews, // add subscribeNews state to payload
@@ -247,9 +249,9 @@ export default function RegisterForm() {
         return;
       }
       if (amount > 0) {
-        window.location.href = `/xac-nhan-dong-gop?id=${data.ticketId}`;
+        window.location.href = `/xac-nhan-dong-gop?id=${data.invitationId}`;
       } else {
-        window.location.href = `/thu-moi?id=${data.ticketId}`;
+        window.location.href = `/thu-moi?id=${data.invitationId}`;
       }
     } catch {
       setError("Có lỗi xảy ra, vui lòng thử lại.");
@@ -416,9 +418,25 @@ export default function RegisterForm() {
                       fieldErrors["email"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
                     }`}
                   />
+                </div>
 
-                  {/* Note and Checkboxes */}
-                  <div className="mt-3">
+                {/* Note */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lời nhắn (không bắt buộc)
+                  </label>
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Bạn có muốn gửi gắm điều gì cho BTC chương trình không?"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 resize-y"
+                    maxLength={500}
+                    rows={3}
+                  />
+                </div>
+
+                {/* Notice and Checkboxes */}
+                <div className="mt-2">
                     <p className="text-sm text-gray-600 leading-relaxed">
                       <span className="text-amber-600 font-medium">Lưu ý:</span> Bạn có thể nhập email để hệ thống tự động gửi Phiếu đăng kí, hoặc tải về thủ công sau khi hoàn tất.
                       <strong className="font-semibold text-gray-900 block mt-1">Mã QR này sẽ được dùng để kiểm tra nhận áo và check-in vào ngày 08/11.</strong>
@@ -456,7 +474,6 @@ export default function RegisterForm() {
                       </div>
                     </div>
                   </div>
-                </div>
 
                 {/* Footer Section: Grouped to prevent flex gap snap when unmounting */}
                 <motion.div layout className="flex flex-col">
@@ -790,7 +807,7 @@ export default function RegisterForm() {
               </p>
             </div>
 
-            {/* Ticket info card */}
+            {/* Invitation info card */}
             <div className="bg-gray-50 p-6 rounded-xl space-y-4 border border-gray-100">
               <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-blue-50 border border-blue-100">
                 <div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
@@ -100,7 +100,7 @@ function InvitationContent() {
       });
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = `thu-moi-${data.invitation.code}.png`;
+      a.download = `thu-moi-${data.invitation.code}.webp`;
       a.click();
     } catch (err) {
       console.error("Download error:", err);
@@ -162,7 +162,7 @@ function InvitationContent() {
                   <div 
                     className="absolute inset-0 z-0 pointer-events-none"
                     style={{
-                      backgroundImage: "url('/images/hero-5.jpg')",
+                      backgroundImage: "url('/images/hero-5.webp')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       opacity: 0.3,
@@ -176,8 +176,8 @@ function InvitationContent() {
                     {/* Header: Logos & Title */}
                     <div className="flex items-center gap-3 mb-2 border-b border-gray-200 pb-3">
                       <div className="flex gap-1.5 shrink-0">
-                        <img src="/images/logo_nct.png" alt="NCT Logo" className="w-10 h-10 object-contain" crossOrigin="anonymous" />
-                        <img src="/images/Logo_40th_NCT.png" alt="40th Logo" className="w-10 h-10 object-contain" crossOrigin="anonymous" />
+                        <img src="/images/logo_nct.webp" alt="NCT Logo" className="w-10 h-10 object-contain" crossOrigin="anonymous" />
+                        <img src="/images/Logo_40th_NCT.webp" alt="40th Logo" className="w-10 h-10 object-contain" crossOrigin="anonymous" />
                       </div>
                       <div className="text-left text-blue-900 font-black leading-tight uppercase text-[12px] tracking-wide w-full">
                         <div>Kỉ niệm 40 năm thành lập</div>

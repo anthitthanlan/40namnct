@@ -13,6 +13,12 @@ import AdminAccounts from "./AdminAccounts";
 import AdminEditPost from "./AdminEditPost";
 import AdminCameraScanner from "@/components/AdminCameraScanner";
 
+declare global {
+  interface Window {
+    __isDirty: boolean;
+  }
+}
+
 type View = "checking" | "anon" | "admin";
 type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "media" | "accounts" | "scanner" | "edit";
 
@@ -319,14 +325,14 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
             <div className="relative z-10 flex flex-col items-center text-center">
               <div className="flex items-center gap-4">
                 <Image
-                  src="/images/NCT.png"
+                  src="/images/NCT.webp"
                   alt="Logo NCT"
                   width={64}
                   height={64}
                   className="h-16 w-auto object-contain"
                 />
                 <Image
-                  src="/images/Logo_40th_NCT.png"
+                  src="/images/Logo_40th_NCT.webp"
                   alt="Logo 40 năm NCT"
                   width={64}
                   height={64}
@@ -825,7 +831,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                                   </button>
                                 )}
                               <Link
-                                href={`/bai-viet/${post.slug}`}
+                                href={`/cau-chuyen/${post.slug}`}
                                 className="rounded-xl bg-[#1d4ed8]/10 px-3.5 py-2 text-xs font-bold text-[#1d4ed8] hover:bg-[#1d4ed8]/20"
                               >
                                 Xem

@@ -10,7 +10,7 @@ import siteConfig from "../../data/site-config.json";
 export default function SiteFooter() {
   const pathname = usePathname();
   // Trang Timeline full-screen tự động cuộn — không cần footer
-  if (pathname.startsWith("/timeline")) return null;
+  if (pathname.startsWith("/khoang-khac")) return null;
   // Khu quản trị là màn hình riêng — không hiển thị footer công khai
   if (pathname.startsWith("/admin")) return null;
 
@@ -25,14 +25,14 @@ export default function SiteFooter() {
               className="inline-flex items-center gap-3 transition-transform hover:scale-[1.02]"
             >
               <Image
-                src="/images/NCT.png"
+                src="/images/NCT.webp"
                 alt="Logo NCT"
                 width={56}
                 height={56}
                 className="h-14 w-auto object-contain"
               />
               <Image
-                src="/images/Logo_40th_NCT.png"
+                src="/images/Logo_40th_NCT.webp"
                 alt="Logo 40 năm NCT"
                 width={56}
                 height={56}
@@ -101,9 +101,9 @@ export default function SiteFooter() {
                 { href: "/ngay-tro-ve", label: "Ngày Trở Về · 08/11/2026" },
                 { href: "/dang-ky", label: "Đăng ký tham dự" },
                 { href: "/tra-cuu", label: "Tra cứu vé" },
-                { href: "/bai-viet", label: "Bài viết" },
-                { href: "/bai-viet/chia-se", label: "Chia sẻ câu chuyện" },
-                { href: "/timeline", label: "Lược sử 40 năm" },
+                { href: "/cau-chuyen", label: "Bài viết" },
+                { href: "/gui-bai", label: "Gửi gắm kỷ niệm" },
+                { href: "/khoang-khac", label: "Lược sử 40 năm" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -124,7 +124,7 @@ export default function SiteFooter() {
             </h4>
             <div className="mt-4 mb-3 flex items-center gap-3">
               <Image
-                src="/images/Logo_CLB_Tin_Hoc.png"
+                src="/images/Logo_CLB_Tin_Hoc.webp"
                 alt="Logo CLB Tin học"
                 width={72}
                 height={72}

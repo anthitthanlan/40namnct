@@ -1,16 +1,16 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const BG_IMAGES = [
   {
-    src: "/bg/hero-1.jpg",
+    src: "/bg/hero-1.webp",
     alt: "Học sinh trường THPT Nguyễn Công Trứ",
     caption: "Học sinh Nguyễn Công Trứ",
   },
   {
-    src: "/bg/hero-2.jpg",
+    src: "/bg/hero-2.webp",
     alt: "Khuôn viên sân trường Nguyễn Công Trứ",
     caption: "Khuôn viên sân trường",
   },
@@ -25,7 +25,7 @@ const BG_IMAGES = [
     caption: "Cổng trường THPT Nguyễn Công Trứ",
   },
   {
-    src: "/bg/hero-5.jpg",
+    src: "/bg/hero-5.webp",
     alt: "Hoạt động kỷ niệm THPT Nguyễn Công Trứ",
     caption: "Lễ hội & Ngày trở về",
   },

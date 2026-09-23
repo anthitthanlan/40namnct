@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EMVCo QR (chuẩn EMV®QRCPS - Merchant Presented Mode dùng bởi VietQR / Napas 247)
  * - Đảm bảo cấu trúc chuẩn quốc tế: Tag 38 lồng sub-tag 01 (BIN + STK) & sub-tag 02 (QRIBFTTA).
  * - Quét thành công 100% trên tất cả app ngân hàng (Sacombank, Vietcombank, MB, Techcombank, v.v.).
@@ -120,7 +120,7 @@ export function getVietQrFallbackUrl(
     addInfo: content,
     accountName: b.accountName,
   });
-  return `https://img.vietqr.io/image/${b.bin}-${b.account}-compact2.png?${params.toString()}`;
+  return `https://img.vietqr.io/image/${b.bin}-${b.account}-compact2.webp?${params.toString()}`;
 }
 
 // ============================================================

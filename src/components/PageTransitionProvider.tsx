@@ -48,7 +48,7 @@ export default function PageTransitionProvider({ children }: { children: React.R
   }, []);
 
   // Bỏ qua timeline
-  if (pathname === "/timeline") return <>{children}</>;
+  if (pathname === "/khoang-khac") return <>{children}</>;
 
   return (
     <AnimatePresence mode="wait">
@@ -71,9 +71,9 @@ export default function PageTransitionProvider({ children }: { children: React.R
             animate={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
           >
-            <Image src="/images/NCT.png" width={80} height={80} alt="Logo NCT" className="w-auto h-20" priority />
+            <Image src="/images/NCT.webp" width={80} height={80} alt="Logo NCT" className="w-auto h-20" priority />
             <div className="h-16 w-[2px] bg-slate-300"></div>
-            <Image src="/images/Logo_40th_NCT.png" width={80} height={80} alt="40 Năm NCT" className="w-auto h-20" priority />
+            <Image src="/images/Logo_40th_NCT.webp" width={80} height={80} alt="40 Năm NCT" className="w-auto h-20" priority />
           </motion.div>
         </motion.div>
 
@@ -92,9 +92,9 @@ export default function PageTransitionProvider({ children }: { children: React.R
             exit={{ opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeInOut", delay: 0.3 }} // Màn trắng che gần xong thì logo mới mờ mờ hiện ra
           >
-            <Image src="/images/NCT.png" width={80} height={80} alt="Logo NCT" className="w-auto h-20" priority />
+            <Image src="/images/NCT.webp" width={80} height={80} alt="Logo NCT" className="w-auto h-20" priority />
             <div className="h-16 w-[2px] bg-slate-300"></div>
-            <Image src="/images/Logo_40th_NCT.png" width={80} height={80} alt="40 Năm NCT" className="w-auto h-20" priority />
+            <Image src="/images/Logo_40th_NCT.webp" width={80} height={80} alt="40 Năm NCT" className="w-auto h-20" priority />
           </motion.div>
         </motion.div>
       </motion.div>

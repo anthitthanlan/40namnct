@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+﻿import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -78,7 +78,7 @@ Hẹn gặp lại các bạn trong ngày hội trở về!`,
     source: "admin",
     status: "published",
     pinned: false,
-    cover: "/roadmap/khaigiang/DSCF8015.JPG",
+    cover: "/roadmap/khaigiang/DSCF8015.webp",
     createdAt: "2026-09-01T09:30:00+07:00",
     updatedAt: "2026-09-01T09:30:00+07:00",
   },
@@ -116,7 +116,7 @@ Các bạn học trò ngày nay ơi, 20 năm nữa nhìn lại, các bạn sẽ 
     source: "user",
     status: "published",
     pinned: false,
-    cover: "/roadmap/trianvatruongthanh/DSCF4145.jpg",
+    cover: "/roadmap/trianvatruongthanh/DSCF4145.webp",
     createdAt: "2026-09-05T20:15:00+07:00",
     updatedAt: "2026-09-05T20:15:00+07:00",
   },

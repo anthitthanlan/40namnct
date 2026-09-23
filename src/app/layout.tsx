@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 import DynamicNavbar from "@/components/DynamicNavbar";
 import SiteFooter from "@/components/SiteFooter";
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description:
     "Kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ - hành trình 40 năm trồng người.",
   icons: {
-    icon: [{ url: "/images/logo_nct.png", type: "image/png" }],
-    apple: [{ url: "/images/logo_nct.png" }],
+    icon: [{ url: "/images/logo_nct.webp", type: "image/png" }],
+    apple: [{ url: "/images/logo_nct.webp" }],
   },
 };
 

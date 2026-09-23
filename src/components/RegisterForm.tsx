@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import type { FormEvent } from "react";
@@ -539,7 +539,7 @@ export default function RegisterForm() {
                           <div className="flex flex-col items-center justify-center p-4">
                             <div className="relative w-32 h-32 opacity-80 mix-blend-multiply rounded-2xl overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100">
                               <Image
-                                src="/images/logo_nct.png"
+                                src="/images/logo_nct.webp"
                                 alt="Áo kỷ niệm NCT"
                                 width={96}
                                 height={96}

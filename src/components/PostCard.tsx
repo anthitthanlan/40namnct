@@ -45,7 +45,7 @@ export default function PostCard({
   post: Post;
   featured?: boolean;
 }) {
-  const href = `/bai-viet/${post.slug}`;
+  const href = `/cau-chuyen/${post.slug}`;
 
   if (featured) {
     return (

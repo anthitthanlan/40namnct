@@ -81,14 +81,14 @@ export default function StoryForm() {
           Cảm ơn bạn đã góp một mảnh ghép ký ức cho Trứ. Câu chuyện của bạn
           đang chờ Ban Biên tập duyệt - ngay khi được duyệt, bài viết sẽ xuất
           hiện trong mục{" "}
-          <Link href="/bai-viet" className="font-bold text-[#1d4ed8] hover:underline">
+          <Link href="/cau-chuyen" className="font-bold text-[#1d4ed8] hover:underline">
             Bài viết
           </Link>
           .
         </p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
           <Link
-            href="/bai-viet"
+            href="/cau-chuyen"
             className="btn-lightship bg-[#1d4ed8] px-6 py-3 text-sm font-extrabold text-white"
           >
             Đọc bài viết khác

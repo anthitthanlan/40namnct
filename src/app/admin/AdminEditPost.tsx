@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import type { PostStatus } from "@/lib/posts";
@@ -257,7 +257,7 @@ export default function AdminEditPost({
             id="d-cover"
             value={draft.cover}
             onChange={(e) => setDraft({ ...draft, cover: e.target.value })}
-            placeholder="/images/hero-2.jpg"
+            placeholder="/images/hero-2.webp"
             className={aInput}
             maxLength={500}
           />

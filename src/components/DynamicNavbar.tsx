@@ -8,8 +8,8 @@ import MobileNavMorph from "./MobileNavMorph";
 
 const links = [
   { href: "/", label: "Giới thiệu" },
-  { href: "/bai-viet", label: "Bài viết" },
-  { href: "/timeline", label: "Lược sử 40 năm" },
+  { href: "/cau-chuyen", label: "Câu chuyện" },
+  { href: "/khoang-khac", label: "Khoảnh khắc" },
   { href: "/tra-cuu", label: "Tra cứu vé" },
   { href: "/an-pham", label: "Ấn phẩm", comingSoon: true },
 ];
@@ -133,7 +133,7 @@ export default function DynamicNavbar() {
             title="Trường THPT Nguyễn Công Trứ - 40 Năm"
           >
             <Image
-              src="/images/NCT.png"
+              src="/images/NCT.webp"
               alt="Logo NCT"
               width={34}
               height={34}
@@ -141,7 +141,7 @@ export default function DynamicNavbar() {
               className="h-8 w-auto object-contain"
             />
             <Image
-              src="/images/Logo_40th_NCT.png"
+              src="/images/Logo_40th_NCT.webp"
               alt="Logo 40 năm NCT"
               width={34}
               height={34}

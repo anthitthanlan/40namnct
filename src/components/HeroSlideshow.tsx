@@ -6,11 +6,11 @@ import { useEffect, useState } from "react";
 import Reveal from "@/components/Reveal";
 
 const slides = [
-  { src: "/images/hero-1.jpg", alt: "Học sinh trường THPT Nguyễn Công Trứ" },
-  { src: "/images/hero-2.jpg", alt: "Khuôn viên trường Nguyễn Công Trứ" },
+  { src: "/images/hero-1.webp", alt: "Học sinh trường THPT Nguyễn Công Trứ" },
+  { src: "/images/hero-2.webp", alt: "Khuôn viên trường Nguyễn Công Trứ" },
   { src: "/images/hero-3.webp", alt: "Thầy trò Nguyễn Công Trứ" },
   { src: "/images/hero-4.webp", alt: "Trường THPT Nguyễn Công Trứ" },
-  { src: "/images/hero-5.jpg", alt: "Kỷ niệm 40 năm Nguyễn Công Trứ" },
+  { src: "/images/hero-5.webp", alt: "Kỷ niệm 40 năm Nguyễn Công Trứ" },
 ];
 
 const DURATION = 6000;
@@ -85,7 +85,7 @@ export default function HeroSlideshow() {
         <Reveal delay={300}>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="/timeline"
+              href="/khoang-khac"
               className="group/btn relative overflow-hidden rounded-[1.25rem] bg-[#1d4ed8] px-7 py-3.5 text-base font-bold text-white shadow-md transition-all duration-300 active:scale-95 hover:shadow-yellow-500/30"
             >
               <div className="absolute inset-0 bg-live-gradient opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 ease-in-out pointer-events-none"></div>

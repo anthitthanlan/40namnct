@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse mã QR tĩnh
-    let existingInvitation = null;
+    let existingInvitation: any = null;
     let validInvitationId = "";
 
     // Thử parse QR tĩnh (dạng text có chứa mã vé NCT19862026-...)

@@ -82,7 +82,7 @@ export default async function Home() {
           <Reveal delay={400} variant="zoom" className="h-full mt-10 lg:mt-0">
             <div className="relative flex h-full min-h-[420px] flex-col items-center justify-end overflow-hidden rounded-[2.5rem] p-6 sm:p-10 text-center text-white shadow-2xl">
               {/* Hình nền không có lớp phủ xám toàn bộ */}
-              <div className="absolute inset-0 bg-[url('/images/hero-2.jpg')] bg-cover bg-center"></div>
+              <div className="absolute inset-0 bg-[url('/images/hero-2.webp')] bg-cover bg-center"></div>
               
               {/* Lớp phủ blur-gradient-dimmer ở dưới */}
               <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none backdrop-blur-sm [mask-image:linear-gradient(to_top,black_20%,transparent)]"></div>
@@ -145,7 +145,7 @@ export default async function Home() {
           <Reveal delay={240} className="md:col-span-5 md:row-span-1 flex flex-col justify-start">
             <div className="flex flex-col p-4 text-left md:pl-0 border-t border-slate-200/60 pt-6 mt-2">
               <Link 
-                href="/timeline" 
+                href="/khoang-khac" 
                 className="group inline-flex items-center gap-4 text-base font-medium leading-relaxed text-slate-600 hover:text-[#16a34a] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
               >
                 <span className="max-w-[280px]">Khám phá cột mốc phát triển của nhà trường qua các thời kỳ.</span>
@@ -253,14 +253,14 @@ export default async function Home() {
           <Reveal delay={260} variant="right" className="shrink-0">
             <div className="flex gap-4">
               <Link
-                href="/bai-viet"
+                href="/cau-chuyen"
                 className="group relative inline-flex pb-1 text-base font-bold text-[#1d4ed8] transition-colors hover:text-blue-800"
               >
                 <span>Xem tất cả ({allPosts.length})</span>
                 <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
               </Link>
               <Link
-                href="/bai-viet/chia-se"
+                href="/gui-bai"
                 className="group relative inline-flex pb-1 text-base font-bold text-slate-700 transition-colors hover:text-slate-900"
               >
                 <span className="flex items-center gap-1.5"><span className="material-symbols-rounded text-[1.25em]">edit</span> Gửi bài</span>

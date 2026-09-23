@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin || admin.role === "anon") {
+  if (!admin) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
 
@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const filename = await saveUploadFile(file);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const filename = await saveUploadFile(buffer, ext);
     const url = mediaFileUrl(filename);
     return NextResponse.json({ ok: true, url });
   } catch (err) {

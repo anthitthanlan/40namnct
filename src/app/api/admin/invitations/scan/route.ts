@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
     }
 
     await logAction(
-      "shirt",
+      "shirt_received",
       "registrations",
       validInvitationId,
       admin.fullName || admin.username,

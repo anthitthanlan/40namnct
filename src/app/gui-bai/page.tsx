@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Reveal from "@/components/Reveal";
 import MediaUploader from "@/components/MediaUploader";
 import StoryForm from "@/components/StoryForm";
 
-export default function GuiBaiPage() {
+function GuiBaiContent() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<"media" | "story">("media");
 
@@ -101,5 +101,13 @@ export default function GuiBaiPage() {
         </Reveal>
       </section>
     </main>
+  );
+}
+
+export default function GuiBaiPage() {
+  return (
+    <Suspense fallback={null}>
+      <GuiBaiContent />
+    </Suspense>
   );
 }

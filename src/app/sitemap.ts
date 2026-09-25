@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const BASE_URL = "https://40th-anniversary-nct.nctitc.io.vn";
+const BASE_URL = "https://40namnct.nctitc.io.vn";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

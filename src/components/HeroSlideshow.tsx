@@ -5,20 +5,40 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Reveal from "@/components/Reveal";
 
-const slides = [
-  { src: "/images/hero-1.webp", alt: "Học sinh trường THPT Nguyễn Công Trứ" },
-  { src: "/images/hero-2.webp", alt: "Khuôn viên trường Nguyễn Công Trứ" },
-  { src: "/images/hero-3.webp", alt: "Thầy trò Nguyễn Công Trứ" },
-  { src: "/images/hero-4.webp", alt: "Trường THPT Nguyễn Công Trứ" },
-  { src: "/images/hero-5.webp", alt: "Kỷ niệm 40 năm Nguyễn Công Trứ" },
+type Slide = { src: string; alt: string };
+
+const FALLBACK: Slide[] = [
+  { src: "/hero_images/hero-1.webp", alt: "Học sinh trường THPT Nguyễn Công Trứ" },
 ];
 
 const DURATION = 6000;
 
 export default function HeroSlideshow() {
+  const [slides, setSlides] = useState<Slide[]>(FALLBACK);
   const [current, setCurrent] = useState(0);
   // Skeleton: ảnh chưa load xong thì hiện shimmer
-  const [loaded, setLoaded] = useState<boolean[]>(() => slides.map(() => false));
+  const [loaded, setLoaded] = useState<boolean[]>(() => FALLBACK.map(() => false));
+
+  // Tự động quét ảnh từ thư mục hero_images qua API
+  useEffect(() => {
+    fetch("/api/hero-images")
+      .then((r) => r.json())
+      .then((data: { images: string[] }) => {
+        if (data.images?.length) {
+          const mapped: Slide[] = data.images.map((src, i) => ({
+            src,
+            alt: `Kỷ niệm 40 năm Nguyễn Công Trứ - ảnh ${i + 1}`,
+          }));
+          setSlides(mapped);
+          setLoaded(mapped.map(() => false));
+        }
+      })
+      .catch(() => {/* giữ fallback */});
+  }, []);
+
+  useEffect(() => {
+    setCurrent(0);
+  }, [slides]);
 
   useEffect(() => {
     const id = setInterval(
@@ -26,16 +46,15 @@ export default function HeroSlideshow() {
       DURATION,
     );
     return () => clearInterval(id);
-  }, []);
+  }, [slides.length]);
 
   return (
     <header className="relative h-screen min-h-[600px] w-full overflow-hidden">
-      {/* Slideshow */}
+      {/* Slideshow - full width */}
       {slides.map((slide, i) => (
         <div key={slide.src} className={`hero-slide ${i === current ? "active" : ""}`}>
-          {/* Skeleton shimmer nằm dưới ảnh, biến mất khi load xong */}
           <div
-            className={`skeleton absolute inset-0 transition-opacity duration-[var(--duration-very-slow)] ${
+            className={`skeleton-pulse absolute inset-0 rounded-none transition-opacity duration-[var(--duration-very-slow)] ${
               loaded[i] ? "opacity-0" : "opacity-100"
             }`}
           />
@@ -58,34 +77,35 @@ export default function HeroSlideshow() {
         </div>
       ))}
 
-      {/* Overlay gradient - tối trên cho navbar, trắng ở đáy để gợi cuộn */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/30 to-transparent" />
-      <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-white via-white/80 to-transparent" />
+      {/* Overlay tối trên cho navbar */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/60 via-slate-950/20 to-transparent" />
+      {/* Gradient nhẹ bên trái để text đọc được trên desktop */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent hidden lg:block" />
 
       {/* Nội dung */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white">
+      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center text-white lg:items-start lg:text-left lg:max-w-[55%] lg:pl-16 xl:pl-24">
         <Reveal className="mb-6">
           <span className="floaty btn-lightship-soft rounded-full bg-white px-5 py-2 text-sm font-bold tracking-wide text-[#1d4ed8]">
             1986 - 2026 · 40 NĂM TRỒNG NGƯỜI
           </span>
         </Reveal>
         <Reveal delay={100}>
-          <h1 className="flex flex-col items-center gap-1 font-extrabold leading-tight drop-shadow-lg">
+          <h1 className="flex flex-col items-center lg:items-start gap-1 font-extrabold leading-tight drop-shadow-lg">
             <span className="whitespace-nowrap text-[clamp(1.25rem,5.5vw,2.75rem)]">40 Năm Trường THPT</span>
             <span className="whitespace-nowrap text-[clamp(1.6rem,8vw,3.75rem)]">Nguyễn Công Trứ</span>
           </h1>
         </Reveal>
         <Reveal delay={200}>
-          <p className="mt-5 max-w-2xl text-base text-slate-100 sm:text-lg">
+          <p className="mt-5 max-w-xl text-base text-slate-100 sm:text-lg drop-shadow">
             Hành trình 40 năm kiên trì sự nghiệp &ldquo;trồng người&rdquo; - nơi
             ươm mầm những thế hệ học trò hiếu học, nhân ái, giàu ý chí.
           </p>
         </Reveal>
 
         <Reveal delay={300}>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-9 flex flex-wrap items-center justify-center lg:justify-start gap-4">
             <Link
-              href="/khoang-khac"
+              href="/khoanh-khac"
               className="group/btn relative overflow-hidden rounded-[1.25rem] bg-[#1d4ed8] px-7 py-3.5 text-base font-bold text-white shadow-md transition-all duration-300 active:scale-95 hover:shadow-yellow-500/30"
             >
               <div className="absolute inset-0 bg-live-gradient opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 ease-in-out pointer-events-none"></div>

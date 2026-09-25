@@ -8,8 +8,9 @@ import MobileNavMorph from "./MobileNavMorph";
 
 const links = [
   { href: "/", label: "Giới thiệu" },
+  { href: "/thu-ngo", label: "Thư ngỏ" },
   { href: "/cau-chuyen", label: "Câu chuyện" },
-  { href: "/khoang-khac", label: "Khoảnh khắc" },
+  { href: "/khoanh-khac", label: "Khoảnh khắc" },
   { href: "/tra-cuu", label: "Tra cứu vé" },
   { href: "/an-pham", label: "Ấn phẩm", comingSoon: true },
 ];

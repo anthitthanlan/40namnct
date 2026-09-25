@@ -10,7 +10,7 @@ import siteConfig from "../../data/site-config.json";
 export default function SiteFooter() {
   const pathname = usePathname();
   // Trang Timeline full-screen tự động cuộn — không cần footer
-  if (pathname.startsWith("/khoang-khac")) return null;
+  if (pathname.startsWith("/khoanh-khac")) return null;
   // Khu quản trị là màn hình riêng — không hiển thị footer công khai
   if (pathname.startsWith("/admin")) return null;
 
@@ -103,7 +103,7 @@ export default function SiteFooter() {
                 { href: "/tra-cuu", label: "Tra cứu vé" },
                 { href: "/cau-chuyen", label: "Bài viết" },
                 { href: "/gui-bai", label: "Gửi gắm kỷ niệm" },
-                { href: "/khoang-khac", label: "Lược sử 40 năm" },
+                { href: "/khoanh-khac", label: "Lược sử 40 năm" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link

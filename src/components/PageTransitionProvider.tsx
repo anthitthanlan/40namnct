@@ -47,8 +47,6 @@ export default function PageTransitionProvider({ children }: { children: React.R
     isInitialRender.current = false;
   }, []);
 
-  // Bỏ qua timeline
-  if (pathname === "/khoang-khac") return <>{children}</>;
 
   return (
     <AnimatePresence mode="wait">

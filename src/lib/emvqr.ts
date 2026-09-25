@@ -1,4 +1,4 @@
-﻿/**
+/**
  * EMVCo QR (chuẩn EMV®QRCPS - Merchant Presented Mode dùng bởi VietQR / Napas 247)
  * - Đảm bảo cấu trúc chuẩn quốc tế: Tag 38 lồng sub-tag 01 (BIN + STK) & sub-tag 02 (QRIBFTTA).
  * - Quét thành công 100% trên tất cả app ngân hàng (Sacombank, Vietcombank, MB, Techcombank, v.v.).
@@ -22,10 +22,10 @@ export type PayBankConfig = {
  */
 export function getPayBankConfig(): PayBankConfig {
   return {
-    bin: process.env.PAY_BANK_BIN || "970436",
-    account: process.env.PAY_BANK_ACCOUNT || "2772998715",
-    accountName: process.env.PAY_BANK_NAME || "LAI NHAT PHONG",
-    shortName: process.env.PAY_BANK_SHORT || "Vietcombank",
+    bin: process.env.PAY_BANK_BIN || "",
+    account: process.env.PAY_BANK_ACCOUNT || "",
+    accountName: process.env.PAY_BANK_NAME || "",
+    shortName: process.env.PAY_BANK_SHORT || "",
   };
 }
 
@@ -167,7 +167,7 @@ export function matchTransferContent(code: string, text: string): boolean {
 // (Session-based QR đã bị loại bỏ theo yêu cầu)
 // ============================================================
 export const SESSION_DURATION_MS = 120_000;
-export const PAY_BACKGROUNDS: string[] = ["/bg/qr-chuyen-tien.svg"];
+export const PAY_BACKGROUNDS: string[] = ["/assets/qr-chuyen-tien.svg"];
 
 /** @deprecated Session-based QR đã bị loại bỏ. Dùng buildEmvQrPayload() trực tiếp. */
 export type PaymentSession = {

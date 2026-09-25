@@ -13,7 +13,7 @@ export default function MomentCarousel({ moments }: { moments: WallMemory[] }) {
           📸 Khoảnh khắc nổi bật
         </h2>
         <Link
-          href="/khoang-khac"
+          href="/khoanh-khac"
           className="text-sm font-bold text-[#1d4ed8] hover:underline"
         >
           Xem tất cả &rarr;
@@ -62,7 +62,7 @@ export default function MomentCarousel({ moments }: { moments: WallMemory[] }) {
 
         <div className="flex aspect-[4/5] w-[160px] shrink-0 snap-center items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50">
           <Link
-            href="/khoang-khac"
+            href="/khoanh-khac"
             className="text-center text-sm font-extrabold text-slate-500 transition-colors hover:text-[#1d4ed8]"
           >
             Khám phá<br />thêm

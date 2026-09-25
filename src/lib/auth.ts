@@ -10,7 +10,7 @@ const SESSION_CONTEXT = "nct-admin-session-v2";
 
 /** Secret dùng ký session token - lấy từ biến môi trường */
 function secret(): string {
-  return process.env.SUPER_ADMIN_PASSWORD || "NCT@1986";
+  return process.env.SUPER_ADMIN_PASSWORD || "";
 }
 
 // ============================================================

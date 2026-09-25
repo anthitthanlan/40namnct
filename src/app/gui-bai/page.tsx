@@ -22,7 +22,7 @@ function GuiBaiContent() {
       <section className="relative overflow-hidden pb-16 pt-28 text-white">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/bg/hero-4.webp')" }}
+          style={{ backgroundImage: "url('/hero_images/hero-4.webp')" }}
         />
         <div className="absolute inset-0 bg-slate-950/80" />
 

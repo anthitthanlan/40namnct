@@ -1,50 +1,55 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-const BG_IMAGES = [
+type BgImage = { src: string; alt: string; caption: string };
+
+const FALLBACK: BgImage[] = [
   {
-    src: "/bg/hero-1.webp",
-    alt: "Học sinh trường THPT Nguyễn Công Trứ",
-    caption: "Học sinh Nguyễn Công Trứ",
-  },
-  {
-    src: "/bg/hero-2.webp",
-    alt: "Khuôn viên sân trường Nguyễn Công Trứ",
-    caption: "Khuôn viên sân trường",
-  },
-  {
-    src: "/bg/hero-3.webp",
-    alt: "Thầy trò dưới mái trường Nguyễn Công Trứ",
-    caption: "Thầy trò Nguyễn Công Trứ",
-  },
-  {
-    src: "/bg/hero-4.webp",
-    alt: "Cổng trường THPT Nguyễn Công Trứ",
-    caption: "Cổng trường THPT Nguyễn Công Trứ",
-  },
-  {
-    src: "/bg/hero-5.webp",
-    alt: "Hoạt động kỷ niệm THPT Nguyễn Công Trứ",
-    caption: "Lễ hội & Ngày trở về",
+    src: "/hero_images/hero-1.webp",
+    alt: "Trường THPT Nguyễn Công Trứ",
+    caption: "Trường THPT Nguyễn Công Trứ",
   },
 ];
 
 const SLIDE_DURATION = 6500;
 
 export default function SchoolAnimatedBg() {
+  const [images, setImages] = useState<BgImage[]>(FALLBACK);
   const [current, setCurrent] = useState(0);
   const [loaded, setLoaded] = useState<boolean[]>(() =>
-    BG_IMAGES.map(() => false),
+    FALLBACK.map(() => false),
   );
+
+  // Tự động quét ảnh từ thư mục hero_images qua API
+  useEffect(() => {
+    fetch("/api/hero-images")
+      .then((r) => r.json())
+      .then((data: { images: string[] }) => {
+        if (data.images?.length) {
+          const mapped: BgImage[] = data.images.map((src, i) => ({
+            src,
+            alt: `Khoảnh khắc trường Nguyễn Công Trứ ${i + 1}`,
+            caption: `Ảnh ${i + 1}`,
+          }));
+          setImages(mapped);
+          setLoaded(mapped.map(() => false));
+        }
+      })
+      .catch(() => {/* giữ fallback */});
+  }, []);
+
+  useEffect(() => {
+    setCurrent(0);
+  }, [images]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % BG_IMAGES.length);
+      setCurrent((prev) => (prev + 1) % images.length);
     }, SLIDE_DURATION);
     return () => clearInterval(timer);
-  }, []);
+  }, [images.length]);
 
   return (
     <div
@@ -52,7 +57,7 @@ export default function SchoolAnimatedBg() {
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
     >
       {/* Slideshow background trường */}
-      {BG_IMAGES.map((img, index) => {
+      {images.map((img, index) => {
         const isActive = index === current;
         return (
           <div
@@ -102,7 +107,7 @@ export default function SchoolAnimatedBg() {
       <div className="pointer-events-auto absolute bottom-4 right-6 hidden items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3.5 py-1.5 text-xs text-slate-300 backdrop-blur-md sm:flex">
         <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
         <span className="font-medium">
-          {BG_IMAGES[current].caption} ({current + 1}/{BG_IMAGES.length})
+          {images[current]?.caption} ({current + 1}/{images.length})
         </span>
       </div>
     </div>

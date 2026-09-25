@@ -364,22 +364,12 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
 ══════════════════════════════════════════ */
 function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const startTimer = () => {
-    timerRef.current = setInterval(() => setCurrent((i) => (i + 1) % slides.length), 4000);
-  };
-  const stopTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-  };
-
+  
   useEffect(() => {
-    if (slides.length <= 1 || paused) return;
-    startTimer();
-    return stopTimer;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slides.length, paused]);
+    if (slides.length <= 1) return;
+    const id = setInterval(() => setCurrent((c) => (c + 1) % slides.length), 4000);
+    return () => clearInterval(id);
+  }, [slides.length, current]);
 
   if (slides.length === 0) return null;
 
@@ -389,9 +379,7 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
 
   return (
     <div
-      className="relative h-[56vh] min-h-[320px] max-h-[520px] overflow-hidden bg-slate-900"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      className="relative h-screen overflow-hidden bg-slate-900"
     >
       {/* Stacked images with cross-fade */}
       {slides.map((s, i) => (
@@ -436,7 +424,7 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       </button>
 
       {/* Progress dots */}
-      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+      <div className="absolute bottom-12 left-1/2 flex -translate-x-1/2 gap-1.5">
         {slides.map((_, i) => (
           <button
             key={i}
@@ -447,7 +435,19 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
           />
         ))}
       </div>
+
+      {/* Scroll-down pulse indicator */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none select-none"
+           style={{ animation: "scrollPulse 1.8s ease-in-out infinite" }}>
+        <svg width="20" height="28" viewBox="0 0 20 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polyline points="3,2 10,9 17,2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+          <polyline points="3,10 10,17 17,10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.55"/>
+          <polyline points="3,18 10,25 17,18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.25"/>
+        </svg>
+      </div>
     </div>
+
+
   );
 }
 

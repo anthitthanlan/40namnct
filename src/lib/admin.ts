@@ -37,8 +37,8 @@ export type AdminAccount = {
 export type SafeAdminAccount = Omit<AdminAccount, "passwordHash">;
 
 /** Thông tin Super Admin từ biến môi trường */
-const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || "nctitc@1986-2026";
-const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD || "NCT@1986";
+const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || "";
+const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD || "";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const ADMINS_FILE = path.join(DATA_DIR, "admins.json");

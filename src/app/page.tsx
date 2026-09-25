@@ -8,10 +8,27 @@ import CountdownBadge from "@/components/CountdownBadge";
 import ContributionCounter from "@/components/ContributionCounter";
 import { listPublished } from "@/lib/posts";
 import { listInvitations } from "@/lib/members";
+import { readdirSync } from "fs";
+import { join } from "path";
+
+const QUOTE_IMAGE_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".avif"]);
+
+/** Lấy ảnh đầu tiên trong public/quote_section_image, fallback về hero-2.webp */
+function getQuoteSectionImage(): string {
+  try {
+    const dir = join(process.cwd(), "public", "quote_section_image");
+    const file = readdirSync(dir)
+      .sort()
+      .find((f) => QUOTE_IMAGE_EXTS.has("." + f.split(".").pop()!.toLowerCase()));
+    if (file) return `/quote_section_image/${file}`;
+  } catch { /* thư mục chưa có */ }
+  return "/images/hero-2.webp"; // fallback
+}
 
 export const revalidate = 60;
 
 export default async function Home() {
+  const quoteBg = getQuoteSectionImage();
   const allPosts = await listPublished();
   const pinnedPosts = allPosts.filter((p) => p.pinned);
   const nonPinnedPosts = allPosts.filter((p) => !p.pinned).slice(0, 4);
@@ -82,7 +99,7 @@ export default async function Home() {
           <Reveal delay={400} variant="zoom" className="h-full mt-10 lg:mt-0">
             <div className="relative flex h-full min-h-[420px] flex-col items-center justify-end overflow-hidden rounded-[2.5rem] p-6 sm:p-10 text-center text-white shadow-2xl">
               {/* Hình nền không có lớp phủ xám toàn bộ */}
-              <div className="absolute inset-0 bg-[url('/images/hero-2.webp')] bg-cover bg-center"></div>
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${quoteBg}')` }}></div>
               
               {/* Lớp phủ blur-gradient-dimmer ở dưới */}
               <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none backdrop-blur-sm [mask-image:linear-gradient(to_top,black_20%,transparent)]"></div>
@@ -145,7 +162,7 @@ export default async function Home() {
           <Reveal delay={240} className="md:col-span-5 md:row-span-1 flex flex-col justify-start">
             <div className="flex flex-col p-4 text-left md:pl-0 border-t border-slate-200/60 pt-6 mt-2">
               <Link 
-                href="/khoang-khac" 
+                href="/khoanh-khac" 
                 className="group inline-flex items-center gap-4 text-base font-medium leading-relaxed text-slate-600 hover:text-[#16a34a] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
               >
                 <span className="max-w-[280px]">Khám phá cột mốc phát triển của nhà trường qua các thời kỳ.</span>

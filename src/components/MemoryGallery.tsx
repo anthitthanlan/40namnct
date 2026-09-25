@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SkeletonBlock from "@/components/SkeletonBlock";
 
 type MediaRow = {
   id: string;
@@ -32,12 +33,22 @@ export default function MemoryGallery() {
   }, []);
 
   if (items === null) {
+    // Skeleton grid — same 3-column layout as the real gallery
     return (
-      <div className="rounded-3xl bg-white/10 p-8 text-center text-sm font-semibold text-slate-200">
-        Đang tải tường ký ức…
+      <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="overflow-hidden rounded-3xl bg-white/10">
+            <SkeletonBlock className="h-56 w-full rounded-none opacity-60" />
+            <div className="space-y-2 p-4">
+              <SkeletonBlock className="h-4 w-3/4 opacity-50" />
+              <SkeletonBlock className="h-3 w-1/2 opacity-40" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
+
 
   if (items.length === 0) {
     return (
@@ -57,14 +68,23 @@ export default function MemoryGallery() {
             className="btn-lightship-soft overflow-hidden rounded-3xl bg-white"
           >
             {m.kind === "image" ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={m.url}
-                alt={m.caption || `Kỷ niệm gửi bởi ${m.author}`}
-                loading="lazy"
-                className="h-56 w-full cursor-zoom-in object-cover"
-                onClick={() => setZoom(m)}
-              />
+              <div className="skeleton-reveal h-56 w-full">
+                {/* Pulsing skeleton behind the image */}
+                <SkeletonBlock className="skeleton-reveal__placeholder h-56 w-full rounded-none" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={m.url}
+                  alt={m.caption || `Kỷ niệm gửi bởi ${m.author}`}
+                  loading="lazy"
+                  className="skeleton-reveal__content h-56 w-full cursor-zoom-in object-cover"
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    img.classList.add("is-loaded");
+                    img.previousElementSibling?.classList.add("is-loaded");
+                  }}
+                  onClick={() => setZoom(m)}
+                />
+              </div>
             ) : (
               <video
                 src={m.url}

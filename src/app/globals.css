@@ -944,3 +944,67 @@ input:-webkit-autofill:active {
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
 }
+
+@keyframes scrollPulse {
+  0%   { opacity: 0;    transform: translateY(-4px); }
+  40%  { opacity: 1;    transform: translateY(0px);  }
+  70%  { opacity: 0.6;  transform: translateY(2px);  }
+  100% { opacity: 0;    transform: translateY(4px);  }
+}
+
+/* ===== Skeleton Pulse + Content Cross-fade Reveal ===== */
+@keyframes skeleton-pulse-anim {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* Pulsing placeholder block */
+.skeleton-pulse {
+  background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #e2e8f0 100%);
+  background-size: 200% 200%;
+  animation:
+    shimmer              1.6s ease-in-out infinite,
+    skeleton-pulse-anim  2.2s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+/* Wrapper: stacks skeleton + real content, transitions between them */
+.skeleton-reveal {
+  position: relative;
+  overflow: hidden;
+}
+
+/* The real content layer: invisible until marked loaded */
+.skeleton-reveal__content {
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity;
+}
+.skeleton-reveal__content.is-loaded {
+  opacity: 1;
+}
+
+/* The skeleton overlay: fades out once content is loaded */
+.skeleton-reveal__placeholder {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity;
+}
+.skeleton-reveal__placeholder.is-loaded {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-pulse {
+    animation: none;
+    opacity: 0.6;
+  }
+  .skeleton-reveal__content,
+  .skeleton-reveal__placeholder {
+    transition: none !important;
+  }
+}
+

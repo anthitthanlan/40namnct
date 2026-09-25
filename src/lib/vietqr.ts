@@ -1,4 +1,4 @@
-﻿/** Thông tin tài khoản tiếp nhận đóng góp - Theo thư ngỏ Ban Tổ chức */
+/** Thông tin tài khoản tiếp nhận đóng góp - Theo thư ngỏ Ban Tổ chức */
 export const BANK = {
   /** Mã BIN Vietcombank */
   bin: "970436",

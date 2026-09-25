@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatDate, type Post } from "@/lib/posts";
+import ClientPostCover from "@/components/ClientPostCover";
 
 /** Huy hiệu nguồn bài: ✦ Ban Biên tập (admin) hay 🗣 Câu chuyện cộng đồng (user) */
 export function PostBadges({ post }: { post: Post }) {
@@ -23,10 +24,11 @@ export function PostBadges({ post }: { post: Post }) {
   );
 }
 
-/** Ảnh bìa bài viết - fallback gradient khi bài không có ảnh */
+/** Ảnh bìa bài viết - fallback gradient khi bài không có ảnh + skeleton cross-fade reveal */
 export function PostCover({ post, className = "" }: { post: Post; className?: string }) {
   if (post.cover) {
-    return <img src={post.cover} alt={post.title} className={className} />;
+    // Delegate to Client Component to handle onLoad (skeleton cross-fade)
+    return <ClientPostCover src={post.cover} alt={post.title} className={className} />;
   }
   return (
     <span
@@ -37,6 +39,7 @@ export function PostCover({ post, className = "" }: { post: Post; className?: st
     </span>
   );
 }
+
 
 export default function PostCard({
   post,

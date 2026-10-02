@@ -173,7 +173,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
 
       {/* ═══════════ YEAR BAR ═══════════
           top-[84px] = below the floating navbar */}
-      <div className="sticky top-[84px] z-40 mx-auto mb-8 w-max max-w-[calc(100vw-2rem)] rounded-full border border-white/60 bg-white/80 p-1.5 shadow-lg shadow-slate-950/10 backdrop-blur-xl transition-all">
+      <div id="timeline-year-bar" className="sticky top-[84px] z-40 mx-auto mb-8 w-max max-w-[calc(100vw-2rem)] rounded-full border border-white/60 bg-white/80 p-1.5 shadow-lg shadow-slate-950/10 backdrop-blur-xl transition-all">
         <div ref={yearBarRef} className="flex items-center gap-1 overflow-x-auto px-1 hide-scrollbar">
           {YEARS.map((y) => {
             const has = (itemsByYear.get(y)?.length ?? 0) > 0;
@@ -390,21 +390,22 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={s.src} alt={s.title} decoding="async" {...(i === 0 ? { fetchPriority: "high" } : { loading: "lazy" })} className="h-full w-full object-cover" />
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+          {/* Gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent hidden lg:block" />
         </div>
       ))}
 
       {/* Text overlay */}
-      <div className="absolute inset-x-0 bottom-0 px-5 pb-12 md:px-10 md:pb-14">
-        <span className="inline-block rounded-full bg-white/10 px-3 py-0.5 text-xs font-bold tracking-widest text-white/70 backdrop-blur-sm">
+      <div className="absolute inset-x-0 bottom-0 px-6 pb-24 md:px-16 md:pb-32 lg:px-24">
+        <span className="btn-lightship-soft inline-flex rounded-full bg-white px-4 py-1.5 text-xs font-bold tracking-widest text-[#1d4ed8]">
           {slide.year}
         </span>
-        <h2 className="mt-2 line-clamp-2 text-xl font-extrabold leading-tight text-white drop-shadow md:text-3xl">
+        <h2 className="mt-4 line-clamp-2 text-3xl font-extrabold leading-tight text-white drop-shadow-lg md:text-5xl max-w-4xl">
           {slide.title}
         </h2>
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-white/60">
-          <span className="material-symbols-rounded text-[0.9em]">person</span>
+        <p className="mt-3 flex items-center gap-2 text-base text-slate-100 drop-shadow md:text-lg">
+          <span className="material-symbols-rounded text-[1.1em]">person</span>
           {slide.author}
         </p>
       </div>
@@ -424,7 +425,7 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       </button>
 
       {/* Progress dots */}
-      <div className="absolute bottom-12 left-1/2 flex -translate-x-1/2 gap-1.5">
+      <div className="absolute bottom-10 left-6 flex gap-1.5 md:bottom-12 md:left-16 lg:left-24">
         {slides.map((_, i) => (
           <button
             key={i}
@@ -437,14 +438,27 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       </div>
 
       {/* Scroll-down pulse indicator */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none select-none"
-           style={{ animation: "scrollPulse 1.8s ease-in-out infinite" }}>
-        <svg width="20" height="28" viewBox="0 0 20 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polyline points="3,2 10,9 17,2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
-          <polyline points="3,10 10,17 17,10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.55"/>
-          <polyline points="3,18 10,25 17,18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.25"/>
-        </svg>
-      </div>
+      <button
+        onClick={() => {
+          const yearBar = document.getElementById("timeline-year-bar");
+          if (yearBar) {
+            const y = yearBar.getBoundingClientRect().top + window.scrollY - 90;
+            window.scrollTo({ top: y, behavior: "smooth" });
+          } else {
+            window.scrollBy({ top: window.innerHeight - 80, behavior: "smooth" });
+          }
+        }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-white/90 transition-all hover:text-white hover:scale-110 active:scale-95"
+        style={{ animation: "scrollPulse 2.5s ease-in-out infinite" }}
+        aria-label="Cuộn xuống xem nội dung"
+      >
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] drop-shadow-md">Xem tiếp</span>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+          <span className="material-symbols-rounded text-2xl font-light">
+            keyboard_arrow_down
+          </span>
+        </div>
+      </button>
     </div>
 
 

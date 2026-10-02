@@ -8,7 +8,7 @@ import Reveal from "@/components/Reveal";
 type Slide = { src: string; alt: string };
 
 const FALLBACK: Slide[] = [
-  { src: "/hero_images/hero-1.webp", alt: "Học sinh trường THPT Nguyễn Công Trứ" },
+  { src: "/hero_images/hero_0.webp", alt: "Học sinh trường THPT Nguyễn Công Trứ" },
 ];
 
 const DURATION = 6000;

@@ -9,7 +9,7 @@ export type HeroImage = {
 
 /** Fallback khi API chưa trả về (hoặc lỗi) */
 const FALLBACK: HeroImage[] = [
-  { src: "/hero_images/hero-1.webp", alt: "Trường THPT Nguyễn Công Trứ" },
+  { src: "/hero_images/hero_0.webp", alt: "Trường THPT Nguyễn Công Trứ" },
 ];
 
 export function useHeroImages() {

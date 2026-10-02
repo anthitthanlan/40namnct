@@ -8,22 +8,10 @@ import CountdownBadge from "@/components/CountdownBadge";
 import ContributionCounter from "@/components/ContributionCounter";
 import { listPublished } from "@/lib/posts";
 import { listInvitations } from "@/lib/members";
-import { readdirSync } from "fs";
-import { join } from "path";
 
-const QUOTE_IMAGE_EXTS = new Set([".webp", ".jpg", ".jpeg", ".png", ".avif"]);
 
-/** Lấy ảnh đầu tiên trong public/quote_section_image, fallback về hero-2.webp */
-function getQuoteSectionImage(): string {
-  try {
-    const dir = join(process.cwd(), "public", "quote_section_image");
-    const file = readdirSync(dir)
-      .sort()
-      .find((f) => QUOTE_IMAGE_EXTS.has("." + f.split(".").pop()!.toLowerCase()));
-    if (file) return `/quote_section_image/${file}`;
-  } catch { /* thư mục chưa có */ }
-  return "/images/hero-2.webp"; // fallback
-}
+/** Ảnh quote section — cập nhật thủ công nếu thay file trong public/quote_section_image/ */
+const QUOTE_SECTION_IMAGE = "/quote_section_image/hero-2.webp";
 
 export const revalidate = 60;
 

@@ -7,7 +7,7 @@ type BgImage = { src: string; alt: string; caption: string };
 
 const FALLBACK: BgImage[] = [
   {
-    src: "/hero_images/hero-1.webp",
+    src: "/hero_images/hero_0.webp",
     alt: "Trường THPT Nguyễn Công Trứ",
     caption: "Trường THPT Nguyễn Công Trứ",
   },

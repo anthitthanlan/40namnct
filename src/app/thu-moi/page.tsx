@@ -162,7 +162,7 @@ function InvitationContent() {
                   <div 
                     className="absolute inset-0 z-0 pointer-events-none"
                     style={{
-                      backgroundImage: "url('/images/hero-5.webp')",
+                      backgroundImage: "url('/hero_images/hero_5.webp')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       opacity: 0.3,

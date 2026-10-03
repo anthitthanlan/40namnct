@@ -3,9 +3,9 @@ import TraCuuClient from "./TraCuuClient";
 import Reveal from "@/components/Reveal";
 
 export const metadata: Metadata = {
-  title: "Tra cứu vé · THPT Nguyễn Công Trứ",
+  title: "Tra cứu thư mời · THPT Nguyễn Công Trứ",
   description:
-    "Tra cứu kết quả giao dịch và tải vé QR cho ngày Lễ kỷ niệm 40 năm - 08/11/2026.",
+    "Tra cứu kết quả giao dịch và tải thư mời điện tử cho ngày Lễ kỷ niệm 40 năm - 08/11/2026.",
 };
 
 export default function TraCuuPage() {

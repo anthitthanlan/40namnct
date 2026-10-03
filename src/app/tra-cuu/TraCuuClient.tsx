@@ -56,7 +56,18 @@ export default function TraCuuClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), phone: phone.trim() }),
       });
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        setError("Lỗi máy chủ (Không thể đọc phản hồi). Vui lòng thử lại.");
+        return;
+      }
+
+      if (data.isFallback) {
+        console.warn("⚠️ [FALLBACK_ACTIVATED] Máy chủ Backend FastAPI không phản hồi. Hệ thống đang sử dụng dữ liệu Local!");
+      }
+
       if (!data.ok) {
         setError(data.message || "Không tìm thấy thông tin.");
         return;
@@ -76,23 +87,21 @@ export default function TraCuuClient() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6">
-      {!result ? (
-        <form
-          onSubmit={submit}
-          className="rounded-[2rem] border border-slate-200/60 bg-white p-6 sm:p-8 shadow-sm"
-        >
+    <div className="mx-auto max-w-[1200px] px-4 md:px-6">
+      <div className={`flex flex-col lg:flex-row gap-8 items-start ${result ? "justify-start" : "justify-center"} transition-all duration-500`}>
+        {/* Khung Tra cứu */}
+        <div className="w-full lg:w-[480px] shrink-0">
+          <form
+            onSubmit={submit}
+            className="rounded-[2rem] border border-slate-200/60 bg-white p-6 sm:p-8 shadow-sm"
+          >
           <div className="text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-[#1d4ed8]">
-              <span className="material-symbols-rounded text-sm">search</span>
-              Tra cứu vé tham dự
-            </div>
             <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-              Tra cứu vé 08/11/2026
+              Tra cứu thư mời 08/11/2026
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
               Nhập đúng họ tên và số điện thoại đã đăng ký để xem kết quả giao
-              dịch và tải vé QR về.
+              dịch và tải thư mời điện tử.
             </p>
           </div>
 
@@ -146,7 +155,7 @@ export default function TraCuuClient() {
             disabled={busy}
             className="mt-5 w-full rounded-xl bg-[#1d4ed8] py-3.5 text-sm font-extrabold text-white shadow-md transition-all hover:bg-blue-700 disabled:opacity-50 active:scale-[0.98]"
           >
-            {busy ? "Đang tra cứu…" : "🔍 Tra cứu"}
+            {busy ? "Đang tra cứu…" : "Tra cứu"}
           </button>
 
           <p className="mt-4 text-center text-xs text-slate-400">
@@ -159,40 +168,33 @@ export default function TraCuuClient() {
             </Link>
           </p>
         </form>
-      ) : (
-        <div className="space-y-6">
-          {/* Header kết quả */}
-          <div className="rounded-[2rem] border border-emerald-200 bg-emerald-50/50 p-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">
-              🎫
+        </div>
+
+        {/* Khung Kết quả (Hiện khi có data) */}
+        {result && (
+          <div className="w-full lg:flex-1 max-w-[600px] space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+            {/* Header kết quả */}
+            <div className="text-center pb-2">
+              <h2 className="text-2xl font-black text-slate-900">
+                Xin chào, {result.member.name}!
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Thông tin tra cứu hợp lệ.
+              </p>
             </div>
-            <h2 className="mt-3 text-xl font-extrabold text-slate-900">
-              Xin chào, {result.member.name}!
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Thông tin tra cứu hợp lệ.
-            </p>
-            <button
-              type="button"
-              onClick={resetSearch}
-              className="mt-4 rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-slate-600 transition-all hover:bg-slate-50"
-            >
-              ← Tra cứu khác
-            </button>
-          </div>
 
           {/* Danh sách vé */}
           {result.invitations.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
               <p className="text-sm text-slate-500">
-                Bạn chưa có vé nào. Hãy{" "}
+                Bạn chưa có thư mời nào. Hãy{" "}
                 <Link
                   href="/dang-ky"
                   className="font-bold text-[#1d4ed8] hover:underline"
                 >
                   đăng ký tham dự
                 </Link>{" "}
-                để nhận vé.
+                để nhận thư mời.
               </p>
             </div>
           ) : (
@@ -222,8 +224,8 @@ export default function TraCuuClient() {
                       </div>
                       <p className="mt-1.5 text-sm font-semibold text-slate-700">
                         {invitation.type === "individual"
-                          ? `Vé cá nhân · ${invitation.attendeeName}`
-                          : `Vé tập thể · ${invitation.quantity} suất`}
+                          ? `Thư mời cá nhân · ${invitation.attendeeName}`
+                          : `Thư mời tập thể · ${invitation.quantity} suất`}
                       </p>
                       <p className="mt-0.5 text-xs text-slate-400">
                         {formatVnd(invitation.amount)} ·{" "}
@@ -310,7 +312,8 @@ export default function TraCuuClient() {
             })
           )}
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

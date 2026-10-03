@@ -1,1 +1,24 @@
-[]
+[
+  {
+    "id": "d613352a-d8c1-4d16-86c7-25103f5688d8",
+    "code": "NCT19862026-00173YUU",
+    "memberId": "1ddb876a-da6f-4250-ab41-029db9cc17f2",
+    "nienKhoa": "2023 - 2026",
+    "type": "individual",
+    "attendeeName": "Lại Nhất Phong",
+    "size": "XXL",
+    "quantity": 1,
+    "sizes": {
+      "XXL": 1
+    },
+    "snacks": 1,
+    "amount": 500000,
+    "status": "confirmed",
+    "note": "Lớp: 12A8",
+    "checkedIn": false,
+    "checkedInAt": null,
+    "createdAt": "2026-10-03T07:27:04.262Z",
+    "updatedAt": "2026-10-03T07:49:17.358Z",
+    "shirtReceived": false
+  }
+]

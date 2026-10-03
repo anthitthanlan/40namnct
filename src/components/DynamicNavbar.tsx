@@ -11,7 +11,7 @@ const links = [
   { href: "/thu-ngo", label: "Thư ngỏ" },
   { href: "/cau-chuyen", label: "Câu chuyện" },
   { href: "/khoanh-khac", label: "Khoảnh khắc" },
-  { href: "/tra-cuu", label: "Tra cứu vé" },
+  { href: "/tra-cuu", label: "Tra cứu" },
   { href: "/an-pham", label: "Ấn phẩm", comingSoon: true },
 ];
 

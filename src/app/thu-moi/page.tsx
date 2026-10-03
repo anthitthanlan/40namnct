@@ -123,7 +123,7 @@ function InvitationContent() {
         backgroundColor: "#ffffff",
         style: {
           transform: "scale(1)",
-          WebkitTextSizeAdjust: "none",
+          webkitTextSizeAdjust: "none",
         },
       });
       const a = document.createElement("a");
@@ -237,7 +237,7 @@ function InvitationContent() {
                       </p>
                       <p>
                         <span className="font-semibold text-gray-700 w-28 inline-block">Niên khóa:</span>
-                        <span className="prata-regular font-bold">{invitation.nienKhoa || "Không rõ"}</span>
+                        <span className="prata-regular font-bold">{member?.nienKhoa || invitation?.nienKhoa || "Không rõ"}</span>
                       </p>
                       <p>
                         <span className="font-semibold text-gray-700 w-28 inline-block">SĐT:</span>

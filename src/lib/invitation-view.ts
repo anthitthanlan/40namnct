@@ -66,32 +66,32 @@ export function invitationStatusInfo(status: InvitationStatus | string): {
   switch (status) {
     case "confirmed":
       return {
-        label: "✅ Đã phát hành",
-        cls: "bg-emerald-100 text-emerald-800 border border-emerald-300",
-        desc: "Vé hợp lệ · Xuất trình QR động khi vào cổng 08/11/2026",
+        label: "Đã phát hành",
+        cls: "bg-emerald-600 text-white border border-emerald-700",
+        desc: "Vé hợp lệ · Xuất trình mã QR khi vào cổng 08/11/2026",
       };
     case "pending_approval":
       return {
-        label: "⏳ Chờ duyệt (24h)",
+        label: "Chờ duyệt (24h)",
         cls: "bg-blue-100 text-blue-800 border border-blue-300",
         desc: "Đã gửi xác nhận đóng góp, Ban Tổ chức đang đối soát biên lai để phát hành vé",
       };
     case "pending_payment":
     case "pending":
       return {
-        label: "🕒 Chờ xác nhận",
+        label: "Chờ xác nhận",
         cls: "bg-amber-100 text-amber-800 border border-amber-300",
         desc: "Đang chờ người dùng quét QR và upload biên lai đóng góp",
       };
     case "rejected":
       return {
-        label: "❌ Đã từ chối",
+        label: "Đã từ chối",
         cls: "bg-rose-100 text-rose-700 border border-rose-300",
         desc: "Không khớp thông tin chuyển khoản",
       };
     default:
       return {
-        label: "🚫 Đã hủy",
+        label: "Đã hủy",
         cls: "bg-slate-100 text-slate-600 border border-slate-300",
       };
   }

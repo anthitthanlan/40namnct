@@ -40,6 +40,39 @@ export async function GET(req: Request) {
       status: "pending_payment",
     });
   }
+  const backendUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.BACKEND_API_URL ||
+    "https://api.nctitc.io.vn";
+
+  try {
+    const res = await fetch(`${backendUrl}/api/invitations/${invitationId}`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const inv = (await res.json()) as {
+        id: string;
+        code: string;
+        amount: number;
+        status: string;
+        attendeeName?: string;
+        nienKhoa?: string;
+      };
+      const bank = getPayBankConfig();
+      return NextResponse.json({
+        ok: true,
+        bank,
+        amount: inv.amount,
+        addInfo: inv.code,
+        invitationCode: inv.code,
+        id: inv.id,
+        status: inv.status,
+        isFallback: false,
+      });
+    }
+  } catch (backendErr) {
+    console.warn("[BANK_INFO] Backend fetch failed, falling back to local JSON:", backendErr);
+  }
 
   const invitation = await findInvitationById(invitationId);
   if (!invitation) {
@@ -58,11 +91,7 @@ export async function GET(req: Request) {
   }
 
   const bank = getPayBankConfig();
-  const addInfo = buildTransferContent(
-    member.name,
-    invitation.nienKhoa || "",
-    member.phone,
-  );
+  const addInfo = invitation.code;
 
   return NextResponse.json({
     ok: true,
@@ -72,5 +101,6 @@ export async function GET(req: Request) {
     invitationCode: invitation.code,
     id: invitation.id,
     status: invitation.status,
+    isFallback: true,
   });
 }

@@ -99,36 +99,94 @@ export async function POST(req: NextRequest) {
   const nienKhoa =
     typeof body.nienKhoa === "string" ? body.nienKhoa.trim().slice(0, 50) : "";
 
-  // --- 1. Tạo Member ---
-  const memberResult = await createMember(name, phone, email);
-  if (!memberResult.ok) {
-    return NextResponse.json(
-      { ok: false, message: memberResult.message },
-      { status: 409 },
-    );
-  }
-
   const lop = typeof body.lop === "string" ? body.lop.trim().slice(0, 50) : "";
   const userNote = typeof body.note === "string" ? body.note.trim().slice(0, 500) : "";
   const finalNote = [lop ? `Lớp: ${lop}` : "", userNote ? `Lời nhắn: ${userNote}` : ""].filter(Boolean).join(" | ");
 
-  // --- 2. Tạo Invitation (chứa combo) ---
-  const invitation = await createInvitation(memberResult.member.id, {
-    type,
-    nienKhoa,
-    attendeeName: name,
-    size,
-    quantity,
-    sizes,
-    snacks: comboCount,
-    note: finalNote,
-  });
+  const backendUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.BACKEND_API_URL ||
+    "https://api.nctitc.io.vn";
+
+  let invitationCode = "";
+  let invitationId = "";
+  let isFallback = false;
+
+  try {
+    // 1. Tạo Member trên Backend Server (FastAPI)
+    const memberRes = await fetch(`${backendUrl}/api/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, phone, email }),
+    });
+
+    if (!memberRes.ok) {
+      const errData = (await memberRes.json().catch(() => ({}))) as { detail?: string };
+      throw new Error(errData?.detail || "Không thể tạo thông tin thành viên trên server.");
+    }
+
+    const memberData = (await memberRes.json()) as { id: string };
+
+    // 2. Tạo Invitation trên Backend Server (FastAPI)
+    const invRes = await fetch(`${backendUrl}/api/invitations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        memberId: memberData.id,
+        attendeeName: name,
+        nienKhoa,
+        type,
+        size,
+        quantity,
+        sizes,
+        snacks: comboCount,
+        amount: comboCount * 500000,
+        note: finalNote,
+      }),
+    });
+
+    if (!invRes.ok) {
+      const errData = (await invRes.json().catch(() => ({}))) as { detail?: string };
+      throw new Error(errData?.detail || "Không thể tạo thư mời trên server.");
+    }
+
+    const invData = (await invRes.json()) as { id: string; code: string };
+    invitationId = invData.id;
+    invitationCode = invData.code;
+  } catch (backendErr: unknown) {
+    console.warn("[BACKEND_API_FALLBACK] Backend error, attempting local fallback:", backendErr);
+    isFallback = true;
+
+    // Fallback local file nếu backend không khả dụng
+    const memberResult = await createMember(name, phone, email);
+    if (!memberResult.ok) {
+      return NextResponse.json(
+        { ok: false, message: memberResult.message, isFallback },
+        { status: 409 },
+      );
+    }
+
+    const invitation = await createInvitation(memberResult.member.id, {
+      type,
+      nienKhoa,
+      attendeeName: name,
+      size,
+      quantity,
+      sizes,
+      snacks: comboCount,
+      note: finalNote,
+    });
+
+    invitationId = invitation.id;
+    invitationCode = invitation.code;
+  }
 
   return NextResponse.json(
     {
       ok: true,
-      invitationCode: invitation.code, // Trả về invitationCode cho UI (nếu cần)
-      invitationId: invitation.id,     // Trả về UUID để dùng làm index trên URL
+      invitationCode,
+      invitationId,
+      isFallback,
     },
     { status: 201 },
   );

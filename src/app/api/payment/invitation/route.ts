@@ -58,6 +58,40 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  const backendUrl =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.BACKEND_API_URL ||
+    "https://api.nctitc.io.vn";
+
+  try {
+    const res = await fetch(`${backendUrl}/api/invitations/${id}`, {
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const inv = await res.json();
+      return NextResponse.json({
+        ok: true,
+        invitation: {
+          code: inv.code,
+          amount: inv.amount,
+          status: inv.status,
+          sizes: inv.sizes || {},
+          snacks: inv.snacks || 0,
+          checkedIn: inv.checkedIn || false,
+        },
+        member: {
+          name: inv.attendeeName || "Thành viên",
+          nienKhoa: inv.nienKhoa || "",
+          phone: inv.phone || "",
+        },
+        addInfo: inv.code,
+        isFallback: false,
+      });
+    }
+  } catch (backendErr) {
+    console.warn("[INVITATION_INFO] Backend fetch failed, falling back to local JSON:", backendErr);
+  }
+
   // Find invitation by id
   const invitations = await listInvitations();
   const invitation = invitations.find(t => t.id === id);

@@ -724,8 +724,8 @@ export default function AdminRegistrations({
                     <span className="text-[11px] font-medium text-slate-500">
                       {isConfirmed
                         ? (t.ocrResult?.confidence === "high" 
-                            ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> AI đã phê duyệt tự động. Thư mời đã vào sao kê và có mã QR động 30s.</>
-                            : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Thư mời đã được admin duyệt thủ công. Kích hoạt mã QR động 30s.</>)
+                            ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> AI đã phê duyệt tự động. Thư mời đã vào sao kê.</>
+                            : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Thư mời đã được admin duyệt thủ công.</>)
                         : t.status === "pending_approval"
                           ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">warning</span> Chờ duyệt thủ công do AI phát hiện rủi ro (lệch tiền/nội dung).</>
                           : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">schedule</span> Đang chờ thành viên thực hiện chuyển khoản.</>}

@@ -272,7 +272,22 @@ export default function XacNhanDongGopContent() {
         body: formData,
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        setUploadState({
+          phase: "system_error",
+          message: "Lỗi máy chủ (Không thể đọc phản hồi). Vui lòng thử lại.",
+          attemptsLeft: 0,
+        });
+        return;
+      }
+
+      if (data.isFallback) {
+        console.warn("⚠️ [FALLBACK_ACTIVATED] Máy chủ AI FastAPI không phản hồi. Hệ thống đang sử dụng AI xử lý nội bộ!");
+      }
+
       if (!res.ok || !data.ok) {
         if (data.confidence === "system_error") {
           setUploadState({

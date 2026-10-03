@@ -189,7 +189,7 @@ export default function ContributionCounter({
                   href="/tra-cuu"
                   className="group relative inline-flex items-center pb-1 text-lg font-bold text-white transition-colors hover:text-emerald-300"
                 >
-                  <span>Tra cứu vé của tôi</span>
+                  <span>Tra cứu thư mời của tôi</span>
                   <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-emerald-400 opacity-0 scale-x-0 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] group-hover:opacity-100 group-hover:scale-x-100" />
                 </Link>
               </div>

@@ -10,7 +10,7 @@ const links = [
   { href: "/thu-ngo", label: "Thư ngỏ" },
   { href: "/cau-chuyen", label: "Câu chuyện" },
   { href: "/khoanh-khac", label: "Khoảnh khắc" },
-  { href: "/tra-cuu", label: "Tra cứu vé" },
+  { href: "/tra-cuu", label: "Tra cứu" },
   { href: "/dang-ky", label: "Đăng kí tham gia" },
   { href: "/an-pham", label: "Ấn phẩm", comingSoon: true },
 ];

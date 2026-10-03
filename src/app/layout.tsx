@@ -3,7 +3,7 @@ import "./globals.css";
 import DynamicNavbar from "@/components/DynamicNavbar";
 import SiteFooter from "@/components/SiteFooter";
 import PageTransitionProvider from "@/components/PageTransitionProvider";
-import DemoWarning from "@/components/DemoWarning";
+import MusicPlayer from "@/components/MusicPlayer";
 
 export const metadata: Metadata = {
   title: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
@@ -36,7 +36,7 @@ export default function RootLayout({
         <DynamicNavbar />
         <PageTransitionProvider>{children}</PageTransitionProvider>
         <SiteFooter />
-        <DemoWarning />
+        <MusicPlayer />
       </body>
     </html>
   );

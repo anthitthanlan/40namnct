@@ -395,7 +395,18 @@ export default function RegisterForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        setError("Lỗi máy chủ (Không thể đọc phản hồi). Vui lòng thử lại.");
+        return;
+      }
+
+      if (data.isFallback) {
+        console.warn("⚠️ [FALLBACK_ACTIVATED] Máy chủ AI FastAPI không phản hồi. Hệ thống đang sử dụng AI xử lý nội bộ!");
+      }
+
       if (!res.ok || !data.ok) {
         setError(data.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
         return;

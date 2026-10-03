@@ -38,5 +38,38 @@
     "adminRole": "super_admin",
     "details": "Cập nhật bài viết: Chiếc bàn gỗ lớp 10A2 - ký ức của một học trò khóa 1998",
     "createdAt": "2026-10-02T19:19:24.540Z"
+  },
+  {
+    "id": "b75a7e0e-9219-4338-b8a2-0a2b072219ba",
+    "action": "update_status",
+    "group": "registrations",
+    "entityId": "d613352a-d8c1-4d16-86c7-25103f5688d8",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminUsername": "nctitc@1986-2026",
+    "adminRole": "super_admin",
+    "details": "Cập nhật trạng thái thành: confirmed",
+    "createdAt": "2026-10-03T07:40:24.579Z"
+  },
+  {
+    "id": "aa2b84d8-87f0-4385-b695-32a84dfd9a2d",
+    "action": "update_status",
+    "group": "registrations",
+    "entityId": "d613352a-d8c1-4d16-86c7-25103f5688d8",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminUsername": "nctitc@1986-2026",
+    "adminRole": "super_admin",
+    "details": "Cập nhật nhận áo thành: Đã nhận",
+    "createdAt": "2026-10-03T07:49:16.246Z"
+  },
+  {
+    "id": "05c0df28-3749-42a4-bd07-3d3236b879d2",
+    "action": "update_status",
+    "group": "registrations",
+    "entityId": "d613352a-d8c1-4d16-86c7-25103f5688d8",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminUsername": "nctitc@1986-2026",
+    "adminRole": "super_admin",
+    "details": "Cập nhật nhận áo thành: Chưa nhận",
+    "createdAt": "2026-10-03T07:49:17.367Z"
   }
 ]

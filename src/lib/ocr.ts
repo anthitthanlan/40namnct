@@ -451,9 +451,9 @@ export function matchReceiptToInvitation(
   },
 ): MatchResult {
   // --- So khớp số tiền ---
-  // Cho phép chênh lệch ≤ 1.000đ (lẻ nhập sai)
+  // Bắt buộc chính xác số tiền (không chênh lệch)
   const amountMatch =
-    ocr.amount !== null && Math.abs(ocr.amount - expected.amount) <= 1000;
+    ocr.amount !== null && ocr.amount === expected.amount;
 
   // --- So khớp nội dung CK ---
   // Chuẩn hóa cả 2 phía, rồi kiểm tra xem:

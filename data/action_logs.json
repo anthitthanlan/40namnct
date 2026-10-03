@@ -71,5 +71,27 @@
     "adminRole": "super_admin",
     "details": "Cập nhật nhận áo thành: Chưa nhận",
     "createdAt": "2026-10-03T07:49:17.367Z"
+  },
+  {
+    "id": "a55047c1-e7d8-400d-a2aa-cf4749b1e5a5",
+    "action": "update_post",
+    "group": "posts",
+    "entityId": "nct-seed-04",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminUsername": "nctitc@1986-2026",
+    "adminRole": "super_admin",
+    "details": "Cập nhật bài viết: Sân trường mùa phượng 2005 - lời nhắn gửi các thế hệ sau",
+    "createdAt": "2026-10-03T15:02:32.909Z"
+  },
+  {
+    "id": "bc7d841c-32dd-4626-b4c8-aa49abdc5b13",
+    "action": "delete_post",
+    "group": "posts",
+    "entityId": "nct-seed-04",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminUsername": "nctitc@1986-2026",
+    "adminRole": "super_admin",
+    "details": "Xóa bài viết ID: nct-seed-04",
+    "createdAt": "2026-10-03T15:02:55.336Z"
   }
 ]

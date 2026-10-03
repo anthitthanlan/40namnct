@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { findInvitationById, getMemberById, updateInvitationReceipt, listInvitations } from "@/lib/members";
+import { findInvitationById, getMemberById, updateInvitationReceipt, listInvitations, checkDuplicateTransaction } from "@/lib/members";
 import { buildTransferContent } from "@/lib/emvqr";
 import { uploadReceipt } from "@/lib/r2";
 import { verifyReceipt } from "@/lib/ocr";
@@ -173,6 +173,20 @@ export async function POST(req: NextRequest) {
       const isHigh = confidence === "high";
 
       let message = "";
+      
+      // Kiểm tra chống trùng lặp từ DB nếu có transactionId
+      if (data.ocrResult?.transactionId) {
+        const isDuplicate = await checkDuplicateTransaction(data.ocrResult.transactionId);
+        if (isDuplicate) {
+          confidence = "mismatch";
+          data.matchResult.confidence = "mismatch";
+          data.matchResult.note = "Phát hiện biên lai tái sử dụng: Mã giao dịch đã được dùng cho vé khác.";
+          if (data.ocrResult) {
+            data.ocrResult.note = data.matchResult.note;
+          }
+        }
+      }
+
       if (confidence === "mismatch") {
         message = buildMismatchMessage(
           match.amountMatch,
@@ -296,15 +310,7 @@ export async function POST(req: NextRequest) {
 
   // --- Kiểm tra chống dùng chung biên lai ---
   if (ocrResult.transactionId && matchResult.confidence !== "mismatch") {
-    const allInvitations = await listInvitations();
-    const isDuplicate = allInvitations.some((t) => {
-      // Bỏ qua chính vé đang kiểm tra
-      if (t.id === invitationId) return false;
-      // Chỉ check các vé đã đóng góp hoặc đang chờ duyệt
-      if (t.status !== "confirmed" && t.status !== "pending_approval") return false;
-      // Trùng mã giao dịch
-      return t.ocrResult?.transactionId === ocrResult.transactionId;
-    });
+    const isDuplicate = await checkDuplicateTransaction(ocrResult.transactionId);
 
     if (isDuplicate) {
       matchResult.confidence = "mismatch";

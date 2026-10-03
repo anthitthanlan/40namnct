@@ -49,22 +49,7 @@ export default async function BaiVietPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/70 to-slate-950/95" />
         <div className="relative mx-auto max-w-6xl px-6 text-center">
-          <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 py-2 text-xs font-extrabold uppercase tracking-widest text-white backdrop-blur-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3.5 w-3.5"
-                width={14}
-                height={14}
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.396 0 2.703.432 3.75 1.17A7.97 7.97 0 0112.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0012.5 4c-1.396 0-2.703.432-3.75 1.17A7.97 7.97 0 009 4.804z" />
-              </svg>
-              Bài viết
-            </span>
-          </Reveal>
+
           <Reveal delay={100}>
             <h1 className="mt-4 text-3xl font-extrabold sm:text-5xl">
               Câu chuyện từ mái trường Trứ
@@ -76,23 +61,7 @@ export default async function BaiVietPage() {
               Công Trứ — được lưu giữ và viết tiếp mỗi ngày.
             </p>
           </Reveal>
-          <Reveal delay={260}>
-            <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm font-bold">
-              <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm">
-                ✍️ {posts.length} bài viết
-              </span>
-              {pinnedPosts.length > 0 && (
-                <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm">
-                  📌 {pinnedPosts.length} được ghim
-                </span>
-              )}
-              {communityPosts.length > 0 && (
-                <span className="rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm">
-                  🗣 {communityPosts.length} câu chuyện cộng đồng
-                </span>
-              )}
-            </div>
-          </Reveal>
+
         </div>
       </section>
 
@@ -109,7 +78,7 @@ export default async function BaiVietPage() {
         /* ── EMPTY STATE ── */
         <section className="mx-auto max-w-3xl px-6 py-20 text-center">
           <Reveal>
-            <div className="btn-lightship-soft rounded-[2rem] bg-white p-12">
+            <div className="btn-lightship-soft rounded-[2rem] bg-white p-6 sm:p-8">
               <span className="text-5xl">🌱</span>
               <h2 className="mt-4 text-2xl font-extrabold text-slate-900">
                 Chưa có bài viết nào
@@ -120,9 +89,10 @@ export default async function BaiVietPage() {
               </p>
               <Link
                 href="/gui-bai?tab=cau-chuyen"
-                className="btn-lightship mt-7 inline-block bg-[#16a34a] px-7 py-3.5 font-bold text-white"
+                className="group relative mt-7 inline-block font-bold text-[#1d4ed8] transition-colors hover:text-blue-800"
               >
                 ✍️ Kể câu chuyện của bạn
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 rounded-full bg-[#1d4ed8] transition-all duration-300 group-hover:w-full" />
               </Link>
             </div>
           </Reveal>

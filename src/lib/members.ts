@@ -1,7 +1,6 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { UNIT_PRICE, type Size, type InvitationStatus } from "./invitation-view";
+import { db } from "./firebase";
 
 export { SIZES, UNIT_PRICE } from "./invitation-view";
 export type { Size, InvitationStatus } from "./invitation-view";
@@ -19,23 +18,14 @@ export type Member = {
 };
 
 export type OcrResult = {
-  /** Số tiền AI trích xuất từ biên lai */
   amount: number | null;
-  /** Nội dung CK AI trích xuất */
   content: string | null;
-  /** Thời gian giao dịch AI trích xuất */
   time: string | null;
-  /** Mã giao dịch / Số tham chiếu */
   transactionId?: string | null;
-  /** Trạng thái giao dịch trích xuất (mới thêm) */
   transactionStatus?: "success" | "pending" | "failed" | "unknown";
-  /** Điểm tin cậy OCR */
   trustScore?: number | null;
-  /** Mức độ tin cậy kết quả so khớp */
   confidence: "high" | "low" | "mismatch" | "system_error";
-  /** Ghi chú chi tiết cho Admin */
   note: string;
-  /** Provider AI đã dùng */
   provider: string;
 };
 
@@ -45,36 +35,24 @@ export type ReceiptAttempt = {
   createdAt: string;
 };
 
-
 export type Invitation = {
   id: string;
-  /** Mã thư mời - ghi trong nội dung chuyển khoản khi quét QR */
   code: string;
   memberId: string;
   nienKhoa?: string;
   type: InvitationType;
-  /** Cá nhân: tên người tham dự (mặc định = tên tài khoản) */
   attendeeName: string;
-  /** Cá nhân: 1 size áo */
   size: string | null;
-  /** Tập thể: tổng số suất (cá nhân = 1) */
   quantity: number;
-  /** size -> số lượng */
   sizes: Record<string, number>;
-  /** Số lượng Combo Áo + Ăn nhẹ (500k/suất) */
   snacks: number;
-  /** Vé tham gia miễn phí. Tiền = snacks × UNIT_PRICE */
   amount: number;
   status: InvitationStatus;
-  /** Ghi chú tự do (VD: Lớp 12A2 - khóa 2005) */
   note: string;
   lastSessionId?: string;
   paymentClaimedAt?: string;
-  /** URL ảnh biên lai chuyển khoản (Cloudflare R2 hoặc local fallback) - Bản mới nhất */
   receiptUrl?: string;
-  /** Kết quả AI OCR từ ảnh biên lai - Bản mới nhất */
   ocrResult?: OcrResult;
-  /** Lịch sử các lần tải ảnh (Tối đa 3 lần) */
   receiptAttempts?: ReceiptAttempt[];
   checkedIn?: boolean;
   checkedInAt?: string | null;
@@ -88,59 +66,23 @@ export type InvitationInput = {
   type: InvitationType;
   nienKhoa?: string;
   attendeeName: string;
-  size: Size | null; // Size áo
+  size: Size | null;
   quantity: number;
   sizes: Record<string, number>;
   snacks: number;
   note: string;
 };
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const MEMBERS_FILE = path.join(DATA_DIR, "members.json");
-const INVITATIONS_FILE = path.join(DATA_DIR, "invitations.json");
-
-/** Khóa ghi file đơn giản - tránh ghi đè song song */
-let queue: Promise<unknown> = Promise.resolve();
-function withLock<T>(fn: () => Promise<T>): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.catch(() => undefined);
-  return run;
-}
-
-async function readJson<T>(file: string, fallback: T): Promise<T> {
-  try {
-    const raw = await fs.readFile(file, "utf8");
-    const parsed: unknown = JSON.parse(raw);
-    return parsed as T;
-  } catch {
-    await withLock(async () => {
-      try {
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        await fs.writeFile(file, JSON.stringify(fallback, null, 2), "utf8");
-      } catch {
-        /* no-op */
-      }
-    });
-    return fallback;
-  }
-}
-
 export async function listMembers(): Promise<Member[]> {
-  return readJson<Member[]>(MEMBERS_FILE, []);
+  const snap = await db.collection("members").get();
+  return snap.docs.map((doc) => doc.data() as Member);
 }
 
 export async function listInvitations(): Promise<Invitation[]> {
-  return readJson<Invitation[]>(INVITATIONS_FILE, []);
+  const snap = await db.collection("invitations").get();
+  return snap.docs.map((doc) => doc.data() as Invitation);
 }
 
-async function writeJson<T>(file: string, value: T): Promise<void> {
-  await withLock(async () => {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(file, JSON.stringify(value, null, 2), "utf8");
-  });
-}
-
-/** Chuẩn hoá SĐT Việt Nam: bỏ ký tự lạ, +84/84 → 0. Null nếu không hợp lệ */
 export function normalizePhone(input: string): string | null {
   let digits = input.replace(/\D/g, "");
   if (digits.startsWith("84") && digits.length >= 11) {
@@ -150,7 +92,6 @@ export function normalizePhone(input: string): string | null {
   return digits;
 }
 
-/** Bảng chữ cái cho mã - bỏ I, O, 0, 1 dễ nhầm */
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function randomCode(len: number): string {
@@ -162,22 +103,21 @@ function randomCode(len: number): string {
 }
 
 export async function findMemberByPhone(phone: string): Promise<Member | null> {
-  const members = await listMembers();
-  return members.find((m) => m.phone === phone) ?? null;
+  const snap = await db.collection("members").where("phone", "==", phone).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].data() as Member;
 }
 
-/** Tạo tài khoản thành viên mới - trùng SĐT sẽ bị từ chối */
 export async function createMember(
   name: string,
   phone: string,
   email: string,
 ): Promise<{ ok: true; member: Member } | { ok: false; message: string }> {
-  const members = await listMembers();
-  if (members.some((m) => m.phone === phone)) {
+  const existing = await findMemberByPhone(phone);
+  if (existing) {
     return {
       ok: false,
-      message:
-        "Số điện thoại này đã đăng ký tham gia. Vui lòng sử dụng mã định danh đã được cấp.",
+      message: "Số điện thoại này đã đăng ký tham gia. Vui lòng sử dụng mã định danh đã được cấp.",
     };
   }
   const member: Member = {
@@ -187,22 +127,20 @@ export async function createMember(
     email,
     createdAt: new Date().toISOString(),
   };
-  members.push(member);
-  await writeJson(MEMBERS_FILE, members);
+  await db.collection("members").doc(member.id).set(member);
   return { ok: true, member };
 }
 
-
-
 export async function getMemberById(id: string): Promise<Member | null> {
-  const members = await listMembers();
-  return members.find((m) => m.id === id) ?? null;
+  const doc = await db.collection("members").doc(id).get();
+  return doc.exists ? (doc.data() as Member) : null;
 }
 
 export async function findInvitationByCode(code: string): Promise<Invitation | null> {
   const normalized = code.trim().toUpperCase();
-  const invitations = await listInvitations();
-  return invitations.find((i) => i.code === normalized) ?? null;
+  const snap = await db.collection("invitations").where("code", "==", normalized).limit(1).get();
+  if (snap.empty) return null;
+  return snap.docs[0].data() as Invitation;
 }
 
 function generateInvitationCode(order: number): string {
@@ -210,17 +148,18 @@ function generateInvitationCode(order: number): string {
   return `NCT19862026-${orderStr}${randomCode(5)}`;
 }
 
-/** Tạo vé tham dự. Combo tính phí 500k/suất (lưu vào biến snacks) */
 export async function createInvitation(
   memberId: string,
   input: InvitationInput,
 ): Promise<Invitation> {
-  const invitations = await listInvitations();
-  const order = invitations.length + 1;
+  const invitationsSnap = await db.collection("invitations").get();
+  const order = invitationsSnap.size + 1;
   let code = generateInvitationCode(order);
-  while (invitations.some((t) => t.code === code)) {
+  
+  while (invitationsSnap.docs.some((d) => (d.data() as Invitation).code === code)) {
     code = generateInvitationCode(order);
   }
+  
   const now = new Date().toISOString();
   const invitation: Invitation =
     input.type === "individual"
@@ -262,88 +201,83 @@ export async function createInvitation(
           createdAt: now,
           updatedAt: now,
         };
-  invitations.push(invitation);
-  await writeJson(INVITATIONS_FILE, invitations);
+        
+  await db.collection("invitations").doc(invitation.id).set(invitation);
   return invitation;
 }
 
 export async function listInvitationsByMember(memberId: string): Promise<Invitation[]> {
-  const invitations = await listInvitations();
-  return invitations
-    .filter((t) => t.memberId === memberId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const snap = await db.collection("invitations").where("memberId", "==", memberId).get();
+  const list = snap.docs.map((d) => d.data() as Invitation);
+  return list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function findInvitationById(id: string): Promise<Invitation | null> {
-  const invitations = await listInvitations();
-  return invitations.find((t) => t.id === id) ?? null;
+  const doc = await db.collection("invitations").doc(id).get();
+  return doc.exists ? (doc.data() as Invitation) : null;
 }
 
 export async function setInvitationStatus(
   id: string,
   status: InvitationStatus,
 ): Promise<Invitation | null> {
-  const invitations = await listInvitations();
-  const index = invitations.findIndex((t) => t.id === id);
-  if (index === -1) return null;
-  invitations[index] = {
-    ...invitations[index],
-    status,
-    updatedAt: new Date().toISOString(),
-  };
-  await writeJson(INVITATIONS_FILE, invitations);
-  return invitations[index];
+  const docRef = db.collection("invitations").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return null;
+  
+  const now = new Date().toISOString();
+  await docRef.update({ status, updatedAt: now });
+  
+  const updated = await docRef.get();
+  return updated.data() as Invitation;
 }
 
 export async function setShirtReceived(
   id: string,
   shirtReceived: boolean,
 ): Promise<Invitation | null> {
-  const invitations = await listInvitations();
-  const index = invitations.findIndex((t) => t.id === id);
-  if (index === -1) return null;
-  invitations[index] = {
-    ...invitations[index],
-    shirtReceived,
-    updatedAt: new Date().toISOString(),
-  };
-  await writeJson(INVITATIONS_FILE, invitations);
-  return invitations[index];
+  const docRef = db.collection("invitations").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return null;
+  
+  const now = new Date().toISOString();
+  await docRef.update({ shirtReceived, shirtReceivedAt: now, updatedAt: now });
+  
+  const updated = await docRef.get();
+  return updated.data() as Invitation;
 }
 
-/** Người dùng xác nhận đã chuyển khoản -> chuyển sang chờ duyệt (24h) kèm Session ID */
 export async function claimPayment(
   id: string,
   sessionId?: string,
 ): Promise<Invitation | null> {
-  const invitations = await listInvitations();
-  const index = invitations.findIndex((t) => t.id === id);
-  if (index === -1) return null;
+  const docRef = db.collection("invitations").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return null;
+  
+  const current = doc.data() as Invitation;
   const now = new Date().toISOString();
-  invitations[index] = {
-    ...invitations[index],
+  await docRef.update({
     status: "pending_approval",
-    lastSessionId: sessionId || invitations[index].lastSessionId,
+    lastSessionId: sessionId || current.lastSessionId,
     paymentClaimedAt: now,
     updatedAt: now,
-  };
-  await writeJson(INVITATIONS_FILE, invitations);
-  return invitations[index];
+  });
+  
+  const updated = await docRef.get();
+  return updated.data() as Invitation;
 }
 
-/**
- * Lưu kết quả AI OCR và URL ảnh biên lai vào vé
- * Đồng thời cập nhật trạng thái dựa trên confidence
- */
 export async function updateInvitationReceipt(
   id: string,
   receiptUrl: string,
   ocrResult: OcrResult,
 ): Promise<Invitation | null> {
-  const invitations = await listInvitations();
-  const index = invitations.findIndex((t) => t.id === id);
-  if (index === -1) return null;
-
+  const docRef = db.collection("invitations").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return null;
+  
+  const current = doc.data() as Invitation;
   const now = new Date().toISOString();
   
   const attempt: ReceiptAttempt = {
@@ -351,43 +285,45 @@ export async function updateInvitationReceipt(
     ocrResult,
     createdAt: now,
   };
-  const newAttempts = [...(invitations[index].receiptAttempts || []), attempt];
+  const newAttempts = [...(current.receiptAttempts || []), attempt];
 
-  let newStatus = invitations[index].status;
+  let newStatus = current.status;
   if (ocrResult.confidence === "high") {
     newStatus = "confirmed";
   } else if (
     ocrResult.confidence === "low" ||
     ocrResult.confidence === "system_error" ||
-    newAttempts.length >= 3 // Quá 3 lần sai -> Bắt buộc chuyển chờ duyệt
+    newAttempts.length >= 3
   ) {
     newStatus = "pending_approval";
   }
 
-  invitations[index] = {
-    ...invitations[index],
-    receiptUrl, // Bản mới nhất để hiển thị nhanh
+  const updates: any = {
+    receiptUrl,
     ocrResult,
     receiptAttempts: newAttempts,
     status: newStatus,
-    ...(newStatus !== invitations[index].status ? { paymentClaimedAt: now } : {}),
     updatedAt: now,
   };
-
-  await writeJson(INVITATIONS_FILE, invitations);
-  return invitations[index];
+  
+  if (newStatus !== current.status) {
+    updates.paymentClaimedAt = now;
+  }
+  
+  await docRef.update(updates);
+  
+  const updated = await docRef.get();
+  return updated.data() as Invitation;
 }
 
-/** Check-in vé tại cổng bằng camera scanner */
 export async function checkInInvitation(
   id: string,
 ): Promise<{ ok: boolean; invitation?: Invitation; message?: string }> {
-  const invitations = await listInvitations();
-  const index = invitations.findIndex((t) => t.id === id);
-  if (index === -1) {
-    return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
-  }
-  const t = invitations[index];
+  const docRef = db.collection("invitations").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
+  
+  const t = doc.data() as Invitation;
   if (t.status !== "confirmed") {
     return {
       ok: false,
@@ -401,27 +337,26 @@ export async function checkInInvitation(
       message: `Vé này đã được quét vào cổng lúc ${new Date(t.checkedInAt || "").toLocaleTimeString("vi-VN")}`,
     };
   }
+  
   const now = new Date().toISOString();
-  invitations[index] = {
-    ...t,
+  await docRef.update({
     checkedIn: true,
     checkedInAt: now,
     updatedAt: now,
-  };
-  await writeJson(INVITATIONS_FILE, invitations);
-  return { ok: true, invitation: invitations[index] };
+  });
+  
+  const updated = await docRef.get();
+  return { ok: true, invitation: updated.data() as Invitation };
 }
 
-/** Quét QR trao áo tại sự kiện — chỉ áp dụng cho vé đã duyệt */
 export async function shirtCheckInByQr(
   id: string,
 ): Promise<{ ok: boolean; invitation?: Invitation; message?: string }> {
-  const invitations = await listInvitations();
-  const index = invitations.findIndex((t) => t.id === id);
-  if (index === -1) {
-    return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
-  }
-  const t = invitations[index];
+  const docRef = db.collection("invitations").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
+  
+  const t = doc.data() as Invitation;
   if (t.status !== "confirmed") {
     return {
       ok: false,
@@ -435,24 +370,35 @@ export async function shirtCheckInByQr(
       message: `Vé này đã được trao áo lúc ${new Date(t.shirtReceivedAt || "").toLocaleTimeString("vi-VN")}`,
     };
   }
+  
   const now = new Date().toISOString();
-  invitations[index] = {
-    ...t,
+  await docRef.update({
     shirtReceived: true,
     shirtReceivedAt: now,
     updatedAt: now,
-  };
-  await writeJson(INVITATIONS_FILE, invitations);
-  return { ok: true, invitation: invitations[index] };
+  });
+  
+  const updated = await docRef.get();
+  return { ok: true, invitation: updated.data() as Invitation };
 }
 
 export { vietqrUrl } from "./vietqr";
 
 export async function deleteInvitation(id: string): Promise<boolean> {
-  const invitations = await listInvitations();
-  const index = invitations.findIndex((t) => t.id === id);
-  if (index === -1) return false;
-  invitations.splice(index, 1);
-  await writeJson(INVITATIONS_FILE, invitations);
+  const docRef = db.collection("invitations").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return false;
+  
+  await docRef.delete();
   return true;
+}
+
+export async function checkDuplicateTransaction(transactionId: string): Promise<boolean> {
+  if (!transactionId) return false;
+  const snap = await db.collection("invitations")
+    .where("ocrResult.transactionId", "==", transactionId)
+    .where("status", "==", "confirmed")
+    .limit(1)
+    .get();
+  return !snap.empty;
 }

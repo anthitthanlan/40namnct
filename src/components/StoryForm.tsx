@@ -16,7 +16,7 @@ const ROLES = [
 ];
 
 const inputCls =
-  "mt-2 w-full rounded-2xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-[#1d4ed8] focus:outline-none";
+  "mt-2 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-[#1d4ed8] focus:outline-none";
 
 const labelCls =
   "mt-5 block text-xs font-extrabold uppercase tracking-wider text-slate-500";
@@ -113,7 +113,7 @@ export default function StoryForm() {
   }
 
   return (
-    <form onSubmit={submit} className="btn-lightship-soft rounded-[2rem] bg-white p-8 sm:p-10">
+    <form onSubmit={submit}>
       <h2 className="text-2xl font-extrabold text-slate-900">
         Kể câu chuyện của bạn
       </h2>

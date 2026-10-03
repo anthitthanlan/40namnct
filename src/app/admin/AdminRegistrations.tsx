@@ -731,7 +731,7 @@ export default function AdminRegistrations({
                           : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">schedule</span> Đang chờ thành viên thực hiện chuyển khoản.</>}
                     </span>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
                       {!isConfirmed && (
                         <button
                           type="button"

@@ -1,0 +1,44 @@
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { deleteInvitation } from "@/lib/members";
+import { logAction } from "@/lib/action-logs";
+
+export const dynamic = "force-dynamic";
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const admin = getAdminFromRequest(req);
+  if (!admin || admin.role === "editor") return unauthorized();
+
+  const { id } = await params;
+
+  if (!id) {
+    return NextResponse.json(
+      { ok: false, message: "Thiếu id thư mời." },
+      { status: 400 }
+    );
+  }
+
+  const success = await deleteInvitation(id);
+  if (!success) {
+    return NextResponse.json(
+      { ok: false, message: "Không tìm thấy thư mời để xóa." },
+      { status: 404 }
+    );
+  }
+
+  await logAction(
+    "delete_invitation",
+    "registrations",
+    id,
+    admin.fullName || admin.username,
+    admin.username,
+    admin.role,
+    "Đã xoá thư mời"
+  );
+
+  return NextResponse.json({ ok: true });
+}

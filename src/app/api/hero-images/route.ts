@@ -6,6 +6,7 @@ const HERO_IMAGES = [
   "/hero_images/hero_0.webp",
   "/hero_images/hero_1.webp",
   "/hero_images/hero_2.webp",
+  "/hero_images/hero_2.1.webp",
   "/hero_images/hero_3.webp",
   "/hero_images/hero_4.webp",
   "/hero_images/hero_5.webp",

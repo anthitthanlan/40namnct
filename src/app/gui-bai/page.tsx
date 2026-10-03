@@ -67,35 +67,11 @@ function GuiBaiContent() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-3xl bg-white shadow-xl shadow-slate-200/50">
+          <div className="mt-4">
             {tab === "media" ? (
-              <div>
-                <div className="bg-slate-50 p-6 md:p-8">
-                  <h2 className="text-xl font-extrabold text-slate-900">
-                    Đăng ảnh hoặc video
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-500">
-                    Gửi một hoặc nhiều ảnh, video ngắn kỷ niệm của bạn (tối đa 10MB/ảnh, 40MB/video).
-                  </p>
-                </div>
-                <div className="p-6 md:p-8">
-                  <MediaUploader />
-                </div>
-              </div>
+              <MediaUploader />
             ) : (
-              <div>
-                <div className="bg-slate-50 p-6 md:p-8">
-                  <h2 className="text-xl font-extrabold text-slate-900">
-                    Viết câu chuyện
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-500">
-                    Kể lại những kỷ niệm sâu sắc, bài học hay những tâm sự gửi thanh xuân của bạn.
-                  </p>
-                </div>
-                <div className="p-6 md:p-8">
-                  <StoryForm />
-                </div>
-              </div>
+              <StoryForm />
             )}
           </div>
         </Reveal>

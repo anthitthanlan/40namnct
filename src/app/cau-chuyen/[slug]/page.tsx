@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { hasAdminCookie } from "@/lib/auth";
 import {
-  findPostAnyBySlug,
   formatDate,
   getPostBySlug,
   listPublished,
@@ -35,16 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PostDetailPage({ params }: Props) {
   const { slug } = await params;
-  let post = await getPostBySlug(slug);
-  let preview = false;
-  if (!post) {
-    // Chưa xuất bản - chỉ Ban Biên tập (đang đăng nhập) xem được bản nháp/chờ duyệt
-    const anyPost = await findPostAnyBySlug(slug);
-    if (anyPost && (await hasAdminCookie())) {
-      post = anyPost;
-      preview = true;
-    }
-  }
+  const post = await getPostBySlug(slug);
   if (!post) notFound();
 
   const related = sortPublic(
@@ -61,13 +51,6 @@ export default async function PostDetailPage({ params }: Props) {
         >
           ← Tất cả bài viết
         </Link>
-
-        {preview && (
-          <div className="mt-6 rounded-2xl bg-amber-100 px-5 py-3 text-sm font-extrabold text-amber-800">
-            👁 Bản xem trước - bài viết chưa được xuất bản, chỉ Ban Biên tập
-            nhìn thấy.
-          </div>
-        )}
 
         <div className="mt-6">
           <PostBadges post={post} />

@@ -1,6 +1,5 @@
 import HeroSlideshow from "@/components/HeroSlideshow";
 import Link from "next/link";
-import MediaUploader from "@/components/MediaUploader";
 import MemoryGallery from "@/components/MemoryGallery";
 import PostCard from "@/components/PostCard";
 import Reveal from "@/components/Reveal";
@@ -316,11 +315,21 @@ export default async function Home() {
           </div>
 
           <div className="grid gap-16 lg:grid-cols-12 lg:items-start">
-            {/* Cột trái: Form tải ảnh */}
+            {/* Cột trái: CTA chuyển hướng */}
             <div className="lg:col-span-5">
               <Reveal variant="up" delay={240}>
-                <div>
-                  <MediaUploader />
+                <div className="rounded-[2rem] bg-white/5 p-8 backdrop-blur-md border border-white/10 text-center lg:text-left">
+                  <h3 className="text-2xl font-bold text-white mb-4">Gửi gắm kỷ niệm của bạn</h3>
+                  <p className="text-blue-100 mb-8 text-sm leading-relaxed">
+                    Bạn có những bức ảnh cũ, những đoạn video quý giá hay những câu chuyện thanh xuân chưa từng kể? Hãy chia sẻ cùng chúng tôi để làm phong phú thêm Tường ký ức 40 năm.
+                  </p>
+                  <Link 
+                    href="/gui-bai"
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-extrabold text-[#1d4ed8] shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-50 hover:shadow-xl"
+                  >
+                    <span className="material-symbols-rounded">upload</span>
+                    Gửi kỷ niệm ngay
+                  </Link>
                 </div>
               </Reveal>
             </div>

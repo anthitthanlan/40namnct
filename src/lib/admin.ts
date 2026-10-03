@@ -1,12 +1,11 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { randomUUID, createHash, scryptSync, randomBytes } from "node:crypto";
+import { db } from "./firebase";
 
 // ============================================================
 // Hệ thống tài khoản quản trị phân quyền
 // Roles: super_admin | system_manager | editor
 // Super Admin: lấy từ biến môi trường (không lưu trong DB)
-// Các tài khoản còn lại: lưu trong data/admins.json
+// Các tài khoản còn lại: lưu trong Firestore (collection "admins")
 // ============================================================
 
 export type AdminRole = "super_admin" | "system_manager" | "editor";
@@ -40,17 +39,6 @@ export type SafeAdminAccount = Omit<AdminAccount, "passwordHash">;
 const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || "";
 const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD || "";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const ADMINS_FILE = path.join(DATA_DIR, "admins.json");
-
-/** Khóa ghi file đơn giản */
-let queue: Promise<unknown> = Promise.resolve();
-function withLock<T>(fn: () => Promise<T>): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.catch(() => undefined);
-  return run;
-}
-
 function hashPassword(password: string, salt?: string): string {
   const s = salt || randomBytes(16).toString("hex");
   const derivedKey = scryptSync(password, s, 64).toString("hex");
@@ -65,30 +53,6 @@ function verifyPassword(password: string, hash: string): boolean {
   const [salt, key] = hash.split(":");
   const derivedKey = scryptSync(password, salt, 64).toString("hex");
   return key === derivedKey;
-}
-
-async function readAdmins(): Promise<AdminAccount[]> {
-  try {
-    const raw = await fs.readFile(ADMINS_FILE, "utf8");
-    return JSON.parse(raw) as AdminAccount[];
-  } catch {
-    await withLock(async () => {
-      try {
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        await fs.writeFile(ADMINS_FILE, "[]", "utf8");
-      } catch {
-        /* no-op */
-      }
-    });
-    return [];
-  }
-}
-
-async function writeAdmins(admins: AdminAccount[]): Promise<void> {
-  await withLock(async () => {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(ADMINS_FILE, JSON.stringify(admins, null, 2), "utf8");
-  });
 }
 
 // ============================================================
@@ -126,12 +90,12 @@ export async function authenticateAdmin(
     };
   }
 
-  // Kiểm tra tài khoản trong DB
-  const admins = await readAdmins();
-  const account = admins.find((a) => a.username === username);
-  if (!account) {
+  // Kiểm tra tài khoản trong DB Firestore
+  const snap = await db.collection("admins").where("username", "==", username).limit(1).get();
+  if (snap.empty) {
     return { ok: false, message: "Tên đăng nhập không tồn tại." };
   }
+  const account = snap.docs[0].data() as AdminAccount;
 
   if (!verifyPassword(password, account.passwordHash)) {
     return { ok: false, message: "Mật khẩu không đúng." };
@@ -165,14 +129,15 @@ export type CreateAdminInput = {
 export async function createAdminAccount(
   input: CreateAdminInput,
 ): Promise<{ ok: true; account: AdminAccount } | { ok: false; message: string }> {
-  const admins = await readAdmins();
-  if (admins.some((a) => a.username === input.username)) {
+  const snap = await db.collection("admins").where("username", "==", input.username).limit(1).get();
+  if (!snap.empty) {
     return { ok: false, message: "Tên đăng nhập đã tồn tại." };
   }
 
   const now = new Date().toISOString();
+  const id = randomUUID();
   const account: AdminAccount = {
-    id: randomUUID(),
+    id,
     username: input.username,
     fullName: input.fullName,
     title: input.title,
@@ -189,23 +154,24 @@ export async function createAdminAccount(
     updatedAt: now,
   };
 
-  admins.push(account);
-  await writeAdmins(admins);
+  await db.collection("admins").doc(id).set(account);
   return { ok: true, account };
 }
 
 /** Lấy danh sách tài khoản admin (không bao gồm super admin) */
 export async function listAdminAccounts(): Promise<SafeAdminAccount[]> {
-  const admins = await readAdmins();
-  return admins.map(({ passwordHash, ...safe }) => safe);
+  const snap = await db.collection("admins").get();
+  const accounts = snap.docs.map((doc) => doc.data() as AdminAccount);
+  return accounts.map(({ passwordHash, ...safe }) => safe);
 }
 
 /** Xóa tài khoản admin (chỉ Super Admin) */
 export async function deleteAdminAccount(id: string): Promise<boolean> {
-  const admins = await readAdmins();
-  const next = admins.filter((a) => a.id !== id);
-  if (next.length === admins.length) return false;
-  await writeAdmins(next);
+  const docRef = db.collection("admins").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return false;
+  
+  await docRef.delete();
   return true;
 }
 
@@ -215,44 +181,47 @@ export async function addAdminLog(
   action: string,
   detail: string,
 ): Promise<void> {
-  if (adminId === "super_admin") return; // Super Admin không lưu log trong file
-  const admins = await readAdmins();
-  const index = admins.findIndex((a) => a.id === adminId);
-  if (index === -1) return;
-  admins[index].logs.push({
-    action,
-    detail,
-    timestamp: new Date().toISOString(),
+  if (adminId === "super_admin") return; // Super Admin không lưu log
+  const docRef = db.collection("admins").doc(adminId);
+  const doc = await docRef.get();
+  if (!doc.exists) return;
+  
+  const current = doc.data() as AdminAccount;
+  const newLogs = [
+    ...(current.logs || []),
+    {
+      action,
+      detail,
+      timestamp: new Date().toISOString(),
+    }
+  ];
+  
+  await docRef.update({
+    logs: newLogs,
+    updatedAt: new Date().toISOString(),
   });
-  admins[index].updatedAt = new Date().toISOString();
-  await writeAdmins(admins);
 }
 
 // ============================================================
 // Kiểm tra quyền
 // ============================================================
 
-/** Super Admin: mọi quyền */
 export function isSuperAdmin(role: AdminRole): boolean {
   return role === "super_admin";
 }
 
-/** System Manager: quản lý hệ thống nhưng không tạo tài khoản */
 export function canManageSystem(role: AdminRole): boolean {
   return role === "super_admin" || role === "system_manager";
 }
 
-/** Editor: chỉ được quản lý bài viết (đăng/gỡ, duyệt bài) */
 export function canManagePosts(role: AdminRole): boolean {
   return role === "super_admin" || role === "system_manager" || role === "editor";
 }
 
-/** Chỉ Super Admin có thể tạo tài khoản */
 export function canCreateAccounts(role: AdminRole): boolean {
   return role === "super_admin";
 }
 
-/** Nhãn hiển thị cho role */
 export function roleLabel(role: AdminRole): string {
   switch (role) {
     case "super_admin":

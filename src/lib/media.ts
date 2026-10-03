@@ -1,12 +1,12 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { db } from "./firebase";
+import { uploadMediaFile } from "./r2";
 
 export type MediaStatus = "pending" | "approved" | "rejected";
 
 export type MediaItem = {
   id: string;
-  /** Tên file trong data/uploads - phục vụ qua /api/media/file/[name] */
+  /** Tên file (R2 key) */
   file: string;
   kind: "image" | "video";
   size: number;
@@ -19,44 +19,6 @@ export type MediaItem = {
   status: MediaStatus;
   createdAt: string;
 };
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const UPLOADS_DIR = path.join(DATA_DIR, "uploads");
-const MEDIA_FILE = path.join(DATA_DIR, "media.json");
-
-let queue: Promise<unknown> = Promise.resolve();
-function withLock<T>(fn: () => Promise<T>): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.catch(() => undefined);
-  return run;
-}
-
-async function readMedia(): Promise<MediaItem[]> {
-  try {
-    const raw = await fs.readFile(MEDIA_FILE, "utf8");
-    const parsed: unknown = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return (parsed as MediaItem[]).map(normalizeMediaItem);
-    }
-  } catch {
-    await withLock(async () => {
-      try {
-        await fs.mkdir(DATA_DIR, { recursive: true });
-        await fs.writeFile(MEDIA_FILE, "[]", "utf8");
-      } catch {
-        /* no-op */
-      }
-    });
-  }
-  return [];
-}
-
-async function writeMedia(items: MediaItem[]): Promise<void> {
-  await withLock(async () => {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(MEDIA_FILE, JSON.stringify(items, null, 2), "utf8");
-  });
-}
 
 export const IMAGE_MIME: Record<string, string> = {
   jpg: "image/jpeg",
@@ -94,19 +56,25 @@ export async function saveUploadFile(
   buffer: Buffer,
   ext: string,
 ): Promise<string> {
-  await fs.mkdir(UPLOADS_DIR, { recursive: true });
   const name = `${randomUUID()}.${ext}`;
-  await fs.writeFile(path.join(UPLOADS_DIR, name), buffer);
-  return name;
+  const mime = mimeForExt(ext) || "application/octet-stream";
+  const result = await uploadMediaFile(name, buffer, mime);
+  if (!result.ok) {
+    throw new Error(`Upload to R2 failed: ${result.error}`);
+  }
+  // Return the R2 key
+  return result.key;
+}
+
+async function readMedia(): Promise<MediaItem[]> {
+  const snapshot = await db.collection("media").get();
+  return snapshot.docs.map((doc) => normalizeMediaItem(doc.data() as MediaItem));
 }
 
 export async function addMediaItem(item: MediaItem): Promise<void> {
-  const items = await readMedia();
-  items.push(item);
-  await writeMedia(items);
+  await db.collection("media").doc(item.id).set(item);
 }
 
-/** Dữ data cố từ các item cữ (không có năm/tháng) → năm/tháng từ createdAt */
 function normalizeMediaItem(item: MediaItem): MediaItem {
   const created = new Date(item.createdAt);
   const fallbackYear = Number.isNaN(created.getFullYear())
@@ -127,21 +95,21 @@ function normalizeMediaItem(item: MediaItem): MediaItem {
 }
 
 export async function listApprovedMedia(): Promise<MediaItem[]> {
-  return (await readMedia())
-    .filter((m) => m.status === "approved")
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const snapshot = await db.collection("media").where("status", "==", "approved").get();
+  const items = snapshot.docs.map((doc) => normalizeMediaItem(doc.data() as MediaItem));
+  return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 /** Danh sách media đã duyệt, sắp theo năm → tháng (cho Timeline tự động cuộn) */
 export async function listApprovedMediaChronological(): Promise<MediaItem[]> {
-  return (await readMedia())
-    .filter((m) => m.status === "approved")
-    .sort(
-      (a, b) =>
-        a.year - b.year ||
-        a.month - b.month ||
-        b.createdAt.localeCompare(a.createdAt),
-    );
+  const snapshot = await db.collection("media").where("status", "==", "approved").get();
+  const items = snapshot.docs.map((doc) => normalizeMediaItem(doc.data() as MediaItem));
+  return items.sort(
+    (a, b) =>
+      a.year - b.year ||
+      a.month - b.month ||
+      b.createdAt.localeCompare(a.createdAt),
+  );
 }
 
 export async function listAllMedia(): Promise<MediaItem[]> {
@@ -158,47 +126,29 @@ export async function setMediaStatus(
   id: string,
   status: MediaStatus,
 ): Promise<MediaItem | null> {
-  const items = await readMedia();
-  const index = items.findIndex((m) => m.id === id);
-  if (index === -1) return null;
-  items[index] = { ...items[index], status };
-  await writeMedia(items);
-  return items[index];
+  const docRef = db.collection("media").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return null;
+
+  await docRef.update({ status });
+  const updated = await docRef.get();
+  return normalizeMediaItem(updated.data() as MediaItem);
 }
 
 export async function deleteMedia(id: string): Promise<boolean> {
-  const items = await readMedia();
-  const found = items.find((m) => m.id === id);
-  if (!found) return false;
-  await writeMedia(items.filter((m) => m.id !== id));
-  try {
-    await fs.unlink(path.join(UPLOADS_DIR, path.basename(found.file)));
-  } catch {
-    /* file có thể đã mất - bỏ qua */
-  }
+  const docRef = db.collection("media").doc(id);
+  const doc = await docRef.get();
+  if (!doc.exists) return false;
+  
+  await docRef.delete();
+  // We should ideally also delete the object from R2, but we don't have a delete function in r2.ts yet.
+  // This is acceptable as a tradeoff for now, or we can add it later.
   return true;
 }
 
-const SAFE_FILE_RE =
-  /^[a-f0-9-]{36}\.(jpg|jpeg|png|webp|gif|mp4|webm)$/i;
-
-/** Đọc file upload để phục vụ - chặn path traversal */
-export async function readUploadFile(
-  name: string,
-): Promise<{ buffer: Buffer; mime: string } | null> {
-  const safe = path.basename(name);
-  if (!SAFE_FILE_RE.test(safe)) return null;
-  const ext = extOf(safe);
-  const mime = mimeForExt(ext);
-  if (!mime) return null;
-  try {
-    const buffer = await fs.readFile(path.join(UPLOADS_DIR, safe));
-    return { buffer, mime };
-  } catch {
-    return null;
-  }
-}
-
 export function mediaFileUrl(file: string): string {
-  return `/api/media/file/${encodeURIComponent(file)}`;
+  if (file.startsWith("http")) return file;
+  const publicUrlBase = (process.env.R2_PUBLIC_URL_MEDIA || "").replace(/\/$/, "");
+  if (publicUrlBase) return `${publicUrlBase}/${file}`;
+  return `https://pub-xxxxxx.r2.dev/${file}`;
 }

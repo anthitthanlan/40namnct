@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
 
 /** Upload media từ cộng đồng → vào hàng chờ Ban Biên tập duyệt */
 export async function POST(req: NextRequest) {
+  const admin = getAdminFromRequest(req);
   let form: FormData;
   try {
     form = await req.formData();
@@ -133,7 +134,7 @@ export async function POST(req: NextRequest) {
       author,
       authorRole,
       caption,
-      status: "pending",
+      status: admin ? "approved" : "pending",
       createdAt: new Date().toISOString(),
     });
   }
@@ -142,8 +143,9 @@ export async function POST(req: NextRequest) {
     {
       ok: true,
       count: files.length,
-      message:
-        "Cảm ơn bạn! Kỷ niệm của bạn đã được gửi và đang chờ Ban Biên tập duyệt.",
+      message: admin 
+        ? "Đã đăng khoảnh khắc lên trang Timeline thành công."
+        : "Cảm ơn bạn! Kỷ niệm của bạn đã được gửi và đang chờ Ban Biên tập duyệt.",
     },
     { status: 201 },
   );

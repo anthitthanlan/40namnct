@@ -12,6 +12,7 @@ import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
 import AdminEditPost from "./AdminEditPost";
 import AdminCameraScanner from "@/components/AdminCameraScanner";
+import { useConfirm } from "@/components/useConfirm";
 
 declare global {
   interface Window {
@@ -81,6 +82,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const [view, setView] = useState<View>("checking");
   const [posts, setPosts] = useState<Post[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { confirm, ConfirmElement } = useConfirm();
 
   const editPostId = searchParams.get("edit");
   const urlTab = editPostId ? "edit" : (searchParams.get("tab") as Tab | null);
@@ -277,9 +279,9 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
   async function remove(post: Post) {
     if (
-      !window.confirm(
+      !(await confirm(
         `Xoá bài viết "${post.title}"? Thao tác không thể hoàn tác.`,
-      )
+      ))
     )
       return;
     setBusy(true);
@@ -498,7 +500,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
       items: [
         ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
         ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
-        ...(!isEditor ? [{ key: "media", label: "Media cộng đồng" } as const] : []),
+        ...(!isEditor ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
         { key: "accounts", label: "Quản lý tài khoản" },
       ],
     },
@@ -509,6 +511,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16">
+      {ConfirmElement}
       <div className="flex flex-col md:flex-row md:items-start gap-4 md:gap-8 lg:gap-16">
         {/* SIDEBAR */}
         <aside className="md:w-[280px] shrink-0">
@@ -830,12 +833,14 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                                     Đăng bài
                                   </button>
                                 )}
-                              <Link
-                                href={`/cau-chuyen/${post.slug}`}
-                                className="rounded-xl bg-[#1d4ed8]/10 px-3.5 py-2 text-xs font-bold text-[#1d4ed8] hover:bg-[#1d4ed8]/20"
-                              >
-                                Xem
-                              </Link>
+                              {post.status === "published" && (
+                                <Link
+                                  href={`/cau-chuyen/${post.slug}`}
+                                  className="rounded-xl bg-[#1d4ed8]/10 px-3.5 py-2 text-xs font-bold text-[#1d4ed8] hover:bg-[#1d4ed8]/20"
+                                >
+                                  Xem
+                                </Link>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => openEdit(post)}

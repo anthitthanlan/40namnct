@@ -32,6 +32,8 @@ function prettySize(bytes: number): string {
 }
 
 import React from "react";
+import MediaUploader from "@/components/MediaUploader";
+import { useConfirm } from "@/components/useConfirm";
 
 const STATUS_INFO: Record<MediaRow["status"], { label: React.ReactNode; cls: string }> =
   {
@@ -50,6 +52,8 @@ export default function AdminMedia({
     null,
   );
   const [busy, setBusy] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
+  const { confirm, ConfirmElement } = useConfirm();
 
   const flash = useCallback((ok: boolean, text: string) => {
     setBanner({ ok, text });
@@ -101,7 +105,7 @@ export default function AdminMedia({
   }
 
   async function remove(item: MediaRow) {
-    if (!window.confirm(`Xoá tệp của "${item.author}"? Không thể hoàn tác.`))
+    if (!(await confirm(`Xoá tệp của "${item.author}"? Không thể hoàn tác.`)))
       return;
     setBusy(true);
     try {
@@ -133,7 +137,32 @@ export default function AdminMedia({
 
   return (
     <div className="mt-8 space-y-6">
-      {banner && (
+      {ConfirmElement}
+      {!showUploader && (
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-slate-900">Danh sách khoảnh khắc</h2>
+          <button
+            type="button"
+            onClick={() => setShowUploader(true)}
+            className="flex items-center justify-center gap-1.5 rounded-full bg-[#1d4ed8] px-3 sm:px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-blue-700 transition-colors"
+          >
+            <span className="material-symbols-rounded sm:hidden text-lg">add</span>
+            <span className="hidden sm:inline">Đăng khoảnh khắc mới</span>
+          </button>
+        </div>
+      )}
+
+      {showUploader && (
+        <div className="mt-6 mb-10">
+          <MediaUploader 
+            isAdmin={true} 
+            onSuccess={() => { setShowUploader(false); load(); }} 
+            onCancel={() => setShowUploader(false)} 
+          />
+        </div>
+      )}
+
+      {!showUploader && banner && (
         <div
           className={`rounded-2xl px-5 py-3 text-sm font-bold ${
             banner.ok
@@ -145,7 +174,7 @@ export default function AdminMedia({
         </div>
       )}
 
-      {items.length === 0 ? (
+      {!showUploader && (items.length === 0 ? (
         <div className="rounded-3xl bg-white p-10 text-center text-sm text-slate-400">
           Chưa có media nào được gửi.
         </div>
@@ -226,7 +255,7 @@ export default function AdminMedia({
             );
           })}
         </div>
-      )}
+      ))}
     </div>
   );
 }

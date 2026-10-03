@@ -48,17 +48,18 @@ const SEED: Post[] = [
       "Tin tức chính thức về Lễ kỷ niệm 40 năm: thời gian, địa điểm, chương trình tri ân, triển lãm kỷ vật và gặp mặt các thế hệ Thầy trò Nguyễn Công Trứ.",
     content: `## Thông báo chính thức
 
-Ngày 08/11/2026, Trường THPT Nguyễn Công Trứ trân trọng tổ chức **LỄ KỶ NIỆM 40 NĂM THÀNH LẬP TRƯỜNG (1986 - 2026)** tại hội trường và sân trường - 97 Quang Trung, Phường Thông Tây Hội, TP. Hồ Chí Minh.
+Ngày 08/11/2026, Trường THPT Nguyễn Công Trứ trân trọng tổ chức **"NGÀY TRỞ VỀ"** - chương trình hội ngộ và giao lưu dành riêng cho các thế hệ cựu học sinh, giáo viên và cựu giáo viên.
+
+Tiếp nối sau đó, **LỄ KỶ NIỆM 40 NĂM THÀNH LẬP TRƯỜNG (1986 - 2026)** chính thức sẽ được diễn ra vào ngày **15/11/2026** tại hội trường và sân trường - 97 Quang Trung, Phường Thông Tây Hội, TP. Hồ Chí Minh.
 
 > "Đây còn là NGÀY TRỞ VỀ - ngày các thế hệ Thầy Cô, cựu học sinh và học sinh cùng hội ngộ, cùng viết tiếp câu chuyện đầy tự hào về THPT Nguyễn Công Trứ."
 
 ### Chương trình dự kiến
 
-- **07:30** - Đón khách, tham quan Triển lãm 40 năm (ảnh, kỷ vật, học bạ, sổ liên lạc của các thế hệ)
-- **08:30** - Lễ kỷ niệm: hoàn cảnh ra đời của trường, film tư liệu 40 năm, phát biểu của đại biểu và đại diện các thế hệ
-- **10:00** - Vinh danh Thầy Cô giáo về hưu, tri ân các thế hệ cựu học sinh tiêu biểu
-- **10:45** - Công bố Quỹ học bổng "Uyên bác - Nhân ái - Giàu chí khí" hỗ trợ học sinh
-- **11:30** - Giao lưu, gặp mặt theo từng khóa, chụp ảnh lưu niệm tại các góc kỷ niệm
+- **Từ 07g30** - Đón tiếp, giao lưu, tham quan Phòng Truyền thống và cơ sở vật chất nhà trường.
+- **09g00–10g30** - Chương trình Họp mặt kỷ niệm 40 năm.
+- **10g30–11g00** - Chụp ảnh, giao lưu.
+- **Từ 11g30 trở đi** - Tiệc thân mật, gặp gỡ, giao lưu các thế hệ, văn nghệ.
 
 ### Thông tin cần biết
 

@@ -123,10 +123,9 @@ export default async function Home() {
             <p className="relative z-10 mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
               Ngày 08/11/2026, Trường THPT Nguyễn Công Trứ trân trọng tổ chức{" "}
               <strong className="font-extrabold text-slate-900">
-                Lễ kỷ niệm 40 năm thành lập trường
+                "Ngày Trở Về"
               </strong>
-              . Đây không chỉ là ngày nhìn lại một hành trình đáng tự hào, mà còn
-              là ngày các thế hệ Thầy Cô và học sinh cùng hội ngộ dưới mái trường thân thương.
+              . Đây là cơ hội đặc biệt để các thế hệ cựu học sinh, giáo viên và cựu giáo viên cùng giao lưu, hội ngộ dưới mái trường thân thương trước thềm Lễ kỷ niệm chính thức (15/11).
             </p>
             <div className="relative z-10 mt-10 flex flex-wrap gap-4">
               <Link
@@ -177,33 +176,27 @@ export default async function Home() {
             {[
               {
                 time: "07:30",
-                title: "Đón khách & Tham quan Triển lãm 40 năm",
-                desc: "Trưng bày ảnh, kỷ vật, học bạ, sổ liên lạc của các thế hệ học sinh.",
+                title: "Đón tiếp & Tham quan",
+                desc: "Đón tiếp, giao lưu, tham quan Phòng Truyền thống và cơ sở vật chất nhà trường.",
                 icon: "groups"
               },
               {
-                time: "08:30",
-                title: "Lễ Kỷ Niệm Chính Thức",
-                desc: "Ôn lại hoàn cảnh ra đời của trường, xem film tư liệu 40 năm, lắng nghe phát biểu của đại biểu và đại diện các thế hệ.",
+                time: "09:00",
+                title: "Chương trình Họp mặt",
+                desc: "Chương trình Họp mặt kỷ niệm 40 năm.",
                 icon: "celebration"
               },
               {
-                time: "10:00",
-                title: "Lễ Tri ân & Vinh danh",
-                desc: "Vinh danh Thầy Cô giáo về hưu, tri ân các thế hệ cựu học sinh tiêu biểu.",
-                icon: "award_star"
-              },
-              {
-                time: "10:45",
-                title: "Công bố Quỹ học bổng",
-                desc: 'Ra mắt Quỹ học bổng "Uyên bác - Nhân ái - Giàu chí khí" nhằm hỗ trợ các thế hệ học sinh hiếu học.',
-                icon: "local_library"
+                time: "10:30",
+                title: "Chụp ảnh & Giao lưu",
+                desc: "Chụp ảnh lưu niệm và giao lưu tự do.",
+                icon: "photo_camera"
               },
               {
                 time: "11:30",
-                title: "Giao lưu & Chụp ảnh lưu niệm",
-                desc: "Các thế hệ gặp mặt, giao lưu theo từng khóa và chụp ảnh lưu niệm tại các góc check-in kỷ niệm.",
-                icon: "photo_camera"
+                title: "Tiệc thân mật & Văn nghệ",
+                desc: "Tiệc thân mật, gặp gỡ, giao lưu các thế hệ và thưởng thức văn nghệ.",
+                icon: "restaurant"
               }
             ].map((item, i) => (
               <Reveal key={i} delay={300 + i * 100} variant="left">

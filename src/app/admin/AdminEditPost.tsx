@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { PostStatus } from "@/lib/posts";
 import RichTextEditor from "@/components/RichTextEditor";
 import { ChevronLeft, Save, Loader2 } from "lucide-react";
@@ -47,6 +47,9 @@ export default function AdminEditPost({
   const [originalDraft, setOriginalDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<{ ok: boolean; text: string } | null>(null);
+  
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const isNew = postId === null || postId === "new";
 
@@ -109,6 +112,29 @@ export default function AdminEditPost({
   const flash = (ok: boolean, text: string) => {
     setBanner({ ok, text });
     setTimeout(() => setBanner(null), 4000);
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setUploadingCover(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (data.ok && data.url) {
+        setDraft((d) => (d ? { ...d, cover: data.url } : d));
+        flash(true, "Tải ảnh bìa thành công.");
+      } else {
+        flash(false, "Lỗi tải ảnh: " + (data.message || "Unknown error"));
+      }
+    } catch {
+      flash(false, "Lỗi kết nối khi tải ảnh bìa.");
+    } finally {
+      setUploadingCover(false);
+    }
   };
 
   async function saveDraft() {
@@ -252,15 +278,34 @@ export default function AdminEditPost({
           />
         </div>
         <div className="sm:col-span-2">
-          <label className={aLabel} htmlFor="d-cover">Ảnh bìa (URL - để trống nếu không có)</label>
-          <input
-            id="d-cover"
-            value={draft.cover}
-            onChange={(e) => setDraft({ ...draft, cover: e.target.value })}
-            placeholder="/images/hero-2.webp"
-            className={aInput}
-            maxLength={500}
-          />
+          <label className={aLabel} htmlFor="d-cover">
+            Ảnh bìa (tự động lấy ảnh đầu tiên trong bài nếu để trống)
+          </label>
+          <div className="flex gap-2 items-start">
+            <input
+              id="d-cover"
+              value={draft.cover}
+              onChange={(e) => setDraft({ ...draft, cover: e.target.value })}
+              placeholder="https://... hoặc tự động lấy từ bài"
+              className={aInput}
+              maxLength={500}
+            />
+            <button
+              type="button"
+              disabled={uploadingCover}
+              onClick={() => coverInputRef.current?.click()}
+              className="mt-2 shrink-0 rounded-xl bg-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-300 disabled:opacity-50 transition-colors"
+            >
+              {uploadingCover ? "Đang tải..." : "Tải ảnh lên"}
+            </button>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={coverInputRef}
+              onChange={handleCoverUpload}
+            />
+          </div>
         </div>
       </div>
 

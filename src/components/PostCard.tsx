@@ -56,7 +56,7 @@ export default function PostCard({
         <Link href={href} className="block md:order-2">
           <PostCover
             post={post}
-            className="h-60 w-full object-cover transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.04] md:h-full"
+            className="h-60 w-full object-contain bg-slate-50 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.04] md:h-full"
           />
         </Link>
         <div className="flex flex-col p-7 md:p-9">
@@ -64,7 +64,6 @@ export default function PostCard({
           <h2 className="mt-4 text-2xl font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-[#1d4ed8] md:text-3xl">
             <Link href={href}>{post.title}</Link>
           </h2>
-          <p className="mt-3 line-clamp-3 text-slate-600">{post.excerpt}</p>
           <div className="mt-auto pt-6 text-xs font-semibold text-slate-500">
             {post.author} · {post.authorRole}
           </div>
@@ -87,17 +86,14 @@ export default function PostCard({
       <Link href={href} className="block overflow-hidden">
         <PostCover
           post={post}
-          className="h-44 w-full object-cover transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.05]"
+          className="h-44 w-full object-contain bg-slate-50 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.05]"
         />
       </Link>
       <div className="flex flex-1 flex-col p-6">
         <PostBadges post={post} />
-        <h3 className="mt-3 text-lg font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-[#1d4ed8]">
+        <h3 className="mt-3 flex-1 text-lg font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-[#1d4ed8]">
           <Link href={href}>{post.title}</Link>
         </h3>
-        <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
-          {post.excerpt}
-        </p>
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs text-slate-500">
           <span className="truncate pr-2 font-semibold">{post.author}</span>
           <span className="shrink-0 text-slate-400">

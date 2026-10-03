@@ -7,6 +7,7 @@ import {
   getPostBySlug,
   listPublished,
   sortPublic,
+  extractFirstImage,
 } from "@/lib/posts";
 import Markdown from "@/components/Markdown";
 import PostCard, { PostBadges } from "@/components/PostCard";
@@ -59,9 +60,6 @@ export default async function PostDetailPage({ params }: Props) {
         <h1 className="mt-4 text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">
           {post.title}
         </h1>
-        <p className="mt-4 text-lg leading-relaxed text-slate-600">
-          {post.excerpt}
-        </p>
 
         <div className="mt-8 flex items-center gap-4 border-y border-slate-100 py-4">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#1d4ed8] text-lg font-extrabold text-white">
@@ -78,11 +76,11 @@ export default async function PostDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {post.cover && (
+        {post.cover && post.cover !== extractFirstImage(post.content) && (
           <img
             src={post.cover}
             alt={post.title}
-            className="mt-8 aspect-[16/9] w-full rounded-3xl object-cover"
+            className="mt-8 w-full rounded-3xl h-auto"
           />
         )}
 

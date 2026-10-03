@@ -45,7 +45,7 @@ export async function PATCH(
     "update_media",
     "media",
     id,
-    admin.name,
+    admin.fullName,
     admin.username,
     admin.role,
     `Cập nhật trạng thái thành ${status}`
@@ -75,7 +75,7 @@ export async function DELETE(
     "delete_media",
     "media",
     id,
-    admin.name,
+    admin.fullName,
     admin.username,
     admin.role,
     "Đã xoá khoảnh khắc"

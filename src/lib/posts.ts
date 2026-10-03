@@ -46,6 +46,12 @@ export function slugify(input: string): string {
   return base || "bai-viet";
 }
 
+/** Trích xuất ảnh đầu tiên từ nội dung HTML */
+export function extractFirstImage(content: string): string {
+  const match = content.match(/<img[^>]+src="([^">]+)"/i);
+  return match ? match[1] : "";
+}
+
 /** Sinh tóm tắt từ nội dung (bỏ cú pháp markdown) */
 export function deriveExcerpt(content: string, max = 200): string {
   const clean = content
@@ -144,7 +150,7 @@ export async function createPost(input: PostInput): Promise<Post> {
     source: input.source,
     status: input.status,
     pinned: input.pinned,
-    cover: input.cover,
+    cover: input.cover || extractFirstImage(input.content) || null,
     createdAt: now,
     updatedAt: now,
   };
@@ -180,6 +186,10 @@ export async function updatePost(
     ...cleanPatch(patch),
     updatedAt: new Date().toISOString(),
   };
+
+  if (!next.cover) {
+    next.cover = extractFirstImage(next.content) || null;
+  }
 
   if (patch.title !== undefined && patch.title.trim() !== current.title) {
     next.slug = await uniqueSlug(slugify(patch.title), id);

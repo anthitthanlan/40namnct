@@ -27,8 +27,7 @@ export default function MusicPlayer() {
   // Khởi tạo Audio
   useEffect(() => {
     const audio = new Audio();
-    // Ưu tiên /assets/bgmusic.mp3, fallback /bgmusic.mp3
-    audio.src = "/assets/bgmusic.mp3";
+    audio.src = "/bg_music.mp3";
     audio.loop = true;
     audio.preload = "metadata";
     audio.volume = 0.7;
@@ -97,7 +96,7 @@ export default function MusicPlayer() {
     if (!audio) return;
 
     if (audio.paused) {
-      audio.play().catch(() => {});
+      audio.play().catch(() => { });
     } else {
       audio.pause();
     }
@@ -143,8 +142,8 @@ export default function MusicPlayer() {
     setIsMuted(val === 0);
   };
 
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const toggleMute = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (!audioRef.current) return;
     if (isMuted || volume === 0) {
       const restored = prevVolume > 0 ? prevVolume : 0.7;
@@ -180,270 +179,309 @@ export default function MusicPlayer() {
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 select-none font-sans"
+      className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 select-none font-sans flex items-end justify-end"
     >
-      <AnimatePresence mode="wait">
-        {!showExpanded ? (
-          /* ========================================================
-             TRẠNG THÁI THU GỌN: PILL CAPSULE DYNAMIC ISLAND
-             ======================================================== */
-          <motion.div
-            key="collapsed"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 400, damping: 28 }}
-            onClick={() => setIsExpanded(true)}
-            className="group flex items-center gap-3 px-3.5 py-2.5 rounded-full bg-slate-950/85 backdrop-blur-xl border border-white/15 text-white shadow-[0_12px_32px_rgba(0,0,0,0.35)] hover:bg-slate-900 hover:border-white/25 transition-all cursor-pointer"
-          >
-            {/* ĐĨA NHẠC LOGO NGUYỄN CÔNG TRỨ XOAY TRÒN */}
-            <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-inner bg-slate-900 border border-slate-700/60 flex items-center justify-center">
-              <div
-                className={`w-full h-full relative rounded-full flex items-center justify-center ${
-                  isPlaying ? "animate-spin" : ""
-                }`}
-                style={{
-                  animationDuration: "4s",
-                  animationTimingFunction: "linear",
-                  animationIterationCount: "infinite",
-                }}
-              >
-                {/* Rãnh đĩa vinyl */}
-                <div className="absolute inset-0 rounded-full border border-slate-700/50" />
-                <div className="absolute inset-1 rounded-full border border-slate-800/40" />
-                {/* Logo trường Nguyễn Công Trứ làm tâm đĩa */}
-                <Image
-                  src="/images/logo_nct.webp"
-                  alt="NCT Vinyl"
-                  width={24}
-                  height={24}
-                  className="object-contain rounded-full drop-shadow-sm"
-                />
-                {/* Lỗ trục đĩa */}
-                <div className="absolute w-1.5 h-1.5 rounded-full bg-slate-950 border border-white/60" />
-              </div>
-            </div>
-
-            {/* Tên bài hát & Sóng nhạc */}
-            <div className="flex items-center gap-2 pr-1">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-white tracking-wide leading-none">
-                  40 Năm NCT
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono leading-none mt-1">
-                  {formatTime(currentTime)}
-                </span>
-              </div>
-
-              {/* Equalizer animation khi đang phát */}
-              {isPlaying ? (
-                <div className="flex items-end gap-0.5 h-3 ml-1">
-                  <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0ms] h-3" />
-                  <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:150ms] h-2" />
-                  <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:300ms] h-3.5" />
-                  <span className="w-0.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:75ms] h-2.5" />
-                </div>
-              ) : (
-                <span className="text-[10px] text-slate-400 ml-1">❚❚</span>
-              )}
-            </div>
-
-            {/* Nút Play/Pause nhanh */}
-            <button
-              type="button"
-              onClick={togglePlay}
-              aria-label={isPlaying ? "Tạm dừng" : "Phát nhạc"}
-              className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-white transition-all ml-0.5"
+      <motion.div
+        animate={{
+          width: showExpanded ? 320 : 230,
+          height: showExpanded ? 204 : 52,
+          borderRadius: showExpanded ? 32 : 26,
+        }}
+        transition={{ type: "spring", stiffness: 360, damping: 26 }}
+        onClick={() => { if (!showExpanded) setIsExpanded(true); }}
+        className="mx-auto overflow-hidden bg-white/95 backdrop-blur-xl border border-slate-200/60 text-slate-900 shadow-xl transition-colors cursor-pointer relative origin-bottom-right"
+      >
+        <AnimatePresence initial={false}>
+          {!showExpanded ? (
+            /* ========================================================
+               TRẠNG THÁI THU GỌN: PILL CAPSULE DYNAMIC ISLAND
+               ======================================================== */
+            <motion.div
+              key="collapsed"
+              initial={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 flex items-center justify-between px-3.5"
             >
-              <span className="material-symbols-rounded text-base">
-                {isPlaying ? "pause" : "play_arrow"}
-              </span>
-            </button>
-          </motion.div>
-        ) : (
-          /* ========================================================
-             TRẠNG THÁI MỞ RỘNG: DYNAMIC ISLAND PLAYER
-             ======================================================== */
-          <motion.div
-            key="expanded"
-            initial={{ scale: 0.92, opacity: 0, y: 10 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.92, opacity: 0, y: 10 }}
-            transition={{ type: "spring", stiffness: 360, damping: 26 }}
-            className="w-[20rem] sm:w-[22rem] rounded-3xl bg-slate-950/90 backdrop-blur-2xl border border-white/15 text-white p-4 sm:p-5 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col gap-4"
-          >
-            {/* HEADER: ĐĨA NHẠC + THÔNG TIN BÀI HÁT + NÚT THU GỌN */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 overflow-hidden">
-                {/* ĐĨA NHẠC VINYL LỚN */}
-                <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 shadow-lg bg-gradient-to-tr from-slate-900 via-slate-950 to-slate-800 border-2 border-slate-700/60 flex items-center justify-center p-1">
-                  <div
-                    className={`w-full h-full relative rounded-full flex items-center justify-center ${
-                      isPlaying ? "animate-spin" : ""
+              {/* ĐĨA NHẠC LOGO NGUYỄN CÔNG TRỨ XOAY TRÒN */}
+              <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-inner bg-slate-900 border border-slate-700/60 flex items-center justify-center">
+                <div
+                  className={`w-full h-full relative rounded-full flex items-center justify-center ${isPlaying ? "animate-spin" : ""
                     }`}
-                    style={{
-                      animationDuration: "5s",
-                      animationTimingFunction: "linear",
-                      animationIterationCount: "infinite",
-                    }}
-                  >
-                    {/* Các vòng rãnh đĩa than */}
-                    <div className="absolute inset-0 rounded-full border border-slate-700/60" />
-                    <div className="absolute inset-1 rounded-full border border-slate-800/80" />
-                    <div className="absolute inset-2 rounded-full border border-slate-700/40" />
-
-                    {/* Logo NCT ở tâm đĩa */}
-                    <Image
-                      src="/images/logo_nct.webp"
-                      alt="NCT Vinyl Disc"
-                      width={28}
-                      height={28}
-                      className="object-contain rounded-full drop-shadow-md z-10"
-                    />
-
-                    {/* Trục tâm */}
-                    <div className="absolute w-2 h-2 rounded-full bg-slate-950 border border-white/70 z-20" />
-                  </div>
-                </div>
-
-                {/* Thông tin bài hát */}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">
-                      Giai điệu truyền thống
-                    </span>
-                  </div>
-                  <h4 className="text-sm font-bold text-white truncate leading-snug mt-0.5">
-                    Kỷ niệm 40 năm NCT
-                  </h4>
-                  <p className="text-[11px] text-slate-400 truncate">
-                    Trường THPT Nguyễn Công Trứ
-                  </p>
+                  style={{
+                    animationDuration: "4s",
+                    animationTimingFunction: "linear",
+                    animationIterationCount: "infinite",
+                  }}
+                >
+                  {/* Rãnh đĩa vinyl */}
+                  <div className="absolute inset-0 rounded-full border border-slate-700/50" />
+                  <div className="absolute inset-1 rounded-full border border-slate-800/40" />
+                  {/* Logo trường Nguyễn Công Trứ làm tâm đĩa */}
+                  <Image
+                    src="/images/logo_nct.webp"
+                    alt="NCT Vinyl"
+                    width={24}
+                    height={24}
+                    className="object-contain rounded-full drop-shadow-sm"
+                  />
+                  {/* Lỗ trục đĩa */}
+                  <div className="absolute w-1.5 h-1.5 rounded-full bg-slate-950 border border-white/60" />
                 </div>
               </div>
 
-              {/* Nút thu nhỏ lại */}
+              {/* Tên bài hát & Sóng nhạc Waveform (Yêu cầu 2 + 1) */}
+              <div className="flex items-center gap-2 pr-1">
+                <div className="flex flex-col">
+                  <div
+                    className="w-[100px] overflow-hidden whitespace-nowrap"
+                    style={{ WebkitMaskImage: 'linear-gradient(to right, black 80%, transparent 100%)', maskImage: 'linear-gradient(to right, black 80%, transparent 100%)' }}
+                  >
+                    <motion.div
+                      animate={{ x: ["0%", "-50%"] }}
+                      transition={{ repeat: Infinity, ease: "linear", duration: 5 }}
+                      className="flex w-fit"
+                    >
+                      <span className="text-xs font-bold text-slate-900 tracking-wide leading-none pr-6">
+                        NCT Đón Chào Ngày Mai
+                      </span>
+                      <span className="text-xs font-bold text-slate-900 tracking-wide leading-none pr-6">
+                        NCT Đón Chào Ngày Mai
+                      </span>
+                    </motion.div>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-sans font-medium leading-none mt-1 tabular-nums">
+                    {formatTime(currentTime)}
+                  </span>
+                </div>
+
+                {/* Sóng nhạc kiểu thanh dọc (Waveform) */}
+                {isPlaying ? (
+                  <div className="flex items-center gap-0.5 h-[18px] ml-1">
+                    <div className="w-[3px] bg-blue-400 rounded-full animate-bounce [animation-delay:0ms] h-[60%]" />
+                    <div className="w-[3px] bg-blue-400 rounded-full animate-bounce [animation-delay:150ms] h-[80%]" />
+                    <div className="w-[3px] bg-blue-400 rounded-full animate-bounce [animation-delay:300ms] h-[100%]" />
+                    <div className="w-[3px] bg-blue-400 rounded-full animate-bounce [animation-delay:75ms] h-[70%]" />
+                    <div className="w-[3px] bg-blue-400 rounded-full animate-bounce [animation-delay:200ms] h-[50%]" />
+                  </div>
+                ) : (
+                  <span className="text-[10px] text-slate-400 ml-1">❚❚</span>
+                )}
+              </div>
+
+              {/* Nút Play/Pause nhanh */}
               <button
                 type="button"
-                onClick={() => {
-                  setIsExpanded(false);
-                  setIsHovered(false);
-                }}
-                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center text-slate-300 hover:text-white transition-all shrink-0"
-                title="Thu gọn"
+                onClick={togglePlay}
+                aria-label={isPlaying ? "Tạm dừng" : "Phát nhạc"}
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 flex items-center justify-center text-slate-900 transition-all ml-0.5"
               >
-                <span className="material-symbols-rounded text-lg">expand_more</span>
+                <span className="material-symbols-rounded text-base">
+                  {isPlaying ? "pause" : "play_arrow"}
+                </span>
               </button>
-            </div>
-
-            {/* THANH PROGRESS LOADER TIẾN TRÌNH & THỜI GIAN */}
-            <div className="space-y-1.5">
-              <div className="relative flex items-center">
-                {/* Track nền */}
-                <div className="w-full h-1.5 rounded-full bg-white/15 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-500 via-indigo-400 to-emerald-400 transition-all duration-150"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-                {/* Input seek range vô hình nằm đè lên để kéo tua mượt */}
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 100}
-                  step={0.1}
-                  value={currentTime}
-                  onChange={handleSeekChange}
-                  onMouseDown={handleSeekStart}
-                  onMouseUp={handleSeekEnd}
-                  onTouchStart={handleSeekStart}
-                  onTouchEnd={handleSeekEnd}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  title="Tua bài hát"
-                />
-              </div>
-
-              {/* Hiển thị thời gian */}
-              <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                <span className="text-white font-medium">{formatTime(currentTime)}</span>
-                <span>{formatTime(duration)}</span>
-              </div>
-            </div>
-
-            {/* BỘ ĐIỀU KHIỂN & CHỈNH ÂM LƯỢNG */}
-            <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/10">
-              {/* Nút điều khiển: Lùi 5s, Play/Pause, Tới 5s */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={(e) => skipTime(-5, e)}
-                  title="Lùi 5 giây"
-                  className="w-8 h-8 rounded-full hover:bg-white/10 active:scale-90 flex items-center justify-center text-slate-300 hover:text-white transition-all"
-                >
-                  <span className="material-symbols-rounded text-lg">replay_5</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  aria-label={isPlaying ? "Tạm dừng" : "Phát nhạc"}
-                  className="w-10 h-10 rounded-full bg-white text-slate-950 hover:bg-slate-100 hover:scale-105 active:scale-95 shadow-md flex items-center justify-center transition-all font-bold"
-                >
-                  <span className="material-symbols-rounded text-2xl">
-                    {isPlaying ? "pause" : "play_arrow"}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => skipTime(5, e)}
-                  title="Tua tới 5 giây"
-                  className="w-8 h-8 rounded-full hover:bg-white/10 active:scale-90 flex items-center justify-center text-slate-300 hover:text-white transition-all"
-                >
-                  <span className="material-symbols-rounded text-lg">forward_5</span>
-                </button>
-              </div>
-
-              {/* Điều khiển Âm lượng (Volume Slider) */}
-              <div className="flex items-center gap-2 flex-1 max-w-[120px] justify-end">
-                <button
-                  type="button"
-                  onClick={toggleMute}
-                  className="text-slate-400 hover:text-white transition-colors"
-                  title={isMuted ? "Bật tiếng" : "Tắt tiếng"}
-                >
-                  <span className="material-symbols-rounded text-lg">
-                    {isMuted || volume === 0
-                      ? "volume_off"
-                      : volume < 0.5
-                      ? "volume_down"
-                      : "volume_up"}
-                  </span>
-                </button>
-                <div className="relative w-16 flex items-center">
-                  <div className="w-full h-1 rounded-full bg-white/20 overflow-hidden">
+            </motion.div>
+          ) : (
+            /* ========================================================
+               TRẠNG THÁI MỞ RỘNG: DYNAMIC ISLAND PLAYER
+               ======================================================== */
+            <motion.div
+              key="expanded"
+              initial={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, scale: 0.95, filter: "blur(4px)" }}
+              transition={{ duration: 0.2, delay: 0.05 }}
+              className="absolute inset-0 flex flex-col p-4 sm:p-5"
+            >
+              {/* HEADER: ĐĨA NHẠC + THÔNG TIN BÀI HÁT + NÚT THU GỌN */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  {/* ĐĨA NHẠC VINYL LỚN */}
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 shadow-lg bg-gradient-to-tr from-slate-900 via-slate-950 to-slate-800 border-2 border-slate-700/60 flex items-center justify-center p-1">
                     <div
-                      className="h-full bg-white transition-all"
-                      style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
-                    />
+                      className={`w-full h-full relative rounded-full flex items-center justify-center ${isPlaying ? "animate-spin" : ""
+                        }`}
+                      style={{
+                        animationDuration: "5s",
+                        animationTimingFunction: "linear",
+                        animationIterationCount: "infinite",
+                      }}
+                    >
+                      {/* Các vòng rãnh đĩa than */}
+                      <div className="absolute inset-0 rounded-full border border-slate-700/60" />
+                      <div className="absolute inset-1 rounded-full border border-slate-800/80" />
+                      <div className="absolute inset-2 rounded-full border border-slate-700/40" />
+
+                      {/* Logo NCT ở tâm đĩa */}
+                      <Image
+                        src="/images/logo_nct.webp"
+                        alt="NCT Vinyl Disc"
+                        width={28}
+                        height={28}
+                        className="object-contain rounded-full drop-shadow-md z-10"
+                      />
+
+                      {/* Trục tâm */}
+                      <div className="absolute w-2 h-2 rounded-full bg-slate-950 border border-white/70 z-20" />
+                    </div>
                   </div>
+
+                  <div className="min-w-0">
+                    <div
+                      className="w-[170px] overflow-hidden whitespace-nowrap mt-0.5"
+                      style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)', maskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
+                    >
+                      <motion.div
+                        animate={{ x: ["0%", "-50%"] }}
+                        transition={{ repeat: Infinity, ease: "linear", duration: 8 }}
+                        className="flex w-fit"
+                      >
+                        <h4 className="text-sm font-bold text-slate-900 leading-snug pr-8">
+                          Trường Nguyễn Công Trứ đón chào ngày mai
+                        </h4>
+                        <h4 className="text-sm font-bold text-slate-900 leading-snug pr-8">
+                          Trường Nguyễn Công Trứ đón chào ngày mai
+                        </h4>
+                      </motion.div>
+                    </div>
+                    <motion.p layout="position" className="text-[11px] text-slate-500 truncate mt-0.5">
+                      Phạm Gia Khang
+                    </motion.p>
+                  </div>
+                </div>
+
+                {/* Nút thu nhỏ lại */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(false);
+                    setIsHovered(false);
+                  }}
+                  className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-all shrink-0"
+                  title="Thu gọn"
+                >
+                  <span className="material-symbols-rounded text-lg">expand_more</span>
+                </button>
+              </div>
+
+              {/* THANH PROGRESS TÙY CHỈNH (Yêu cầu 4) & THỜI GIAN TABULAR NUMS (Yêu cầu 1) */}
+              <div className="mt-3 flex items-center justify-center gap-2 text-[11px] font-sans font-medium text-slate-500">
+                <p className="tabular-nums w-8 text-right">{formatTime(currentTime)}</p>
+                <div className="relative h-4 w-full touch-none select-none">
+                  <div className="absolute inset-0 flex h-full w-full cursor-pointer items-center px-1">
+                    {/* Thanh nền (Track) */}
+                    <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-slate-200" style={{ transformOrigin: "right center" }}>
+                      {/* Thanh chạy (Fill) */}
+                      <div
+                        className="absolute h-full bg-gradient-to-r from-blue-500 via-indigo-400 to-cyan-400 transition-all duration-150"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                  {/* Input seek range vô hình nằm đè lên để kéo tua mượt */}
                   <input
                     type="range"
                     min={0}
-                    max={1}
-                    step={0.01}
-                    value={isMuted ? 0 : volume}
-                    onChange={handleVolumeChange}
+                    max={duration || 100}
+                    step={0.1}
+                    value={currentTime}
+                    onChange={handleSeekChange}
+                    onMouseDown={handleSeekStart}
+                    onMouseUp={handleSeekEnd}
+                    onTouchStart={handleSeekStart}
+                    onTouchEnd={handleSeekEnd}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    title={`Âm lượng: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+                    title="Tua bài hát"
                   />
                 </div>
+                <p className="tabular-nums w-8 text-left">-{formatTime(duration > currentTime ? duration - currentTime : 0)}</p>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+              {/* BỘ ĐIỀU KHIỂN & CHỈNH ÂM LƯỢNG */}
+              <div className="flex items-center justify-between gap-3 pt-3 mt-1 border-t border-slate-100">
+                {/* Nút điều khiển: Lùi 5s, Play/Pause, Tới 5s */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={(e) => skipTime(-5, e)}
+                    title="Lùi 5 giây"
+                    className="w-8 h-8 rounded-full hover:bg-slate-100 active:scale-90 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-all"
+                  >
+                    <span className="material-symbols-rounded text-lg">replay_5</span>
+                  </button>
+
+                  <motion.button
+                    layout="position"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePlay();
+                    }}
+                    aria-label={isPlaying ? "Tạm dừng" : "Phát nhạc"}
+                    className="w-10 h-10 rounded-full bg-slate-900 text-white hover:bg-slate-800 hover:scale-105 active:scale-95 shadow-md flex items-center justify-center transition-all font-bold"
+                  >
+                    <span className="material-symbols-rounded text-2xl">
+                      {isPlaying ? "pause" : "play_arrow"}
+                    </span>
+                  </motion.button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => skipTime(5, e)}
+                    title="Tua tới 5 giây"
+                    className="w-8 h-8 rounded-full hover:bg-slate-100 active:scale-90 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-all"
+                  >
+                    <span className="material-symbols-rounded text-lg">forward_5</span>
+                  </button>
+                </div>
+
+                {/* Điều khiển Âm lượng (Volume Slider) */}
+                <div className="flex items-center gap-2 flex-1 max-w-[120px] justify-end">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMute();
+                    }}
+                    className="text-slate-500 hover:text-slate-900 transition-colors"
+                    title={isMuted ? "Bật tiếng" : "Tắt tiếng"}
+                  >
+                    <span className="material-symbols-rounded text-lg">
+                      {isMuted || volume === 0
+                        ? "volume_off"
+                        : volume < 0.5
+                          ? "volume_down"
+                          : "volume_up"}
+                    </span>
+                  </button>
+                  <div className="relative w-16 flex items-center touch-none select-none h-4">
+                    <div className="absolute inset-0 flex h-full w-full cursor-pointer items-center">
+                      <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                        <div
+                          className="h-full bg-slate-800 transition-all duration-150"
+                          style={{ width: `${(isMuted ? 0 : volume) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={isMuted ? 0 : volume}
+                      onChange={handleVolumeChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      title={`Âm lượng: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }

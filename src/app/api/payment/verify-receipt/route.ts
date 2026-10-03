@@ -4,6 +4,7 @@ import { findInvitationById, getMemberById, updateInvitationReceipt, listInvitat
 import { buildTransferContent } from "@/lib/emvqr";
 import { uploadReceipt } from "@/lib/r2";
 import { verifyReceipt } from "@/lib/ocr";
+import { sendInvitationEmail } from "@/lib/email";
 import type { OcrResult } from "@/lib/members";
 
 export const dynamic = "force-dynamic";
@@ -169,7 +170,7 @@ export async function POST(req: NextRequest) {
         matchResult?: any;
       };
       const match = data.matchResult || {};
-      const confidence = match.confidence || "low";
+      let confidence = match.confidence || "low";
       const isHigh = confidence === "high";
 
       let message = "";
@@ -361,6 +362,16 @@ export async function POST(req: NextRequest) {
 
   // --- Response cho High / Low ---
   if (matchResult.confidence === "high") {
+    // Send email to the member asynchronously if they have an email
+    if (member.email) {
+      sendInvitationEmail({
+        to: member.email,
+        name: member.name,
+        amount: invitation.amount,
+        invitationCode: invitation.code,
+      }).catch((err) => console.error("Failed to send invitation email:", err));
+    }
+
     return NextResponse.json({
       ok: true,
       confidence: "high" as const,

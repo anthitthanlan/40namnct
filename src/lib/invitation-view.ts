@@ -1,7 +1,7 @@
 /** Module dùng chung client + server - KHÔNG import node:* ở đây */
 
 /** Kích cỡ áo kỷ niệm */
-export const SIZES = ["S", "M", "L", "XL", "2XL", "3XL"] as const;
+export const SIZES = ["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"] as const;
 export type Size = (typeof SIZES)[number];
 
 /** Giá Combo: Áo kỷ niệm + Đồ ăn nhẹ = 500.000đ */

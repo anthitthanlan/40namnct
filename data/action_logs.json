@@ -16,5 +16,27 @@
     "adminRole": "super_admin",
     "details": "Cập nhật nhận áo thành: Chưa nhận",
     "createdAt": "2026-09-20T17:55:37.366Z"
+  },
+  {
+    "id": "2100d2c4-bc3c-419e-9f6f-0ba94f5925c0",
+    "action": "update_post",
+    "group": "posts",
+    "entityId": "nct-seed-04",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminUsername": "nctitc@1986-2026",
+    "adminRole": "super_admin",
+    "details": "Cập nhật bài viết: Sân trường mùa phượng 2005 - lời nhắn gửi các thế hệ sau",
+    "createdAt": "2026-10-02T19:19:22.221Z"
+  },
+  {
+    "id": "7b978eba-78d0-462e-96be-762ddab6f7f9",
+    "action": "update_post",
+    "group": "posts",
+    "entityId": "nct-seed-03",
+    "adminName": "Quản trị viên Hệ thống",
+    "adminUsername": "nctitc@1986-2026",
+    "adminRole": "super_admin",
+    "details": "Cập nhật bài viết: Chiếc bàn gỗ lớp 10A2 - ký ức của một học trò khóa 1998",
+    "createdAt": "2026-10-02T19:19:24.540Z"
   }
 ]

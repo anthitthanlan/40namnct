@@ -5,7 +5,7 @@ import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
-const SIZES = ["XS", "S", "M", "L", "XL", "2XL", "3XL"] as const;
+const SIZES = ["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"] as const;
 type Size = (typeof SIZES)[number];
 
 // Custom Animated Checkbox Component based on Transitions.dev
@@ -113,6 +113,158 @@ export default function RegisterForm() {
   const [code, setCode] = useState("");
   const [copied, setCopied] = useState("");
   const [showSizeModal, setShowSizeModal] = useState(false);
+  const sizeChartRef = useRef<HTMLDivElement>(null);
+  
+  const handleDownloadPNG = async () => {
+    // Load fonts to match website rendering exactly
+    // Unbounded (titles) — static weight 700 woff2
+    // Google Sans (body text) — use Roboto as fallback since Google Sans isn't on gstatic directly
+    const loadFont = async (name: string, url: string, descriptors?: FontFaceDescriptors) => {
+      try {
+        if ([...document.fonts].some(f => f.family === name && f.status === 'loaded')) return;
+        const f = new FontFace(name, `url(${url})`, descriptors);
+        await f.load();
+        document.fonts.add(f);
+      } catch { /* fallback */ }
+    };
+
+    await Promise.all([
+      // Unbounded Bold 700 for section titles
+      loadFont('Unbounded', 'https://fonts.gstatic.com/s/unbounded/v6/cY9ffjeOW0NHpmOQXranrbDnrjeRdlWL.woff2', { weight: '700' }),
+      // Unbounded Regular 400 for size labels in header
+      loadFont('Unbounded', 'https://fonts.gstatic.com/s/unbounded/v6/cY9ffjeOW0NHpmOQXranrbDnrjeRdlWL.woff2', { weight: '400' }),
+      // Google Sans — served via fonts.gstatic as "Product Sans" variant
+      loadFont('Google Sans', 'https://fonts.gstatic.com/s/googlesans/v58/4UasrENHsxJlGDuGo1OIlJfC6l_24rlCK1Yo_Iqcsih3wGpZszs.woff2', { weight: '400' }),
+      loadFont('Google Sans', 'https://fonts.gstatic.com/s/googlesans/v58/4UasrENHsxJlGDuGo1OIlJfC6l_24rlCK1Yo_Iqcsih3wGpZszs.woff2', { weight: '500' }),
+    ]);
+
+    const BODY_FONT = "'Google Sans', 'Helvetica Neue', Arial, sans-serif";
+    const TITLE_FONT = "'Unbounded', 'Google Sans', sans-serif";
+
+
+    const DPR = 2; // Retina quality
+    const W = 960;
+    const PADDING = 32;
+    const COL_LABEL_W = 160;
+    const DATA_COLS = SIZES.length; // 8 cols
+    const COL_W = (W - PADDING * 2 - COL_LABEL_W) / DATA_COLS;
+    const ROW_H = 44;
+    const HEADER_H = 52;
+    const SECTION_GAP = 48;
+    const TITLE_H = 40;
+    const ROWS = ['Chiều cao (cm)', 'Cân nặng (kg)', 'Ngang ngực (cm)', 'Dài áo (cm)'];
+
+    const maleSizes: string[][] = [
+      ['<160', '160-165', '165-170', '170-175', '175-180', '>175', '>175', '>175'],
+      ['45-55', '55-62', '63-69', '70-75', '76-82', '82-90', '90-110', '110-130'],
+      ['46', '48', '50', '52', '54', '55', '61', '67'],
+      ['64', '66', '68', '70', '72', '73', '75', '76'],
+    ];
+    const femaleSizes: string[][] = [
+      ['145-150', '150-155', '155-160', '160-165', '165-170', '>165', '>165', '>165'],
+      ['38-42', '42-46', '47-53', '54-59', '60-65', '65-75', '75-85', '85-95'],
+      ['41', '43', '45', '47', '49', '50', '54', '58'],
+      ['57.5', '59.5', '61.5', '63', '64.5', '65.5', '68.5', '71.5'],
+    ];
+
+    const tableH = HEADER_H + ROWS.length * ROW_H;
+    const totalH = PADDING + TITLE_H + tableH + SECTION_GAP + TITLE_H + tableH + PADDING;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = W * DPR;
+    canvas.height = totalH * DPR;
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(DPR, DPR);
+
+    const drawTable = (offsetY: number, title: string, titleColor: string, headerBg: string, altRowBg: string, data: string[][]) => {
+      // Title — Unbounded matches website headings
+      ctx.fillStyle = titleColor;
+      ctx.font = `700 15px ${TITLE_FONT}`;
+      ctx.fillText(title, PADDING, offsetY + 24);
+      offsetY += TITLE_H;
+
+      const tableX = PADDING;
+      const tableW = W - PADDING * 2;
+
+      // Header row bg
+      ctx.fillStyle = headerBg;
+      ctx.beginPath();
+      ctx.roundRect(tableX, offsetY, tableW, HEADER_H, [6, 6, 0, 0]);
+      ctx.fill();
+
+      // Header text — Unbounded for SIZE labels
+      ctx.fillStyle = titleColor;
+      ctx.font = `700 13px ${TITLE_FONT}`;
+      ctx.fillText('SIZE', tableX + 12, offsetY + 32);
+      SIZES.forEach((s, i) => {
+        const cx = tableX + COL_LABEL_W + i * COL_W + COL_W / 2;
+        ctx.textAlign = 'center';
+        ctx.fillText(s, cx, offsetY + 32);
+      });
+      ctx.textAlign = 'left';
+
+      // Data rows — Google Sans matches website body
+      ROWS.forEach((label, ri) => {
+        const rowY = offsetY + HEADER_H + ri * ROW_H;
+        if (ri % 2 === 1) {
+          ctx.fillStyle = altRowBg;
+          ctx.fillRect(tableX, rowY, tableW, ROW_H);
+        } else {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(tableX, rowY, tableW, ROW_H);
+        }
+        ctx.fillStyle = '#374151';
+        ctx.font = `500 14px ${BODY_FONT}`;
+        ctx.fillText(label, tableX + 12, rowY + 28);
+        data[ri].forEach((val, ci) => {
+          const cx = tableX + COL_LABEL_W + ci * COL_W + COL_W / 2;
+          ctx.textAlign = 'center';
+          ctx.fillText(val, cx, rowY + 28);
+        });
+        ctx.textAlign = 'left';
+      });
+
+      // Table border
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(tableX, offsetY, tableW, HEADER_H + ROWS.length * ROW_H, 6);
+      ctx.stroke();
+
+      // Row dividers
+      for (let ri = 0; ri < ROWS.length; ri++) {
+        const divY = offsetY + HEADER_H + ri * ROW_H;
+        ctx.beginPath();
+        ctx.moveTo(tableX + 1, divY);
+        ctx.lineTo(tableX + tableW - 1, divY);
+        ctx.stroke();
+      }
+
+      // Label/data column divider
+      ctx.beginPath();
+      ctx.moveTo(tableX + COL_LABEL_W, offsetY + HEADER_H);
+      ctx.lineTo(tableX + COL_LABEL_W, offsetY + HEADER_H + ROWS.length * ROW_H);
+      ctx.stroke();
+    };
+
+    // White background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, totalH);
+
+    drawTable(PADDING, 'BẢNG THÔNG SỐ CHỌN SIZE ÁO POLO NAM', '#1e40af', '#eff6ff', '#f9fafb', maleSizes);
+    drawTable(PADDING + TITLE_H + tableH + SECTION_GAP, 'BẢNG THÔNG SỐ CHỌN SIZE ÁO POLO NỮ', '#9d174d', '#fdf2f8', '#f9fafb', femaleSizes);
+
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = 'Bang_Size_Ao_NCT.png';
+      link.href = url;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }, 'image/png');
+  };
+
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -865,19 +1017,153 @@ export default function RegisterForm() {
       {/* Size Chart Modal */}
       <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${showSizeModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSizeModal(false)} />
-        <div className={`t-modal bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative z-10 ${showSizeModal ? 'is-open' : 'is-closing'}`}>
+        <div className={`t-modal bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 relative z-10 ${showSizeModal ? 'is-open' : 'is-closing'}`}>
           <button type="button" onClick={() => setShowSizeModal(false)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
           <h3 className="text-xl font-bold text-gray-900 mb-4">Bảng Size Áo</h3>
-          <div className="aspect-[4/3] bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden relative">
-            <p className="text-gray-500 text-sm p-4 text-center">
-              (Khu vực hiển thị ảnh bảng size)
-              <br />
-              Bạn có thể tải ảnh lên thư mục <code className="bg-gray-200 px-1 rounded">/images</code> và thay thế tại đây.
-            </p>
+          <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div ref={sizeChartRef} className="bg-white">
+              <div className="mb-6">
+              <h4 className="font-bold text-blue-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nam</h4>
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full text-sm text-center whitespace-nowrap">
+                  <thead className="bg-blue-50 text-blue-900 font-semibold">
+                    <tr>
+                      <th className="px-3 py-2 border-b border-r border-gray-200 bg-blue-50 sticky left-0 z-10 text-left">SIZE</th>
+                      <th className="px-3 py-2 border-b border-gray-200">S</th>
+                      <th className="px-3 py-2 border-b border-gray-200">M</th>
+                      <th className="px-3 py-2 border-b border-gray-200">L</th>
+                      <th className="px-3 py-2 border-b border-gray-200">XL</th>
+                      <th className="px-3 py-2 border-b border-gray-200">XXL</th>
+                      <th className="px-3 py-2 border-b border-gray-200">NC1</th>
+                      <th className="px-3 py-2 border-b border-gray-200">NC2</th>
+                      <th className="px-3 py-2 border-b border-gray-200">NC3</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-700">
+                    <tr>
+                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                      <td className="px-3 py-2 border-b border-gray-200">&lt;160</td>
+                      <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
+                      <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
+                      <td className="px-3 py-2 border-b border-gray-200">170 - 175</td>
+                      <td className="px-3 py-2 border-b border-gray-200">175 - 180</td>
+                      <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
+                      <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
+                      <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
+                      <td className="px-3 py-2 border-b border-gray-200">45 - 55</td>
+                      <td className="px-3 py-2 border-b border-gray-200">55 - 62</td>
+                      <td className="px-3 py-2 border-b border-gray-200">63 - 69</td>
+                      <td className="px-3 py-2 border-b border-gray-200">70 - 75</td>
+                      <td className="px-3 py-2 border-b border-gray-200">76 - 82</td>
+                      <td className="px-3 py-2 border-b border-gray-200">82 - 90</td>
+                      <td className="px-3 py-2 border-b border-gray-200">90 - 110</td>
+                      <td className="px-3 py-2 border-b border-gray-200">110 - 130</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                      <td className="px-3 py-2 border-b border-gray-200">46</td>
+                      <td className="px-3 py-2 border-b border-gray-200">48</td>
+                      <td className="px-3 py-2 border-b border-gray-200">50</td>
+                      <td className="px-3 py-2 border-b border-gray-200">52</td>
+                      <td className="px-3 py-2 border-b border-gray-200">54</td>
+                      <td className="px-3 py-2 border-b border-gray-200">55</td>
+                      <td className="px-3 py-2 border-b border-gray-200">61</td>
+                      <td className="px-3 py-2 border-b border-gray-200">67</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                      <td className="px-3 py-2">64</td>
+                      <td className="px-3 py-2">66</td>
+                      <td className="px-3 py-2">68</td>
+                      <td className="px-3 py-2">70</td>
+                      <td className="px-3 py-2">72</td>
+                      <td className="px-3 py-2">73</td>
+                      <td className="px-3 py-2">75</td>
+                      <td className="px-3 py-2">76</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-pink-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nữ</h4>
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full text-sm text-center whitespace-nowrap">
+                  <thead className="bg-pink-50 text-pink-900 font-semibold">
+                    <tr>
+                      <th className="px-3 py-2 border-b border-r border-gray-200 bg-pink-50 sticky left-0 z-10 text-left">SIZE</th>
+                      <th className="px-3 py-2 border-b border-gray-200">S</th>
+                      <th className="px-3 py-2 border-b border-gray-200">M</th>
+                      <th className="px-3 py-2 border-b border-gray-200">L</th>
+                      <th className="px-3 py-2 border-b border-gray-200">XL</th>
+                      <th className="px-3 py-2 border-b border-gray-200">XXL</th>
+                      <th className="px-3 py-2 border-b border-gray-200">NC1</th>
+                      <th className="px-3 py-2 border-b border-gray-200">NC2</th>
+                      <th className="px-3 py-2 border-b border-gray-200">NC3</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-700">
+                    <tr>
+                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                      <td className="px-3 py-2 border-b border-gray-200">145 - 150</td>
+                      <td className="px-3 py-2 border-b border-gray-200">150 - 155</td>
+                      <td className="px-3 py-2 border-b border-gray-200">155 - 160</td>
+                      <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
+                      <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
+                      <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
+                      <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
+                      <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
+                      <td className="px-3 py-2 border-b border-gray-200">38 - 42</td>
+                      <td className="px-3 py-2 border-b border-gray-200">42 - 46</td>
+                      <td className="px-3 py-2 border-b border-gray-200">47 - 53</td>
+                      <td className="px-3 py-2 border-b border-gray-200">54 - 59</td>
+                      <td className="px-3 py-2 border-b border-gray-200">60 - 65</td>
+                      <td className="px-3 py-2 border-b border-gray-200">65 - 75</td>
+                      <td className="px-3 py-2 border-b border-gray-200">75 - 85</td>
+                      <td className="px-3 py-2 border-b border-gray-200">85 - 95</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                      <td className="px-3 py-2 border-b border-gray-200">41</td>
+                      <td className="px-3 py-2 border-b border-gray-200">43</td>
+                      <td className="px-3 py-2 border-b border-gray-200">45</td>
+                      <td className="px-3 py-2 border-b border-gray-200">47</td>
+                      <td className="px-3 py-2 border-b border-gray-200">49</td>
+                      <td className="px-3 py-2 border-b border-gray-200">50</td>
+                      <td className="px-3 py-2 border-b border-gray-200">54</td>
+                      <td className="px-3 py-2 border-b border-gray-200">58</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                      <td className="px-3 py-2">57.5</td>
+                      <td className="px-3 py-2">59.5</td>
+                      <td className="px-3 py-2">61.5</td>
+                      <td className="px-3 py-2">63</td>
+                      <td className="px-3 py-2">64.5</td>
+                      <td className="px-3 py-2">65.5</td>
+                      <td className="px-3 py-2">68.5</td>
+                      <td className="px-3 py-2">71.5</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 flex justify-end">
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 flex justify-end gap-3">
+            <button type="button" onClick={handleDownloadPNG} className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Tải PNG
+            </button>
             <button type="button" onClick={() => setShowSizeModal(false)} className="px-5 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">Đóng</button>
           </div>
         </div>

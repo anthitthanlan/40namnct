@@ -397,15 +397,15 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       ))}
 
       {/* Text overlay */}
-      <div className="absolute inset-x-0 bottom-0 px-6 pb-24 md:px-16 md:pb-32 lg:px-24">
+      <div className="absolute inset-x-0 bottom-0 px-6 pb-28 md:px-16 md:pb-36 lg:px-24">
         <span className="btn-lightship-soft inline-flex rounded-full bg-white px-4 py-1.5 text-xs font-bold tracking-widest text-[#1d4ed8]">
           {slide.year}
         </span>
-        <h2 className="mt-4 line-clamp-2 text-3xl font-extrabold leading-tight text-white drop-shadow-lg md:text-5xl max-w-4xl">
+        <h2 className="mt-5 line-clamp-2 max-w-4xl text-4xl font-extrabold leading-tight text-white drop-shadow-lg md:text-5xl lg:text-6xl">
           {slide.title}
         </h2>
-        <p className="mt-3 flex items-center gap-2 text-base text-slate-100 drop-shadow md:text-lg">
-          <span className="material-symbols-rounded text-[1.1em]">person</span>
+        <p className="mt-4 flex items-center gap-2 text-base font-medium text-slate-100/90 drop-shadow md:text-xl">
+          <span className="material-symbols-rounded text-[1.2em]">person</span>
           {slide.author}
         </p>
       </div>
@@ -413,28 +413,34 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       {/* Arrows (desktop only) */}
       <button
         onClick={prev}
-        className="absolute left-4 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full bg-black/30 p-2 text-white hover:bg-black/50 md:flex"
+        className="absolute left-5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full bg-black/30 p-3 text-white backdrop-blur-sm hover:bg-black/50 md:flex"
       >
-        <span className="material-symbols-rounded text-2xl">chevron_left</span>
+        <span className="material-symbols-rounded text-3xl">chevron_left</span>
       </button>
       <button
         onClick={next}
-        className="absolute right-4 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full bg-black/30 p-2 text-white hover:bg-black/50 md:flex"
+        className="absolute right-5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full bg-black/30 p-3 text-white backdrop-blur-sm hover:bg-black/50 md:flex"
       >
-        <span className="material-symbols-rounded text-2xl">chevron_right</span>
+        <span className="material-symbols-rounded text-3xl">chevron_right</span>
       </button>
 
       {/* Progress dots */}
-      <div className="absolute bottom-10 left-6 flex gap-1.5 md:bottom-12 md:left-16 lg:left-24">
+      <div className="absolute bottom-14 left-6 flex items-center gap-2 md:bottom-16 md:left-16 lg:left-24">
         {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === current ? "w-5 bg-white" : "w-1.5 bg-white/35 hover:bg-white/60"
+            aria-label={`Slide ${i + 1}`}
+            className={`rounded-full transition-all duration-300 ${
+              i === current
+                ? "h-2.5 w-8 bg-white shadow-sm"
+                : "h-2.5 w-2.5 bg-white/40 hover:bg-white/70"
             }`}
           />
         ))}
+        <span className="ml-2 text-xs font-bold tracking-widest text-white/60">
+          {current + 1} / {slides.length}
+        </span>
       </div>
 
       {/* Scroll-down pulse indicator */}
@@ -452,8 +458,8 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         style={{ animation: "scrollPulse 2.5s ease-in-out infinite" }}
         aria-label="Cuộn xuống xem nội dung"
       >
-        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] drop-shadow-md">Xem tiếp</span>
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
+        <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] drop-shadow-md">Xem tiếp</span>
+        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/20 shadow-[0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-md">
           <span className="material-symbols-rounded text-2xl font-light">
             keyboard_arrow_down
           </span>

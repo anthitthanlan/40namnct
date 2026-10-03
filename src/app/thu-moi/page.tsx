@@ -91,16 +91,44 @@ function InvitationContent() {
     if (!invitationRef.current) return;
     setDownloading(true);
     try {
+      // Pre-load all fonts used in the card so html-to-image captures them correctly
+      // regardless of the device's font cache or browser defaults
+      const loadFont = async (name: string, url: string, descriptors?: FontFaceDescriptors) => {
+        try {
+          if ([...document.fonts].some(f => f.family === name && f.status === 'loaded')) return;
+          const f = new FontFace(name, `url(${url})`, descriptors);
+          await f.load();
+          document.fonts.add(f);
+        } catch { /* fallback to next font in stack */ }
+      };
+
+      await Promise.all([
+        // Unbounded — headings / labels
+        loadFont('Unbounded', 'https://fonts.gstatic.com/s/unbounded/v6/cY9ffjeOW0NHpmOQXranrbDnrjeRdlWL.woff2', { weight: '700' }),
+        loadFont('Unbounded', 'https://fonts.gstatic.com/s/unbounded/v6/cY9cfjeOW0NHpmOQXranrbDnrjeRd-lWL.woff2', { weight: '400' }),
+        // Prata — name / body serif text
+        loadFont('Prata', 'https://fonts.gstatic.com/s/prata/v23/6xKhdSpbNNCT-vWIAG_5LWI.woff2', { weight: '400' }),
+        // Beau Rivage — script accent
+        loadFont('Beau Rivage', 'https://fonts.gstatic.com/s/beaurivage/v4/UcCi3FIgIG2bH4mMNWJSEXVN.woff2', { weight: '400' }),
+        // Google Sans — body
+        loadFont('Google Sans', 'https://fonts.gstatic.com/s/googlesans/v58/4UasrENHsxJlGDuGo1OIlJfC6l_24rlCK1Yo_Iqcsih3wGpZszs.woff2', { weight: '400' }),
+        loadFont('Google Sans', 'https://fonts.gstatic.com/s/googlesans/v58/4UasrENHsxJlGDuGo1OIlJfC6l_24rlCK1Yo_Iqcsih3wGpZszs.woff2', { weight: '600' }),
+      ]);
+
+      // Wait for all fonts in document (including CSS-loaded ones) to be ready
+      await document.fonts.ready;
+
       const dataUrl = await htmlToImage.toPng(invitationRef.current, {
-        pixelRatio: 2,
+        pixelRatio: 3, // Higher quality — 1140px output from 380px source
         backgroundColor: "#ffffff",
         style: {
           transform: "scale(1)",
+          WebkitTextSizeAdjust: "none",
         },
       });
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = `thu-moi-${data.invitation.code}.webp`;
+      a.download = `thu-moi-${data.invitation.code}.png`;
       a.click();
     } catch (err) {
       console.error("Download error:", err);
@@ -109,6 +137,7 @@ function InvitationContent() {
       setDownloading(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -162,7 +191,7 @@ function InvitationContent() {
                   <div 
                     className="absolute inset-0 z-0 pointer-events-none"
                     style={{
-                      backgroundImage: "url('/hero_images/hero_5.webp')",
+                      backgroundImage: "url('/invitation_image/bg.webp')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       opacity: 0.3,

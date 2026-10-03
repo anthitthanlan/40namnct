@@ -23,11 +23,11 @@
     "author": "Lê Minh Trí",
     "authorRole": "Cựu học sinh, khóa 1998",
     "source": "user",
-    "status": "published",
+    "status": "draft",
     "pinned": false,
     "cover": "/roadmap/trianvatruongthanh/DSCF4145.webp",
     "createdAt": "2026-09-05T20:15:00+07:00",
-    "updatedAt": "2026-09-05T20:15:00+07:00"
+    "updatedAt": "2026-10-02T19:19:24.537Z"
   },
   {
     "id": "nct-seed-04",
@@ -38,10 +38,10 @@
     "author": "Trần Thanh Hường",
     "authorRole": "Cựu học sinh, khóa 2005",
     "source": "user",
-    "status": "published",
+    "status": "draft",
     "pinned": false,
     "cover": null,
     "createdAt": "2026-09-10T22:40:00+07:00",
-    "updatedAt": "2026-09-13T04:21:44.213Z"
+    "updatedAt": "2026-10-02T19:19:22.208Z"
   }
 ]

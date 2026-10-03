@@ -16,7 +16,7 @@ const QUOTE_SECTION_IMAGE = "/quote_section_image/hero-2.webp";
 export const revalidate = 60;
 
 export default async function Home() {
-  const quoteBg = getQuoteSectionImage();
+  const quoteBg = QUOTE_SECTION_IMAGE;
   const allPosts = await listPublished();
   const pinnedPosts = allPosts.filter((p) => p.pinned);
   const nonPinnedPosts = allPosts.filter((p) => !p.pinned).slice(0, 4);

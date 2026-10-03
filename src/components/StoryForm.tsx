@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(() => import("@/components/RichTextEditor"), { ssr: false });
 
 const ROLES = [
   "Cựu học sinh",
@@ -180,20 +183,11 @@ export default function StoryForm() {
       <label className={labelCls} htmlFor="story-content">
         Câu chuyện của bạn *
       </label>
-      <textarea
-        id="story-content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        rows={10}
-        placeholder={
-          "Kể lại kỷ niệm của bạn dưới mái trường Trứ…\n\nMẹo nhỏ: dùng ## để làm tiêu đề mục, **chữ đậm** để nhấn câu quan trọng, và - để gạch đầu dòng."
-        }
-        className={`${inputCls} leading-relaxed`}
-        maxLength={12000}
-        required
-      />
+      <div className="mt-2">
+        <RichTextEditor content={content} onChange={setContent} />
+      </div>
       <p className="mt-2 text-right text-xs text-slate-400">
-        {content.length} / 12.000 ký tự
+        {content.replace(/<[^>]*>/g, "").length} / 12.000 ký tự
       </p>
 
       {state === "error" && message && (

@@ -98,7 +98,8 @@ export default function SiteFooter() {
             </h4>
             <ul className="mt-4 space-y-2.5 text-sm">
               {[
-                { href: "/ngay-tro-ve", label: "Ngày Trở Về · 08/11/2026" },
+                { href: "/", label: "Trang chủ" },
+                { href: "/thu-ngo", label: "Thư ngỏ" },
                 { href: "/dang-ky", label: "Đăng ký tham dự" },
                 { href: "/tra-cuu", label: "Tra cứu" },
                 { href: "/cau-chuyen", label: "Bài viết" },

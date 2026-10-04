@@ -85,11 +85,13 @@ export function sortAdmin(posts: Post[]): Post[] {
 }
 
 async function readPosts(): Promise<Post[]> {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.FIREBASE_SERVICE_ACCOUNT) return [];
   const snapshot = await db.collection("posts").get();
   return snapshot.docs.map((doc) => doc.data() as Post);
 }
 
 export async function listPublished(): Promise<Post[]> {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.FIREBASE_SERVICE_ACCOUNT) return [];
   const snapshot = await db.collection("posts").where("status", "==", "published").get();
   return sortPublic(snapshot.docs.map((doc) => doc.data() as Post));
 }

@@ -19,6 +19,7 @@ export type CategoryInput = {
 };
 
 export async function listCategories(): Promise<Category[]> {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.FIREBASE_SERVICE_ACCOUNT) return [];
   const snapshot = await db.collection("categories").orderBy("order", "asc").get();
   return snapshot.docs.map((d) => d.data() as Category);
 }

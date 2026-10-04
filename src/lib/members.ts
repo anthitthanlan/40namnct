@@ -79,6 +79,7 @@ export async function listMembers(): Promise<Member[]> {
 }
 
 export async function listInvitations(): Promise<Invitation[]> {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.FIREBASE_SERVICE_ACCOUNT) return [];
   const snap = await db.collection("invitations").get();
   return snap.docs.map((doc) => doc.data() as Invitation);
 }

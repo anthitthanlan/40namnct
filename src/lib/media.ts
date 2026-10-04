@@ -67,6 +67,7 @@ export async function saveUploadFile(
 }
 
 async function readMedia(): Promise<MediaItem[]> {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.FIREBASE_SERVICE_ACCOUNT) return [];
   const snapshot = await db.collection("media").get();
   return snapshot.docs.map((doc) => normalizeMediaItem(doc.data() as MediaItem));
 }
@@ -95,6 +96,7 @@ function normalizeMediaItem(item: MediaItem): MediaItem {
 }
 
 export async function listApprovedMedia(): Promise<MediaItem[]> {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.FIREBASE_SERVICE_ACCOUNT) return [];
   const snapshot = await db.collection("media").where("status", "==", "approved").get();
   const items = snapshot.docs.map((doc) => normalizeMediaItem(doc.data() as MediaItem));
   return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -102,6 +104,7 @@ export async function listApprovedMedia(): Promise<MediaItem[]> {
 
 /** Danh sách media đã duyệt, sắp theo năm → tháng (cho Timeline tự động cuộn) */
 export async function listApprovedMediaChronological(): Promise<MediaItem[]> {
+  if (!process.env.FIREBASE_PROJECT_ID && !process.env.FIREBASE_SERVICE_ACCOUNT) return [];
   const snapshot = await db.collection("media").where("status", "==", "approved").get();
   const items = snapshot.docs.map((doc) => normalizeMediaItem(doc.data() as MediaItem));
   return items.sort(

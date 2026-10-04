@@ -3,7 +3,7 @@ import { render } from "@react-email/render";
 import InvitationEmail from "@/emails/InvitationEmail";
 
 // Vui lòng thêm RESEND_API_KEY=re_xxxxxxxxx vào file .env.local của bạn
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "dummy_key");
 
 export async function sendEmail({
   to,

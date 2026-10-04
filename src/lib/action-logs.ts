@@ -1,12 +1,9 @@
-import { randomUUID } from "node:crypto";
-import { db } from "./firebase";
-
 export type ActionLogGroup = "posts" | "registrations" | "media";
 
 export type ActionLog = {
   id: string;
-  action: "delete_invitation" | "update_status" | "checkin" | "shirt_received" | "create_post" | "update_post" | "delete_post" | "account_created" | "update_media" | "delete_media";
-  group: ActionLogGroup;
+  action: string;
+  group: ActionLogGroup | string;
   entityId: string;
   adminName: string;
   adminUsername: string;
@@ -15,11 +12,25 @@ export type ActionLog = {
   createdAt: string;
 };
 
-export async function listActionLogs(): Promise<ActionLog[]> {
-  const snapshot = await db.collection("action_logs")
-    .orderBy("createdAt", "desc")
-    .get();
-  return snapshot.docs.map((doc) => doc.data() as ActionLog);
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
+
+function getHeaders(token?: string) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+}
+
+export async function listActionLogs(token?: string): Promise<ActionLog[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/admin/logs`, {
+      headers: getHeaders(token),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export async function logAction(
@@ -31,22 +42,8 @@ export async function logAction(
   adminRole: string,
   details: string
 ): Promise<ActionLog | null> {
-  if (entityId === "sample" || entityId === "sample-group") {
-    return null;
-  }
-
-  const log: ActionLog = {
-    id: randomUUID(),
-    action,
-    group,
-    entityId,
-    adminName,
-    adminUsername,
-    adminRole,
-    details,
-    createdAt: new Date().toISOString(),
-  };
-
-  await db.collection("action_logs").doc(log.id).set(log);
-  return log;
+  // Action logs are handled automatically by the FastAPI backend
+  // when the Next.js app sends the authenticated API request.
+  // This function is kept for backward compatibility if needed.
+  return null;
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const EVENT_DATE = new Date("2026-11-08T00:00:00+07:00");
+const EVENT_DATE = new Date("2026-10-11T23:00:00+07:00");
 
 interface TimeLeft {
   days: number;
@@ -61,7 +61,7 @@ export default function CountdownBadge() {
     <div className="flex flex-col items-start justify-center space-y-4">
       <div className="flex items-center space-x-2 text-emerald-600 font-bold tracking-wide mb-2">
         <span className="material-symbols-rounded text-xl">schedule</span>
-        <span>CHỈ CÒN</span>
+        <span>KẾT THÚC ĐĂNG KÝ ĐỢT 1 SAU</span>
       </div>
       <div className="flex gap-2 sm:gap-6 text-center">
         <div className="flex flex-col items-center">

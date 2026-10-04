@@ -264,7 +264,7 @@ export default function XacNhanDongGopContent() {
 
     try {
       const formData = new FormData();
-      formData.append("receipt", file);
+      formData.append("file", file);
       formData.append("invitationId", invitationId);
 
       const res = await fetch("/api/payment/verify-receipt", {

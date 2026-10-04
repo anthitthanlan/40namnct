@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { COOKIE_NAME, createSessionToken, adminCookieOptions } from "@/lib/auth";
-import { authenticateAdmin } from "@/lib/admin";
+import { COOKIE_NAME, adminCookieOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
 
 export async function POST(req: NextRequest) {
   let body: unknown = null;
@@ -24,32 +24,45 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const result = await authenticateAdmin(username, password);
-  if (!result.ok || !result.admin) {
+  try {
+    const apiRes = await fetch(`${API_URL}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!apiRes.ok) {
+      return NextResponse.json(
+        { ok: false, message: "Đăng nhập thất bại." },
+        { status: 401 },
+      );
+    }
+
+    const data = await apiRes.json();
+    const token = data.access_token;
+    if (!token) {
+      return NextResponse.json(
+        { ok: false, message: "Lỗi phản hồi từ máy chủ." },
+        { status: 500 },
+      );
+    }
+
+    const res = NextResponse.json({
+      ok: true,
+      admin: {
+        id: username,
+        username,
+        role: "admin",
+      },
+    });
+    res.cookies.set(COOKIE_NAME, token, adminCookieOptions);
+    return res;
+  } catch (err) {
     return NextResponse.json(
-      { ok: false, message: result.message || "Đăng nhập thất bại." },
-      { status: 401 },
+      { ok: false, message: "Lỗi kết nối máy chủ." },
+      { status: 500 },
     );
   }
-
-  const token = createSessionToken({
-    id: result.admin.id,
-    username: result.admin.username,
-    fullName: result.admin.fullName,
-    title: result.admin.title,
-    role: result.admin.role,
-  });
-
-  const res = NextResponse.json({
-    ok: true,
-    admin: {
-      id: result.admin.id,
-      username: result.admin.username,
-      fullName: result.admin.fullName,
-      title: result.admin.title,
-      role: result.admin.role,
-    },
-  });
-  res.cookies.set(COOKIE_NAME, token, adminCookieOptions);
-  return res;
 }

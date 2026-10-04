@@ -94,6 +94,7 @@ export async function getReceiptSignedUrl(key: string): Promise<string | null> {
   try {
     const client = getR2Client();
     const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
+    // @ts-ignore - aws-sdk/client-s3 and aws-sdk/s3-request-presigner have a minor version mismatch in @smithy/types causing type errors but runtime is fine
     return await getSignedUrl(client, command, { expiresIn: 3600 });
   } catch {
     return null;

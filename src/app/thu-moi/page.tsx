@@ -12,6 +12,7 @@ import { createPortal } from "react-dom";
 function InvitationContent() {
   const searchParams = useSearchParams();
   const rawId = searchParams.get("id");
+  const isBgOnly = searchParams.get("dl") === "invitation-background-only";
   const [id] = useState(rawId);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -201,7 +202,7 @@ function InvitationContent() {
                   />
 
                   {/* Content Wrapper */}
-                  <div className="relative z-10">
+                  <div className={`relative z-10 ${isBgOnly ? "opacity-0" : ""}`}>
                     {/* Header: Logos & Title */}
                     <div className="flex items-center gap-3 mb-2 border-b border-gray-200 pb-3">
                       <div className="flex gap-1.5 shrink-0">

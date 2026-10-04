@@ -40,18 +40,30 @@ export async function sendInvitationEmail({
   name,
   amount,
   invitationCode,
+  nienKhoa,
+  phone,
+  type,
+  shirts,
 }: {
   to: string;
   name: string;
   amount: number;
   invitationCode: string;
+  nienKhoa?: string;
+  phone?: string;
+  type?: "Cá nhân" | "Tập thể";
+  shirts?: Record<string, number>;
 }) {
   const html = await render(
     InvitationEmail({
       name,
       amount,
       invitationCode,
-      appUrl: process.env.NEXT_PUBLIC_APP_URL || "https://nctitc.io.vn",
+      nienKhoa,
+      phone,
+      type,
+      shirts,
+      appUrl: process.env.NEXT_PUBLIC_APP_URL || "https://40namnctru.nctitc.io.vn",
     })
   );
 

@@ -10,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/admin/", "/api/"],
       },
     ],
-    sitemap: "https://40namnct.nctitc.io.vn/sitemap.xml",
+    sitemap: "https://40namnctru.nctitc.io.vn/sitemap.xml",
   };
 }

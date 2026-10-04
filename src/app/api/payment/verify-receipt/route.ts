@@ -369,6 +369,10 @@ export async function POST(req: NextRequest) {
         name: member.name,
         amount: invitation.amount,
         invitationCode: invitation.code,
+        nienKhoa: invitation.nienKhoa || undefined,
+        phone: member.phone || undefined,
+        type: invitation.type === "individual" ? "Cá nhân" : "Tập thể",
+        shirts: invitation.sizes as any,
       }).catch((err) => console.error("Failed to send invitation email:", err));
     }
 

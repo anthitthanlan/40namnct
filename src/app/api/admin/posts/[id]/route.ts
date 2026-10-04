@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
-import { updatePost, deletePost, deriveExcerpt } from "@/lib/posts";
+import { updatePost, deletePost } from "@/lib/posts";
 import { logAction } from "@/lib/action-logs";
 
 export const dynamic = "force-dynamic";
@@ -49,10 +49,6 @@ export async function PATCH(
         { status: 400 },
       );
     }
-    // Update excerpt if content changed and excerpt not explicitly provided
-    if (typeof body.excerpt !== "string") {
-      patch.excerpt = deriveExcerpt(patch.content);
-    }
   }
   if (typeof body.excerpt === "string") {
     patch.excerpt = str(body.excerpt, 300);
@@ -73,6 +69,9 @@ export async function PATCH(
   }
   if (typeof body.cover === "string" || body.cover === null) {
     patch.cover = body.cover ? str(body.cover, 500) : null;
+  }
+  if (body.categoryId !== undefined) {
+    patch.categoryId = body.categoryId === null ? null : str(body.categoryId as string, 100);
   }
 
   const post = await updatePost(id, patch);

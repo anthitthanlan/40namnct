@@ -12,7 +12,8 @@ import {
 import Markdown from "@/components/Markdown";
 import PostCard, { PostBadges } from "@/components/PostCard";
 import Reveal from "@/components/Reveal";
-import ShareButtons from "@/components/ShareButtons";
+import { getCategory } from "@/lib/categories";
+import { NewsRail, NewsShare } from "@/components/NewsRail";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,8 @@ export default async function PostDetailPage({ params }: Props) {
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
+  const category = post.categoryId ? await getCategory(post.categoryId) : null;
+
   const related = sortPublic(
     (await listPublished()).filter((p) => p.slug !== post.slug),
   ).slice(0, 3);
@@ -45,54 +48,61 @@ export default async function PostDetailPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-white">
-      <article className="mx-auto max-w-3xl px-6 pb-16 pt-32">
-        <Link
-          href="/cau-chuyen"
-          className="text-sm font-bold text-[#1d4ed8] hover:underline"
-        >
-          ← Tất cả bài viết
-        </Link>
+      <div className="mx-auto flex max-w-[860px] gap-10 px-6 pb-12 pt-32">
+        <aside className="hidden shrink-0 lg:block">
+          <NewsRail />
+        </aside>
 
-        <div className="mt-6">
-          <PostBadges post={post} />
-        </div>
+        <article className="min-w-0 flex-1 max-w-[700px]">
+          <nav className="flex items-center gap-2 text-sm font-semibold text-[#454545]">
+            <Link href="/cau-chuyen" className="hover:text-[#0098d1]">
+              Câu chuyện
+            </Link>
+            <span className="h-1 w-1 rounded-full bg-[#656565]" />
+            <PostBadges post={post} categoryName={category?.name} />
+          </nav>
 
-        <h1 className="mt-4 text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">
-          {post.title}
-        </h1>
+          <h1 className="news-title mt-3 mb-4">{post.title}</h1>
 
-        <div className="mt-8 flex items-center gap-4 border-y border-slate-100 py-4">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#1d4ed8] text-lg font-extrabold text-white">
-            {post.author.charAt(0).toUpperCase()}
-          </span>
-          <div>
-            <p className="text-sm font-extrabold text-slate-900">
-              {post.author}
-            </p>
-            <p className="text-xs text-slate-500">
-              {post.authorRole} · {formatDate(post.createdAt)} ·{" "}
-              {readingMinutes} phút đọc
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#1d4ed8] text-sm font-semibold text-white">
+                {post.author.charAt(0).toUpperCase()}
+              </span>
+              <div className="font-[Inter] leading-tight">
+                <p className="text-[13px] font-semibold text-[#454545]">
+                  {post.author}
+                </p>
+                <p className="text-[12px] text-[#8b8b8b]">{post.authorRole}</p>
+              </div>
+            </div>
+            <p className="font-[Inter] text-[13px] text-[#454545]">
+              {formatDate(post.createdAt)} · {readingMinutes} phút đọc
             </p>
           </div>
-        </div>
 
-        {post.cover && post.cover !== extractFirstImage(post.content) && (
-          <img
-            src={post.cover}
-            alt={post.title}
-            className="mt-8 w-full rounded-3xl h-auto"
+          <div className="mt-4">
+            <NewsShare title={post.title} />
+          </div>
+
+          {post.cover && post.cover !== extractFirstImage(post.content) && (
+            <img
+              src={post.cover}
+              alt={post.title}
+              className="mb-6 mt-2 h-auto w-full"
+            />
+          )}
+
+          <div
+            className="news-content mt-4"
+            dangerouslySetInnerHTML={{ __html: post.content }}
           />
-        )}
 
-        <div 
-          className="mt-6 prose prose-slate sm:prose-lg max-w-none prose-img:rounded-2xl prose-img:mx-auto prose-video:w-full prose-video:rounded-2xl" 
-          dangerouslySetInnerHTML={{ __html: post.content }} 
-        />
-
-        <div className="mt-10 border-t border-slate-100 pt-8">
-          <ShareButtons title={post.title} />
-        </div>
-      </article>
+          <div className="mt-8 border-t border-[#ebebeb] pt-6">
+            <NewsShare title={post.title} />
+          </div>
+        </article>
+      </div>
 
       <section className="bg-slate-50 py-16">
         <div className="mx-auto max-w-6xl px-6">
@@ -115,8 +125,8 @@ export default async function PostDetailPage({ params }: Props) {
 
           {related.length > 0 && (
             <div className="mt-14">
-              <h2 className="text-2xl font-extrabold text-slate-900">
-                Bài viết khác
+              <h2 className="news-title inline-block border-b-2 border-[#0098d1] pb-1 text-[18px]">
+                Đọc thêm
               </h2>
               <div className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {related.map((p, i) => (

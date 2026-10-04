@@ -3,9 +3,12 @@ import { formatDate, type Post } from "@/lib/posts";
 import ClientPostCover from "@/components/ClientPostCover";
 
 /** Huy hiệu nguồn bài: ✦ Ban Biên tập (admin) hay 🗣 Câu chuyện cộng đồng (user) */
-export function PostBadges({ post }: { post: Post }) {
+export function PostBadges({ post, categoryName }: { post: Post; categoryName?: string }) {
   return (
     <div className="flex flex-wrap gap-2">
+      <span className="rounded-full bg-[#1d4ed8] px-3 py-1 text-[11px] font-extrabold tracking-wide text-white">
+        {categoryName || "Chung"}
+      </span>
       {post.pinned ? (
         <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold tracking-wide text-amber-700">
           📌 Ghim
@@ -44,9 +47,11 @@ export function PostCover({ post, className = "" }: { post: Post; className?: st
 export default function PostCard({
   post,
   featured = false,
+  categoryName,
 }: {
   post: Post;
   featured?: boolean;
+  categoryName?: string;
 }) {
   const href = `/cau-chuyen/${post.slug}`;
 
@@ -56,14 +61,19 @@ export default function PostCard({
         <Link href={href} className="block md:order-2">
           <PostCover
             post={post}
-            className="h-60 w-full object-contain bg-slate-50 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.04] md:h-full"
+            className="h-60 w-full object-cover bg-slate-50 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.04] md:h-full"
           />
         </Link>
         <div className="flex flex-col p-7 md:p-9">
-          <PostBadges post={post} />
+          <PostBadges post={post} categoryName={categoryName} />
           <h2 className="mt-4 text-2xl font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-[#1d4ed8] md:text-3xl">
             <Link href={href}>{post.title}</Link>
           </h2>
+          {post.excerpt && (
+            <p className="mt-4 text-base text-slate-600 line-clamp-6">
+              {post.excerpt}
+            </p>
+          )}
           <div className="mt-auto pt-6 text-xs font-semibold text-slate-500">
             {post.author} · {post.authorRole}
           </div>
@@ -86,14 +96,19 @@ export default function PostCard({
       <Link href={href} className="block overflow-hidden">
         <PostCover
           post={post}
-          className="h-44 w-full object-contain bg-slate-50 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.05]"
+          className="h-44 w-full object-cover bg-slate-50 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] duration-[var(--duration-very-slow)] group-hover:scale-[1.05]"
         />
       </Link>
       <div className="flex flex-1 flex-col p-6">
-        <PostBadges post={post} />
+        <PostBadges post={post} categoryName={categoryName} />
         <h3 className="mt-3 flex-1 text-lg font-extrabold leading-snug text-slate-900 transition-colors group-hover:text-[#1d4ed8]">
           <Link href={href}>{post.title}</Link>
         </h3>
+        {post.excerpt && (
+          <p className="mt-2 text-sm text-slate-600 line-clamp-4">
+            {post.excerpt}
+          </p>
+        )}
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs text-slate-500">
           <span className="truncate pr-2 font-semibold">{post.author}</span>
           <span className="shrink-0 text-slate-400">

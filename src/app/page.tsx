@@ -7,6 +7,7 @@ import CountdownBadge from "@/components/CountdownBadge";
 import ContributionCounter from "@/components/ContributionCounter";
 import { listPublished } from "@/lib/posts";
 import { listInvitations } from "@/lib/members";
+import { listCategories } from "@/lib/categories";
 
 
 /** Ảnh quote section — cập nhật thủ công nếu thay file trong public/quote_section_image/ */
@@ -17,6 +18,7 @@ export const revalidate = 60;
 export default async function Home() {
   const quoteBg = QUOTE_SECTION_IMAGE;
   const allPosts = await listPublished();
+  const categories = await listCategories();
   const pinnedPosts = allPosts.filter((p) => p.pinned);
   const nonPinnedPosts = allPosts.filter((p) => !p.pinned).slice(0, 4);
   const homePosts = [...pinnedPosts, ...nonPinnedPosts];
@@ -272,7 +274,7 @@ export default async function Home() {
           <div className="mt-16 grid gap-8 text-left sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {homePosts.map((post, i) => (
               <Reveal key={post.id} delay={(i % 4) * 80} className="h-full">
-                <PostCard post={post} />
+                <PostCard post={post} categoryName={categories.find(c => c.id === post.categoryId)?.name} />
               </Reveal>
             ))}
           </div>

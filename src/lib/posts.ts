@@ -17,6 +17,7 @@ export type Post = {
   status: PostStatus;
   pinned: boolean;
   cover: string | null;
+  categoryId?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -31,6 +32,7 @@ export type PostInput = {
   status: PostStatus;
   pinned: boolean;
   cover: string | null;
+  categoryId?: string | null;
 };
 
 /** Bỏ dấu tiếng Việt, tạo slug sạch cho URL */
@@ -52,16 +54,7 @@ export function extractFirstImage(content: string): string {
   return match ? match[1] : "";
 }
 
-/** Sinh tóm tắt từ nội dung (bỏ cú pháp markdown) */
-export function deriveExcerpt(content: string, max = 200): string {
-  const clean = content
-    .replace(/^#+\s+/gm, "")
-    .replace(/^>\s?/gm, "")
-    .replace(/^[-*]\s+/gm, "• ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return clean.length <= max ? clean : `${clean.slice(0, max - 1).trimEnd()}…`;
-}
+
 
 export function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", {
@@ -151,6 +144,7 @@ export async function createPost(input: PostInput): Promise<Post> {
     status: input.status,
     pinned: input.pinned,
     cover: input.cover || extractFirstImage(input.content) || null,
+    categoryId: input.categoryId || null,
     createdAt: now,
     updatedAt: now,
   };
@@ -169,6 +163,7 @@ function cleanPatch(patch: Partial<PostInput>): Partial<Post> {
   if (patch.status !== undefined) out.status = patch.status;
   if (patch.pinned !== undefined) out.pinned = patch.pinned;
   if (patch.cover !== undefined) out.cover = patch.cover;
+  if (patch.categoryId !== undefined) out.categoryId = patch.categoryId;
   return out;
 }
 

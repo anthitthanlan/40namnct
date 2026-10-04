@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useRef } from "react";
 import type { PostStatus } from "@/lib/posts";
+import type { Category } from "@/lib/categories";
 import RichTextEditor from "@/components/RichTextEditor";
 import { ChevronLeft, Save, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 type Draft = {
   id: string | null;
@@ -14,6 +16,7 @@ type Draft = {
   cover: string;
   content: string;
   pinned: boolean;
+  categoryId: string | null;
   status: PostStatus;
 };
 
@@ -26,6 +29,7 @@ const EMPTY_DRAFT: Draft = {
   cover: "",
   content: "",
   pinned: false,
+  categoryId: null,
   status: "published",
 };
 
@@ -45,8 +49,8 @@ export default function AdminEditPost({
 }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [originalDraft, setOriginalDraft] = useState<Draft | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [busy, setBusy] = useState(false);
-  const [banner, setBanner] = useState<{ ok: boolean; text: string } | null>(null);
   
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -97,6 +101,7 @@ export default function AdminEditPost({
             cover: post.cover ?? "",
             content: post.content,
             pinned: post.pinned,
+            categoryId: post.categoryId || null,
             status: post.status,
           };
           setDraft(loadedDraft);
@@ -107,12 +112,14 @@ export default function AdminEditPost({
       }
     }
     load();
-  }, [postId, isNew, onBack]);
 
-  const flash = (ok: boolean, text: string) => {
-    setBanner({ ok, text });
-    setTimeout(() => setBanner(null), 4000);
-  };
+    fetch("/api/admin/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) setCategories(data.categories);
+      })
+      .catch(() => {});
+  }, [postId, isNew, onBack]);
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,12 +133,12 @@ export default function AdminEditPost({
       const data = await res.json();
       if (data.ok && data.url) {
         setDraft((d) => (d ? { ...d, cover: data.url } : d));
-        flash(true, "Tải ảnh bìa thành công.");
+        toast.success("Tải ảnh bìa thành công");
       } else {
-        flash(false, "Lỗi tải ảnh: " + (data.message || "Unknown error"));
+        toast.error("Lỗi tải ảnh: " + (data.message || "Unknown error"));
       }
     } catch {
-      flash(false, "Lỗi kết nối khi tải ảnh bìa.");
+      toast.error("Lỗi kết nối khi tải ảnh bìa.");
     } finally {
       setUploadingCover(false);
     }
@@ -140,11 +147,11 @@ export default function AdminEditPost({
   async function saveDraft() {
     if (!draft) return;
     if (draft.title.trim().length < 6) {
-      flash(false, "Tiêu đề cần ít nhất 6 ký tự.");
+      toast.error("Tiêu đề cần ít nhất 6 ký tự");
       return;
     }
     if (draft.content.trim().length < 10) {
-      flash(false, "Nội dung cần ít nhất 10 ký tự.");
+      toast.error("Nội dung cần ít nhất 10 ký tự");
       return;
     }
     setBusy(true);
@@ -158,6 +165,7 @@ export default function AdminEditPost({
         content: draft.content,
         pinned: draft.pinned,
         status: draft.status,
+        categoryId: draft.categoryId || null,
       };
       const url = isNew ? "/api/admin/posts" : `/api/admin/posts/${postId}`;
       const res = await fetch(
@@ -174,12 +182,12 @@ export default function AdminEditPost({
       }
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        flash(false, data.message || "Không lưu được bài viết.");
+        toast.error(data.message || "Không lưu được bài viết");
         return;
       }
       setOriginalDraft({ ...draft, id: draft.id || data.post?.id || "saved" } as Draft);
       (window as any).__isDirty = false;
-      flash(true, draft.id ? "Đã cập nhật bài viết." : "Đã tạo bài viết mới.");
+      toast.success(draft.id ? "Đã cập nhật bài viết" : "Đã tạo bài viết mới");
       setTimeout(() => {
         onBack();
       }, 1500);
@@ -194,17 +202,6 @@ export default function AdminEditPost({
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 pb-24">
-      {banner && (
-        <div
-          className={`mb-8 rounded-3xl px-6 py-4 text-sm font-bold ${banner.ok
-              ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-              : "bg-rose-100 text-rose-800 border border-rose-200"
-            }`}
-        >
-          {banner.text}
-        </div>
-      )}
-
       <div className="sticky top-0 z-40 -mt-16 pt-16 -mx-4 px-4 sm:-mx-6 sm:px-6 mb-4">
         {/* Blurred background with gradient mask */}
         <div
@@ -278,6 +275,22 @@ export default function AdminEditPost({
           />
         </div>
         <div className="sm:col-span-2">
+          <label className={aLabel} htmlFor="d-category">Danh mục</label>
+          <select
+            id="d-category"
+            value={draft.categoryId || ""}
+            onChange={(e) => setDraft({ ...draft, categoryId: e.target.value || null })}
+            className={aInput}
+          >
+            <option value="">-- Không có danh mục --</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="sm:col-span-2">
           <label className={aLabel} htmlFor="d-cover">
             Ảnh bìa (tự động lấy ảnh đầu tiên trong bài nếu để trống)
           </label>
@@ -309,14 +322,14 @@ export default function AdminEditPost({
         </div>
       </div>
 
-      <label className={aLabel} htmlFor="d-excerpt">Tóm tắt (hiển thị trong danh sách - để trống sẽ tự lấy từ nội dung)</label>
+      <label className={aLabel} htmlFor="d-excerpt">Tóm tắt (chỉ hiển thị trên bìa bài viết, để trống nếu không có)</label>
       <textarea
         id="d-excerpt"
-        rows={2}
+        rows={4}
         value={draft.excerpt}
         onChange={(e) => setDraft({ ...draft, excerpt: e.target.value })}
         className={aInput}
-        maxLength={300}
+        maxLength={1000}
       />
 
       <label className={aLabel} htmlFor="d-content">Nội dung *</label>

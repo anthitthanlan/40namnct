@@ -32,6 +32,35 @@ export default function StoryForm() {
   const [state, setState] = useState<SendState>("idle");
   const [message, setMessage] = useState("");
 
+  const handleKhoaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const prevRaw = khoa.replace(/\D/g, "");
+    let val = e.target.value.replace(/\D/g, "");
+    
+    if (val.length >= 4) {
+      let startYear = parseInt(val.slice(0, 4), 10);
+      
+      // Validate Min/Max (Khóa đầu tiên 1986, tương lai tối đa 2026)
+      if (startYear < 1986) startYear = 1986;
+      if (startYear > 2026) startYear = 2026;
+      
+      const rest = val.slice(4, 8);
+      
+      // Nếu vừa gõ đủ 4 số đầu tiên (chưa có phần sau), tự động tính năm kết thúc (+3)
+      if (val.length === 4 && prevRaw.length < 4) {
+        val = `${startYear} - ${startYear + 3}`;
+      } else if (val.length > 4) {
+        val = `${startYear} - ${rest}`;
+      } else if (val.length === 4 && !khoa.endsWith(" - ")) {
+        // Cho trường hợp xóa lùi về 4 số mà không muốn auto-fill nữa
+        val = `${startYear} - `;
+      } else {
+        val = `${startYear}`;
+      }
+    }
+    
+    setKhoa(val);
+  };
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (author.trim().length < 2) {
@@ -156,13 +185,13 @@ export default function StoryForm() {
       </div>
 
       <label className={labelCls} htmlFor="story-khoa">
-        Khóa (năm tốt nghiệp - nếu có)
+        Niên khóa học tập / công tác
       </label>
       <input
         id="story-khoa"
         value={khoa}
-        onChange={(e) => setKhoa(e.target.value)}
-        placeholder="VD: 1998"
+        onChange={handleKhoaChange}
+        placeholder="VD: 1986 - 1989"
         className={inputCls}
         maxLength={20}
       />

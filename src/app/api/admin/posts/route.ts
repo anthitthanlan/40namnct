@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
-import { createPost, deriveExcerpt, listAll, sortAdmin } from "@/lib/posts";
+import { createPost, listAll, sortAdmin } from "@/lib/posts";
 import { logAction } from "@/lib/action-logs";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   const post = await createPost({
     title,
-    excerpt: str(body.excerpt, 300) || deriveExcerpt(content),
+    excerpt: str(body.excerpt, 300),
     content,
     author: str(body.author, 80) || "Ban Biên tập",
     authorRole: str(body.authorRole, 120) || "Ban Tổ chức Lễ kỷ niệm 40 năm",
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
     status: body.status === "draft" ? "draft" : "published",
     pinned: body.pinned === true,
     cover: str(body.cover, 500) || null,
+    categoryId: typeof body.categoryId === "string" ? body.categoryId : null,
   });
 
   await logAction(

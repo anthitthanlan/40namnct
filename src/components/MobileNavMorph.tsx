@@ -32,14 +32,17 @@ export default function MobileNavMorph() {
       items: [
         { href: "/admin?tab=pending", label: "Bài viết chờ duyệt" },
         { href: "/admin?tab=published", label: "Bài đã đăng" },
+        { href: "/admin?tab=draft", label: "Bản nháp" },
         { href: "/admin?tab=all", label: "Tất cả bài viết" },
+        { href: "/admin?tab=categories", label: "Danh mục" },
       ],
     },
     {
       title: "Hệ thống",
       items: [
         { href: "/admin?tab=invitations", label: "Thư mời" },
-        { href: "/admin?tab=media", label: "Media cộng đồng" },
+        { href: "/admin?tab=scanner", label: "Quét QR sự kiện" },
+        { href: "/admin?tab=media", label: "Feed Khoảnh khắc" },
         { href: "/admin?tab=accounts", label: "Quản lý tài khoản" },
       ],
     },
@@ -85,7 +88,7 @@ export default function MobileNavMorph() {
     <div className="relative" ref={navRef}>
       
       {/* Lớp SVG nền với hiệu ứng Gooey (Liquid Split) & Glassmorphism */}
-      <div className="absolute inset-0 z-0 pointer-events-none w-[360px] h-[600px] -left-[20px] -top-[20px]">
+      <div className="absolute inset-0 z-0 pointer-events-none w-[360px] h-[1000px] -left-[20px] -top-[20px]">
         
         <svg width="100%" height="100%" className="overflow-visible absolute inset-0">
           <defs>

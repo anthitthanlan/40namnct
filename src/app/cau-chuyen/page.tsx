@@ -4,6 +4,7 @@ import PostCard from "@/components/PostCard";
 import Reveal from "@/components/Reveal";
 import MomentCarousel from "@/components/MomentCarousel";
 import { listPublished } from "@/lib/posts";
+import { listCategories } from "@/lib/categories";
 import { listApprovedMediaChronological, mediaFileUrl } from "@/lib/media";
 import { WallMemory } from "@/components/TimelineWall";
 
@@ -18,6 +19,9 @@ export const metadata: Metadata = {
 
 export default async function BaiVietPage() {
   const posts = await listPublished();
+  const categories = await listCategories();
+  const catMap = Object.fromEntries(categories.map((c) => [c.id, c.name]));
+
   const [featured, ...rest] = posts;
   const pinnedPosts = posts.filter((p) => p.pinned);
   const adminPosts = rest.filter((p) => p.source === "admin" && !p.pinned);
@@ -62,6 +66,29 @@ export default async function BaiVietPage() {
             </p>
           </Reveal>
 
+        </div>
+      </section>
+
+      {/* ══════════ CATEGORY TABS ══════════ */}
+      <section className="pt-6">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="flex overflow-x-auto py-3 no-scrollbar items-center gap-2">
+            <Link
+              href="/cau-chuyen"
+              className="whitespace-nowrap rounded-full bg-slate-900 px-4 py-1.5 text-sm font-bold text-white transition-colors"
+            >
+              Tất cả
+            </Link>
+            {categories.map((c) => (
+              <Link
+                key={c.id}
+                href={`/cau-chuyen/danh-muc/${c.slug}`}
+                className="whitespace-nowrap rounded-full bg-slate-100 px-4 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -111,7 +138,7 @@ export default async function BaiVietPage() {
               </div>
             </Reveal>
             <Reveal>
-              <PostCard post={featured} featured />
+              <PostCard post={featured} featured categoryName={featured.categoryId ? catMap[featured.categoryId] : undefined} />
             </Reveal>
           </section>
 
@@ -133,7 +160,7 @@ export default async function BaiVietPage() {
                     .filter((p) => p.id !== featured.id)
                     .map((post, i) => (
                       <Reveal key={post.id} delay={(i % 3) * 80} className="h-full">
-                        <PostCard post={post} />
+                        <PostCard post={post} categoryName={post.categoryId ? catMap[post.categoryId] : undefined} />
                       </Reveal>
                     ))}
                 </div>
@@ -157,7 +184,7 @@ export default async function BaiVietPage() {
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {adminPosts.map((post, i) => (
                     <Reveal key={post.id} delay={(i % 3) * 80} className="h-full">
-                      <PostCard post={post} />
+                      <PostCard post={post} categoryName={post.categoryId ? catMap[post.categoryId] : undefined} />
                     </Reveal>
                   ))}
                 </div>
@@ -181,7 +208,7 @@ export default async function BaiVietPage() {
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {communityPosts.map((post, i) => (
                     <Reveal key={post.id} delay={(i % 3) * 80} className="h-full">
-                      <PostCard post={post} />
+                      <PostCard post={post} categoryName={post.categoryId ? catMap[post.categoryId] : undefined} />
                     </Reveal>
                   ))}
                 </div>

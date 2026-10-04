@@ -179,7 +179,7 @@ export default function MusicPlayer() {
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 select-none font-sans flex items-end justify-end"
+      className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 select-none flex items-end justify-end"
     >
       <motion.div
         animate={{
@@ -202,7 +202,7 @@ export default function MusicPlayer() {
               animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
               exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
               transition={{ duration: 0.15 }}
-              className="absolute inset-0 flex items-center justify-between px-3.5"
+              className="absolute inset-0 flex items-center justify-between px-3.5 pt-[2px]"
             >
               {/* ĐĨA NHẠC LOGO NGUYỄN CÔNG TRỨ XOAY TRÒN */}
               <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 shadow-inner bg-slate-900 border border-slate-700/60 flex items-center justify-center">
@@ -251,7 +251,7 @@ export default function MusicPlayer() {
                       </span>
                     </motion.div>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-sans font-medium leading-none mt-1 tabular-nums">
+                  <span className="text-[10px] text-slate-500 font-medium leading-none mt-0.5 tabular-nums">
                     {formatTime(currentTime)}
                   </span>
                 </div>

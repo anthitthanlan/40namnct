@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Toaster } from "react-hot-toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -37,6 +39,24 @@ export default function RootLayout({
         <PageTransitionProvider>{children}</PageTransitionProvider>
         <SiteFooter />
         <MusicPlayer />
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              borderRadius: "16px",
+              background: "#1e293b",
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "14px",
+            },
+            success: {
+              iconTheme: {
+                primary: "#22c55e",
+                secondary: "#fff",
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );

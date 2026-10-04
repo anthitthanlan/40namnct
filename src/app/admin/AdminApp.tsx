@@ -11,6 +11,7 @@ import AdminRegistrations from "./AdminRegistrations";
 import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
 import AdminEditPost from "./AdminEditPost";
+import AdminCategories from "./AdminCategories";
 import AdminCameraScanner from "@/components/AdminCameraScanner";
 import { useConfirm } from "@/components/useConfirm";
 
@@ -21,7 +22,7 @@ declare global {
 }
 
 type View = "checking" | "anon" | "admin";
-type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "media" | "accounts" | "scanner" | "edit";
+type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "media" | "accounts" | "scanner" | "edit" | "categories";
 
 type Draft = {
   id: string | null;
@@ -493,6 +494,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
         { key: "published", label: `Đã đăng (${publishedCount})` },
         { key: "draft", label: `Bản nháp (${draftCount})` },
         { key: "all", label: `Tất cả (${posts.length})` },
+        { key: "categories", label: `Danh mục` },
       ],
     },
     {
@@ -506,7 +508,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
     },
   ].filter((g) => g.items.length > 0);
 
-  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "invitations", "scanner", "media", "accounts", "edit"];
+  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "categories", "invitations", "scanner", "media", "accounts", "edit"];
   const activeIndex = ALL_TABS.indexOf(tab);
 
   return (
@@ -645,6 +647,8 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                 content = <AdminCameraScanner />;
               } else if (k === "accounts") {
                 content = <AdminAccounts adminInfo={adminInfo!} onAuthError={() => setView("anon")} />;
+              } else if (k === "categories") {
+                content = <AdminCategories onAuthError={() => setView("anon")} />;
               } else if (k === "edit") {
                 content = (
                   <AdminEditPost

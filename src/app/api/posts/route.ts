@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { createPost, deriveExcerpt, listPublished, sortPublic } from "@/lib/posts";
+import { createPost, listPublished, sortPublic } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
   const post = await createPost({
     title,
-    excerpt: deriveExcerpt(content),
+    excerpt: "",
     content,
     author,
     authorRole,

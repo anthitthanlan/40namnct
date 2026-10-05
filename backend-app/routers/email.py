@@ -11,7 +11,7 @@ class EmailRequest(BaseModel):
     to: List[str]
     subject: str
     html: str
-    from_email: Optional[str] = "Thư mời <hi@40namnctru.nctitc.io.vn>"
+    from_email: Optional[str] = "Thư mời <bantochuc@40namnctru.nctitc.io.vn>"
     
 async def send_resend_email_task(to: List[str], subject: str, html: str, from_email: str):
     if not settings.RESEND_API_KEY:

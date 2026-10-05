@@ -32,7 +32,7 @@ export async function sendInvitationEmail(invitationId: string) {
         to: [member.email.trim()],
         subject: "Thư mời tham dự Hội ngộ 40 năm NCT",
         html: html,
-        from_email: "Thư mời <hi@40namnctru.nctitc.io.vn>"
+        from_email: "Thư mời <bantochuc@40namnctru.nctitc.io.vn>"
       }),
     });
 

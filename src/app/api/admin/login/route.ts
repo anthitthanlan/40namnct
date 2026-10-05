@@ -51,10 +51,10 @@ export async function POST(req: NextRequest) {
 
     const res = NextResponse.json({
       ok: true,
-      admin: {
+      admin: data.admin || {
         id: username,
         username,
-        role: "admin",
+        role: "editor",
       },
     });
     res.cookies.set(COOKIE_NAME, token, adminCookieOptions);

@@ -15,7 +15,6 @@ export default function AdminAccounts({
 }) {
   const isSuperAdmin = adminInfo.role === "super_admin";
   const [accounts, setAccounts] = useState<SafeAdminAccount[] | null>(null);
-  const [logs, setLogs] = useState<ActionLog[]>([]);
   const [banner, setBanner] = useState<Banner>(null);
   const [busy, setBusy] = useState(false);
 
@@ -48,20 +47,9 @@ export default function AdminAccounts({
     if (data.ok) setAccounts(data.accounts);
   }, [isSuperAdmin, onAuthError]);
 
-  const loadLogs = useCallback(async (targetUsername?: string) => {
-    const url = targetUsername
-      ? `/api/admin/accounts/logs?username=${targetUsername}`
-      : `/api/admin/accounts/logs`;
-    const res = await fetch(url, { cache: "no-store" });
-    if (res.status === 401) return onAuthError?.();
-    const data = await res.json();
-    if (data.ok) setLogs(data.logs);
-  }, [onAuthError]);
-
   useEffect(() => {
     loadAccounts();
-    loadLogs(selectedUser || undefined);
-  }, [loadAccounts, loadLogs, selectedUser]);
+  }, [loadAccounts, selectedUser]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +156,7 @@ export default function AdminAccounts({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-6">
         <div>
           <h2 className="text-2xl font-extrabold text-slate-900">
-            {isSuperAdmin && !selectedUser ? "Quản lý tài khoản" : "Tài khoản của tôi"}
+            {isSuperAdmin && !selectedUser ? "Quản lý hệ thống" : "Tài khoản của tôi"}
           </h2>
           <p className="mt-1 text-sm font-medium text-slate-500">
             {selectedUser 
@@ -296,43 +284,13 @@ export default function AdminAccounts({
                   <p className="text-[13px] text-slate-500">@{acc.username}</p>
                   <span className="inline-block mt-2 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">{getRoleLabel(acc.role)}</span>
                 </div>
-                <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center">
-                  <button onClick={() => setSelectedUser(acc.username)} className="text-sm font-bold text-blue-600 hover:text-blue-800">
-                    Xem lịch sử
-                  </button>
+                <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end items-center">
                   <button onClick={() => handleDelete(acc.id, acc.fullName)} className="text-sm font-bold text-rose-500 hover:text-rose-700">
                     Xoá
                   </button>
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Logs View (For Regular Admin or Super Admin viewing someone) */}
-      {(!isSuperAdmin || selectedUser) && (
-        <div className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm">
-          <h3 className="text-lg font-extrabold mb-6">Lịch sử hoạt động</h3>
-          <div className="space-y-4">
-            {logs.length === 0 ? (
-              <div className="text-sm text-slate-500 italic text-center py-8">Chưa có lịch sử thao tác nào.</div>
-            ) : (
-              logs.map((log) => (
-                <div key={log.id} className="border-b border-slate-50 pb-4 last:border-0 last:pb-0">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-bold text-sm text-slate-800">{log.action} <span className="text-slate-400 font-medium ml-2">({log.group})</span></div>
-                      <div className="text-xs text-slate-500 mt-1">{log.details}</div>
-                      <div className="text-xs text-slate-400 mt-1">Đối tượng: {log.entityId}</div>
-                    </div>
-                    <div className="text-xs text-slate-400 font-medium whitespace-nowrap ml-4">
-                      {new Date(log.createdAt).toLocaleString("vi-VN")}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         </div>
       )}

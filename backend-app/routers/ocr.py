@@ -27,7 +27,20 @@ async def verify_receipt(
 
     # 2. Run AI OCR and Save to Storage concurrently to save time
     import asyncio
-    saved_task = save_uploaded_file(file, subfolder="receipts")
+    import re
+    import unicodedata
+    
+    def remove_accents(input_str):
+        if not input_str: return ""
+        s1 = unicodedata.normalize('NFKD', input_str).encode('ASCII', 'ignore').decode('utf-8')
+        return s1
+        
+    # Tạo tên custom cho receipt: [tên ng đăng kí]_[mã định danh]
+    raw_name = inv.attendee_name if inv.attendee_name else ""
+    safe_name_str = remove_accents(raw_name)
+    safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', f"{safe_name_str}_{inv.code}") if safe_name_str else inv.code
+    
+    saved_task = save_uploaded_file(file, subfolder="receipts", custom_name=safe_name)
     ocr_task = extract_receipt_info(
         image_bytes=image_bytes,
         mime_type=original_mime_type

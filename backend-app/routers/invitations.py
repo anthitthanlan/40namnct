@@ -11,7 +11,8 @@ from app.models.invitation import Invitation
 from app.models.member import Member
 from app.models.admin import ActionLog
 from app.schemas.invitation import InvitationCreate, InvitationUpdate, InvitationResponse
-from app.services.auth_service import get_current_admin
+from app.services.auth_service import get_current_admin, require_super_admin
+from app.services.storage import delete_uploaded_file
 from app.services.vietqr_service import get_vietqr_url
 
 router = APIRouter(prefix="/api/invitations", tags=["Invitations"])
@@ -174,6 +175,15 @@ def update_invitation(
 
     if "note" in changes and changes["note"] is not None:
         inv.note = changes["note"]
+        
+    if "size" in changes and changes["size"] is not None:
+        inv.size = changes["size"]
+
+    if "attendeeName" in changes and changes["attendeeName"] is not None:
+        inv.attendee_name = changes["attendeeName"]
+        
+    if "nienKhoa" in changes and changes["nienKhoa"] is not None:
+        inv.nien_khoa = changes["nienKhoa"]
 
     # Log action
     log = ActionLog(
@@ -198,14 +208,25 @@ def get_invitation_vietqr(id: str, db: Session = Depends(get_db)):
     return {"qrUrl": qr_url, "amount": inv.amount, "code": inv.code}
 
 @router.delete("/{id}")
-def delete_invitation(
+async def delete_invitation(
     id: str,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin = Depends(require_super_admin)
 ):
     inv = db.query(Invitation).filter(Invitation.id == id).first()
     if not inv:
         raise HTTPException(status_code=404, detail="Không tìm thấy thư mời")
+    
+    # Xóa ảnh hóa đơn chính
+    if inv.receipt_url:
+        await delete_uploaded_file(inv.receipt_url, subfolder="receipts")
+    
+    # Xóa các ảnh hóa đơn trong lịch sử attempts
+    if inv.receipt_attempts:
+        for attempt in inv.receipt_attempts:
+            if 'url' in attempt and attempt['url']:
+                await delete_uploaded_file(attempt['url'], subfolder="receipts")
+                
     db.delete(inv)
     db.commit()
     return {"success": True, "id": id}

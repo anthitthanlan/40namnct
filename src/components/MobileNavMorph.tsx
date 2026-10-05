@@ -28,22 +28,25 @@ export default function MobileNavMorph() {
   const isAdmin = pathname.startsWith("/admin");
   const adminGroups = [
     {
-      title: "Quản lý bài đăng",
+      title: "Nội dung & Truyền thông",
       items: [
-        { href: "/admin?tab=pending", label: "Bài viết chờ duyệt" },
-        { href: "/admin?tab=published", label: "Bài đã đăng" },
-        { href: "/admin?tab=draft", label: "Bản nháp" },
-        { href: "/admin?tab=all", label: "Tất cả bài viết" },
-        { href: "/admin?tab=categories", label: "Danh mục" },
+        { href: "/admin?tab=posts", label: "Quản lý bài viết" },
+        { href: "/admin?tab=media", label: "Feed Khoảnh khắc" },
+      ],
+    },
+    {
+      title: "Quản lý sự kiện",
+      items: [
+        { href: "/admin?tab=invitations", label: "Thư mời" },
+        { href: "/admin?tab=scanner", label: "Quét QR sự kiện" },
+        { href: "/admin?tab=email", label: "Gửi Email" },
       ],
     },
     {
       title: "Hệ thống",
       items: [
-        { href: "/admin?tab=invitations", label: "Thư mời" },
-        { href: "/admin?tab=scanner", label: "Quét QR sự kiện" },
-        { href: "/admin?tab=media", label: "Feed Khoảnh khắc" },
-        { href: "/admin?tab=accounts", label: "Quản lý tài khoản" },
+        { href: "/admin?tab=accounts", label: "Quản lý hệ thống" },
+        { href: "/admin?tab=logs", label: "Nhật ký hệ thống" },
       ],
     },
   ];

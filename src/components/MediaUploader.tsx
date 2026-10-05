@@ -45,6 +45,8 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
   const [author, setAuthor] = useState(isAdmin ? "Ban Biên tập" : "");
   const [role, setRole] = useState(isAdmin ? "Ban Biên tập" : ROLES[0]);
   const [caption, setCaption] = useState("");
+  const [mediaType, setMediaType] = useState("feed");
+  const [title, setTitle] = useState("");
   const [year, setYear] = useState(isAdmin ? new Date().getFullYear().toString() : "");
   const [month, setMonth] = useState(isAdmin ? (new Date().getMonth() + 1).toString() : "");
   const [entries, setEntries] = useState<FileEntry[]>([]);
@@ -137,6 +139,8 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
       form.append("author", author);
       form.append("authorRole", role);
       form.append("caption", caption);
+      form.append("mediaType", mediaType);
+      form.append("title", title);
       form.append("year", `${y}`);
       form.append("month", `${m}`);
       entries.forEach(({ file }) => form.append("files", file));
@@ -152,6 +156,7 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
       if (onSuccess) onSuccess();
       setEntries([]);
       setCaption("");
+      setTitle("");
       setYear("");
       setMonth("");
     } catch {
@@ -249,6 +254,36 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
           ))}
         </ul>
       )}
+
+      <div className="grid gap-x-5 sm:grid-cols-2">
+        <div>
+          <label className={labelCls} htmlFor="media-type">
+            Loại hình ảnh
+          </label>
+          <select
+            id="media-type"
+            value={mediaType}
+            onChange={(e) => setMediaType(e.target.value)}
+            className={inputCls}
+          >
+            <option value="feed">Khoảnh khắc / Feed</option>
+            <option value="post">Bài viết / Post</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelCls} htmlFor="media-title">
+            Tên Chủ đề / Album
+          </label>
+          <input
+            id="media-title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="VD: Lễ Khai Giảng 2026"
+            className={inputCls}
+            maxLength={100}
+          />
+        </div>
+      </div>
 
       <label className={labelCls} htmlFor="media-caption">
         Chú thích (khoảnh khắc, năm tháng, người trong ảnh…)

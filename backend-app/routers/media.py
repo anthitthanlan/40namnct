@@ -4,8 +4,8 @@ from typing import List, Optional
 from app.database import get_db
 from app.models.media import MediaItem
 from app.schemas.media import MediaResponse
-from app.services.storage import save_uploaded_file
-from app.services.auth_service import get_current_admin
+from app.services.storage import save_uploaded_file, delete_uploaded_file
+from app.services.auth_service import get_current_admin, require_super_admin
 
 router = APIRouter(prefix="/api/media", tags=["Media"])
 
@@ -46,10 +46,40 @@ async def upload_media(
     author: str = Form(""),
     authorRole: str = Form(""),
     caption: str = Form(""),
+    mediaType: str = Form("media"), # "feed" or "post"
+    title: str = Form(""), # Tên post hoặc feed
+    uploadIndex: int = Form(1),
     db: Session = Depends(get_db)
 ):
-    # Save file directly to server disk
-    saved = await save_uploaded_file(file, subfolder="media")
+    import re
+    import unicodedata
+    bucket_folder = ""
+    custom_name = None
+    
+    def remove_accents(input_str):
+        if not input_str: return ""
+        return unicodedata.normalize('NFKD', input_str).encode('ASCII', 'ignore').decode('utf-8')
+    
+    # Nếu là feed/post và có title, tiến hành format thư mục và tên
+    if mediaType in ["feed", "post"] and title:
+        # Làm sạch tên title
+        unaccented_title = remove_accents(title)
+        safe_title = re.sub(r'[^a-zA-Z0-9_-]', '_', unaccented_title)
+        safe_title_prefix = safe_title[:30] # Lấy 30 kí tự đầu tiên
+        
+        # Thư mục: feed/tên_bài_viết/
+        bucket_folder = f"{mediaType}/{safe_title}"
+        
+        # Tên file: tên_bài_viết_01
+        custom_name = f"{safe_title_prefix}_{uploadIndex:02d}"
+
+    # Save file directly to server disk/R2
+    saved = await save_uploaded_file(
+        file, 
+        subfolder="media", 
+        custom_name=custom_name, 
+        bucket_folder=bucket_folder
+    )
     kind = "video" if file.content_type and "video" in file.content_type else "image"
 
     media_record = MediaItem(
@@ -90,14 +120,18 @@ def update_media_status(
     return {"success": True, "status": item.status}
 
 @router.delete("/{id}")
-def delete_media_item(
+async def delete_media_item(
     id: str,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin = Depends(require_super_admin)
 ):
     item = db.query(MediaItem).filter(MediaItem.id == id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Không tìm thấy file media")
+    
+    if item.url:
+        await delete_uploaded_file(item.url, subfolder="media")
+        
     db.delete(item)
     db.commit()
     return {"success": True, "id": id}

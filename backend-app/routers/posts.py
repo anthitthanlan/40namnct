@@ -6,7 +6,8 @@ import unicodedata
 from app.database import get_db
 from app.models.post import Post
 from app.schemas.post import PostCreate, PostUpdate, PostResponse
-from app.services.auth_service import get_current_admin
+from app.services.auth_service import get_current_admin, require_super_admin
+from app.services.storage import delete_uploaded_file
 
 from app.services.facebook_service import sync_facebook_page_posts
 
@@ -170,14 +171,18 @@ def update_post(
     )
 
 @router.delete("/{id}")
-def delete_post(
+async def delete_post(
     id: str,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin = Depends(require_super_admin)
 ):
     post = db.query(Post).filter(Post.id == id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Bài viết không tồn tại")
+    
+    if post.cover:
+        await delete_uploaded_file(post.cover, subfolder="posts")
+        
     db.delete(post)
     db.commit()
     return {"success": True, "message": "Đã xóa bài viết"}

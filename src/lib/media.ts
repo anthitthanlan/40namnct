@@ -54,6 +54,16 @@ export function kindForExt(ext: string): "image" | "video" | null {
 export async function saveUploadFile(
   buffer: Buffer,
   ext: string,
+  options?: {
+    mediaType?: string;
+    title?: string;
+    uploadIndex?: number;
+    year?: number;
+    month?: number;
+    author?: string;
+    authorRole?: string;
+    caption?: string;
+  }
 ): Promise<string> {
   const formData = new FormData();
   formData.append(
@@ -61,12 +71,24 @@ export async function saveUploadFile(
     new Blob([new Uint8Array(buffer)], { type: "application/octet-stream" }),
     `upload.${ext}`
   );
-  // Default metadata from old logic
-  formData.append("year", "2026");
-  formData.append("month", "11");
-  formData.append("author", "");
-  formData.append("authorRole", "");
-  formData.append("caption", "");
+
+  if (options) {
+    if (options.mediaType) formData.append("mediaType", options.mediaType);
+    if (options.title) formData.append("title", options.title);
+    if (options.uploadIndex !== undefined) formData.append("uploadIndex", String(options.uploadIndex));
+    if (options.year !== undefined) formData.append("year", String(options.year));
+    if (options.month !== undefined) formData.append("month", String(options.month));
+    if (options.author) formData.append("author", options.author);
+    if (options.authorRole) formData.append("authorRole", options.authorRole);
+    if (options.caption) formData.append("caption", options.caption);
+  } else {
+    // Default metadata from old logic
+    formData.append("year", "2026");
+    formData.append("month", "11");
+    formData.append("author", "");
+    formData.append("authorRole", "");
+    formData.append("caption", "");
+  }
 
   const res = await fetch(`${API_URL}/api/media/upload`, {
     method: "POST",

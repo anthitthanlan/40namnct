@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 
 const SIZES = ["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"] as const;
 type Size = (typeof SIZES)[number];
@@ -520,6 +521,27 @@ export default function RegisterForm() {
   // Transition parameters for Framer Motion matching CSS Transitions.dev
   const modalEase = [0.22, 1, 0.36, 1] as [number, number, number, number];
   const boxTransition = { duration: 0.4, ease: modalEase };
+
+  const isClosed = new Date() > new Date("2026-10-11T23:00:00+07:00");
+  if (isClosed) {
+    return (
+      <div className="bg-white rounded-3xl p-8 md:p-12 text-center shadow-sm border border-slate-100 max-w-2xl mx-auto">
+        <span className="material-symbols-rounded text-6xl text-rose-500 mb-4 block">event_busy</span>
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">Đã Đóng Đăng Ký</h2>
+        <p className="text-slate-600 mb-8 leading-relaxed text-lg">
+          Rất tiếc, thời gian đăng ký đợt 1 cho Ngày Trở Về đã kết thúc vào lúc 23h ngày 11/10/2026. 
+          Xin cảm ơn sự quan tâm của quý vị.
+        </p>
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center gap-2 bg-[#1d4ed8] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+        >
+          <span className="material-symbols-rounded">arrow_back</span>
+          Về trang chủ
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <>

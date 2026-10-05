@@ -55,7 +55,7 @@ export default function AdminRegistrations({
   const [typeFilter, setTypeFilter] = useState<"all" | "individual" | "group">("all");
   const [mobileSubTab, setMobileSubTab] = useState<"overview" | "list">("overview");
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [mainTab, setMainTab] = useState<"approve" | "sizes" | "transactions" | "logs">("approve");
+  const [mainTab, setMainTab] = useState<"approve" | "sizes" | "transactions">("approve");
   const [editingInvitation, setEditingInvitation] = useState<InvitationRow | null>(null);
 
   const flash = useCallback((ok: boolean, text: string) => {
@@ -64,8 +64,6 @@ export default function AdminRegistrations({
   }, []);
 
   const [page, setPage] = useState(1);
-
-  const [logs, setLogs] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/registrations", { cache: "no-store" });
@@ -77,9 +75,6 @@ export default function AdminRegistrations({
     if (data.ok) {
       setMembers(data.members as MemberRow[]);
       setInvitations(data.invitations as InvitationRow[]);
-      if (data.logs) {
-        setLogs(data.logs);
-      }
     }
   }, [onAuthError]);
 
@@ -351,14 +346,13 @@ export default function AdminRegistrations({
           <div
             className="t-morph shadow-sm"
             data-open={isMenuOpen}
-            style={{ "--morph-height-open": logs.length > 0 ? "192px" : "148px" } as React.CSSProperties}
+            style={{ "--morph-height-open": "148px" } as React.CSSProperties}
           >
             <div className="t-morph-menu">
               {[
                 { id: "approve", label: "Quản lý Đăng ký" },
                 { id: "sizes", label: "Thống kê Size áo" },
                 { id: "transactions", label: "Thống kê Giao dịch" },
-                ...(logs.length > 0 ? [{ id: "logs", label: "Nhật ký Hệ thống" }] : []),
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -406,7 +400,6 @@ export default function AdminRegistrations({
             { id: "approve", label: "Quản lý Đăng ký" },
             { id: "sizes", label: "Thống kê Size áo" },
             { id: "transactions", label: "Thống kê Giao dịch" },
-            ...(logs.length > 0 ? [{ id: "logs", label: "Nhật ký Hệ thống" }] : []),
           ].map((tab) => (
             <button
               key={tab.id}
@@ -694,27 +687,35 @@ export default function AdminRegistrations({
                   </div>
 
                   {/* Ảnh biên lai & Kết quả OCR */}
-                  {t.receiptUrl && (
+                  {(t.receiptUrl || (t.receiptAttempts && t.receiptAttempts.length > 0)) && (
                     <div className="mt-4 flex flex-col sm:flex-row gap-4 border-t border-slate-100 pt-4">
                       {/* Thumbnail ảnh */}
-                      <a
-                        href={t.receiptUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="shrink-0 group relative block h-24 w-16 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-32 sm:w-24 shadow-sm"
-                        title="Bấm để xem ảnh lớn"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={t.receiptUrl}
-                          alt="Biên lai"
-                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10 flex items-center justify-center">
-                          <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md"><span className="material-symbols-rounded inline-block align-middle text-[1em]">search</span></span>
-                        </div>
-                      </a>
+                      <div className="flex flex-wrap gap-3">
+                        {Array.from(new Set([
+                          ...(t.receiptAttempts?.map(a => a.url) || []),
+                          t.receiptUrl
+                        ].filter(Boolean))).map((imgUrl, i) => (
+                          <a
+                            key={i}
+                            href={imgUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="shrink-0 group relative block h-24 w-16 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-32 sm:w-24 shadow-sm"
+                            title="Bấm để xem ảnh lớn"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imgUrl}
+                              alt={`Biên lai ${i + 1}`}
+                              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10 flex items-center justify-center">
+                              <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md"><span className="material-symbols-rounded inline-block align-middle text-[1em]">search</span></span>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
 
                       {/* Thông tin OCR */}
                       <div className="flex-1 space-y-2 text-xs">
@@ -1003,44 +1004,6 @@ export default function AdminRegistrations({
                 {formatVnd(invitations.filter(t => t.status === "pending" || t.status === "pending_payment").reduce((sum, t) => sum + t.amount, 0))}
               </p>
             </div>
-          </div>
-        </section>
-      )}
-
-      {mainTab === "logs" && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-xl font-extrabold text-slate-900">
-            <span className="material-symbols-rounded inline-block align-middle text-[1em]">history</span> Nhật ký Hệ thống (Action Logs)
-          </h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Ghi nhận mọi thao tác phê duyệt, từ chối, xóa bỏ của Ban Quản trị. Chỉ hiển thị với Super Admin.
-          </p>
-
-          <div className="mt-6 space-y-4">
-            {logs.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
-                Chưa có thao tác nào được ghi nhận.
-              </div>
-            ) : (
-              [...logs].reverse().map((log) => (
-                <div key={log.id} className="flex gap-4 p-4 border border-slate-100 bg-slate-50/50 rounded-2xl">
-                  <div className="shrink-0 pt-1">
-                    <span className={`material-symbols-rounded text-[20px] ${log.action === "delete_invitation" ? "text-rose-500" : "text-blue-500"}`}>
-                      {log.action === "delete_invitation" ? "delete_forever" : "edit_document"}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{log.details}</p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Thực hiện bởi: <span className="font-semibold text-slate-700">{log.adminName}</span> ({log.adminRole})
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                      ID Tác động: {log.entityId} · Lúc: {new Date(log.createdAt).toLocaleString("vi-VN")}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
           </div>
         </section>
       )}

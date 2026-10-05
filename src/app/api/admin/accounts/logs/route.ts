@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { getAdminFromRequest, unauthorized, COOKIE_NAME } from "@/lib/auth";
 import { listActionLogs } from "@/lib/action-logs";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,8 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const targetUsername = url.searchParams.get("username");
 
-  let allLogs = await listActionLogs();
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  let allLogs = await listActionLogs(token);
 
   if (admin.role === "super_admin") {
     // Super admin có thể lọc theo targetUsername

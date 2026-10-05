@@ -10,6 +10,7 @@ import type { AdminRole } from "@/lib/admin";
 import AdminRegistrations from "./AdminRegistrations";
 import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
+import AdminLogs from "./AdminLogs";
 import AdminEditPost from "./AdminEditPost";
 import AdminCategories from "./AdminCategories";
 import AdminEmail from "./AdminEmail";
@@ -23,7 +24,7 @@ declare global {
 }
 
 type View = "checking" | "anon" | "admin";
-type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "email" | "media" | "accounts" | "scanner" | "edit" | "categories";
+type Tab = "posts" | "invitations" | "email" | "media" | "accounts" | "logs" | "scanner" | "edit";
 
 type Draft = {
   id: string | null;
@@ -76,7 +77,7 @@ const aInput =
 const aLabel =
   "mt-5 block text-xs font-extrabold uppercase tracking-wider text-slate-500";
 
-export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
+export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -128,6 +129,8 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [postTab, setPostTab] = useState<"pending" | "published" | "draft" | "all" | "categories">("pending");
+  const [isPostMenuOpen, setIsPostMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [adminInfo, setAdminInfo] = useState<{
     fullName: string;
@@ -210,7 +213,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
         role: data.admin?.role || "editor",
         username: data.admin?.username || "",
       });
-      setTab("pending"); // Reset tab
+      setTab("posts"); // Reset tab
       setView("admin");
       await loadPosts();
     } finally {
@@ -223,7 +226,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
     setPosts([]);
     setDraft(null);
     setAdminInfo(null);
-    setTab("pending"); // Reset tab
+    setTab("posts"); // Reset tab
     setView("anon");
   }
 
@@ -477,11 +480,11 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
   const publishedCount = posts.filter((p) => p.status === "published").length;
   const draftCount = posts.filter((p) => p.status === "draft").length;
   const filtered =
-    tab === "pending"
+    postTab === "pending"
       ? posts.filter((p) => p.status === "pending")
-      : tab === "published"
+      : postTab === "published"
         ? posts.filter((p) => p.status === "published")
-        : tab === "draft"
+        : postTab === "draft"
           ? posts.filter((p) => p.status === "draft")
           : posts;
 
@@ -489,28 +492,30 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
   const menuGroups = [
     {
-      title: "Quản lý bài đăng",
+      title: "Nội dung & Truyền thông",
       items: [
-        { key: "pending", label: `Chờ duyệt (${pendingCount})` },
-        { key: "published", label: `Đã đăng (${publishedCount})` },
-        { key: "draft", label: `Bản nháp (${draftCount})` },
-        { key: "all", label: `Tất cả (${posts.length})` },
-        { key: "categories", label: `Danh mục` },
+        { key: "posts", label: "Quản lý bài viết" },
+        ...(!isEditor ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
+      ],
+    },
+    {
+      title: "Quản lý sự kiện",
+      items: [
+        ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
+        ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
+        ...(!isEditor ? [{ key: "email", label: "Gửi Email" } as const] : []),
       ],
     },
     {
       title: "Hệ thống",
       items: [
-        ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
-        ...(!isEditor ? [{ key: "email", label: "Gửi Email" } as const] : []),
-        ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
-        ...(!isEditor ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
-        { key: "accounts", label: "Quản lý tài khoản" },
+        { key: "accounts", label: "Quản lý hệ thống" },
+        ...(!isEditor ? [{ key: "logs", label: "Nhật ký hệ thống" } as const] : []),
       ],
     },
   ].filter((g) => g.items.length > 0);
 
-  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "categories", "invitations", "email", "scanner", "media", "accounts", "edit"];
+  const ALL_TABS: Tab[] = ["posts", "invitations", "email", "scanner", "media", "accounts", "logs", "edit"];
   const activeIndex = ALL_TABS.indexOf(tab);
 
   return (
@@ -558,7 +563,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
             </div>
 
             {/* Mobile Floating Action Button (+) cho Quản lý bài đăng */}
-            {(tab === "pending" || tab === "published" || tab === "all") && (
+            {tab === "posts" && (
               <button
                 type="button"
                 onClick={openNew}
@@ -634,27 +639,6 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
 
 
-          {/* Mobile Tabs Bar */}
-          <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 custom-scrollbar">
-            {menuGroups.flatMap((g) => g.items).map(({ key, label }) => {
-              const isCurrent = tab === key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleTabChange(key as Tab)}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-extrabold whitespace-nowrap transition-all ${
-                    isCurrent
-                      ? "bg-[#1d4ed8] text-white shadow-xs"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
           <div className="t-page-slide relative">
             {ALL_TABS.map((k, i) => {
               if (!visited.has(k)) return null;
@@ -672,27 +656,22 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                 content = <AdminCameraScanner />;
               } else if (k === "accounts") {
                 content = <AdminAccounts adminInfo={adminInfo!} onAuthError={() => setView("anon")} />;
-              } else if (k === "categories") {
-                content = <AdminCategories onAuthError={() => setView("anon")} />;
-              } else if (k === "edit") {
-                content = (
-                  <AdminEditPost
-                    key={editPostId || "new"}
-                    postId={editPostId}
-                    onBack={() => {
-                      if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
-                      const params = new URLSearchParams(searchParams);
-                      params.delete("edit");
-                      router.push(`${pathname}?${params.toString()}`);
-                    }}
-                  />
-                );
-              } else if (k === "pending" || k === "published" || k === "draft" || k === "all") {
+              } else if (k === "logs") {
+                content = <AdminLogs onAuthError={() => setView("anon")} />;
+              } else if (k === "posts") {
+                const postsMinitabs = [
+                  { id: "pending", label: `Chờ duyệt (${pendingCount})` },
+                  { id: "published", label: `Đã đăng (${publishedCount})` },
+                  { id: "draft", label: `Bản nháp (${draftCount})` },
+                  { id: "all", label: `Tất cả (${posts.length})` },
+                  { id: "categories", label: `Danh mục` },
+                ];
+
                 const tabPosts = posts
                   .filter((p) => {
-                    if (k === "pending") return p.status === "pending";
-                    if (k === "published") return p.status === "published";
-                    if (k === "draft") return p.status === "draft";
+                    if (postTab === "pending") return p.status === "pending";
+                    if (postTab === "published") return p.status === "published";
+                    if (postTab === "draft") return p.status === "draft";
                     return true;
                   })
                   .filter((p) => filterSource === "all" || p.source === filterSource)
@@ -711,7 +690,70 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
                 content = (
                   <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row gap-4 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                    {/* Mobile Morph Dropdown */}
+                    <div className="md:hidden relative z-50 mb-6">
+                      <div
+                        className="t-morph shadow-sm"
+                        data-open={isPostMenuOpen}
+                        style={{ "--morph-height-open": "240px" } as React.CSSProperties}
+                      >
+                        <div className="t-morph-menu">
+                          {postsMinitabs.map((tabItem) => (
+                            <button
+                              key={tabItem.id}
+                              type="button"
+                              onClick={() => {
+                                setPostTab(tabItem.id as any);
+                                setIsPostMenuOpen(false);
+                              }}
+                              className={`flex-1 flex items-center px-4 py-3 text-left text-sm font-bold rounded-xl transition-colors ${
+                                postTab === tabItem.id
+                                  ? "bg-slate-100 text-[#1d4ed8]"
+                                  : "text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              {tabItem.label}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <button
+                          type="button"
+                          className="t-morph-plus text-sm font-bold text-slate-800 flex items-center justify-between"
+                          onClick={() => setIsPostMenuOpen(!isPostMenuOpen)}
+                          aria-expanded={isPostMenuOpen}
+                        >
+                          <span>{postsMinitabs.find(t => t.id === postTab)?.label}</span>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Desktop Mini-tabs */}
+                    <div className="hidden md:flex flex-wrap gap-2 border-b border-slate-100 pb-4 text-sm font-bold mb-4">
+                      {postsMinitabs.map((tabItem) => (
+                        <button
+                          key={tabItem.id}
+                          type="button"
+                          onClick={() => setPostTab(tabItem.id as any)}
+                          className={`rounded-xl px-4 py-2.5 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
+                            postTab === tabItem.id
+                              ? "bg-[#1d4ed8] text-white shadow-xs"
+                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          }`}
+                        >
+                          {tabItem.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {postTab === "categories" ? (
+                      <AdminCategories onAuthError={() => setView("anon")} />
+                    ) : (
+                      <>
+                        <div className="flex flex-col sm:flex-row gap-4 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                       <input
                         type="search"
                         placeholder="Tìm theo tiêu đề, tác giả, người duyệt..."
@@ -892,12 +934,27 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
                     })}
                     {tabPosts.length === 0 && (
                       <div className="rounded-3xl bg-white p-10 text-center text-sm text-slate-400">
-                        {k === "pending"
+                        {postTab === "pending"
                           ? "🎉 Không có bài nào chờ duyệt - mọi thứ đã được xử lý!"
                           : "Chưa có bài viết nào trong mục này."}
                       </div>
                     )}
+                    </>
+                  )}
                   </div>
+                );
+              } else if (k === "edit") {
+                content = (
+                  <AdminEditPost
+                    key={editPostId || "new"}
+                    postId={editPostId}
+                    onBack={() => {
+                      if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
+                      const params = new URLSearchParams(searchParams);
+                      params.delete("edit");
+                      router.push(`${pathname}?${params.toString()}`);
+                    }}
+                  />
                 );
               }
 

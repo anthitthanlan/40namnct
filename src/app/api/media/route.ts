@@ -56,6 +56,9 @@ export async function POST(req: NextRequest) {
   const caption = str(form.get("caption"), 300);
   const year = parseInt(str(form.get("year"), 8), 10);
   const month = parseInt(str(form.get("month"), 8), 10);
+  
+  const mediaType = str(form.get("mediaType"), 20) || "media";
+  const title = str(form.get("title"), 100) || "";
 
   if (author.length < 2) {
     return NextResponse.json(
@@ -119,11 +122,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  let uploadIndex = 1;
   for (const file of files) {
     const ext = extOf(file.name);
     const kind = kindForExt(ext) as "image" | "video";
     const buffer = Buffer.from(await file.arrayBuffer());
-    const name = await saveUploadFile(buffer, ext);
+    const name = await saveUploadFile(buffer, ext, {
+      mediaType,
+      title,
+      uploadIndex: uploadIndex++,
+      year,
+      month,
+      author,
+      authorRole,
+      caption,
+    });
     await addMediaItem({
       id: randomUUID(),
       file: name,

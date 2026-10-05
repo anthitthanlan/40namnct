@@ -119,6 +119,9 @@ export default function CountdownBadge() {
           <div className="text-xs sm:text-sm font-semibold uppercase text-emerald-600/70 mt-1">Giây</div>
         </div>
       </div>
+      <div className="mt-4 text-[13px] sm:text-sm font-medium text-slate-500 bg-slate-100/80 px-4 py-2 rounded-xl border border-slate-200">
+        Đăng ký đợt 1 sẽ kết thúc vào 23:00 ngày 11/10/2026
+      </div>
     </div>
   );
 }

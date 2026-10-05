@@ -44,7 +44,7 @@ export default async function Home() {
               </div>
             </Reveal>
             <Reveal delay={100} variant="left">
-              <h2 className="mt-6 text-3xl font-black leading-tight text-slate-900 sm:text-4xl">
+              <h2 className="mt-6 text-2xl font-extrabold leading-tight text-slate-900 sm:text-4xl">
                 &ldquo;Có một nơi để trở về - nơi ấy gọi tên THPT Nguyễn Công
                 Trứ.&rdquo;
               </h2>
@@ -111,7 +111,7 @@ export default async function Home() {
         <div className="mt-14 grid gap-4 lg:gap-8 md:grid-cols-12 md:grid-rows-2">
           {/* Main Content (Removed Box Styling) */}
           <Reveal delay={100} className="md:col-span-7 md:row-span-2 flex flex-col justify-center text-left">
-            <h2 className="relative z-10 text-3xl font-black leading-tight text-slate-900 sm:text-4xl">
+            <h2 className="relative z-10 text-2xl font-extrabold leading-tight text-slate-900 sm:text-4xl">
               08/11/2026<br />&ldquo;NGÀY TRỞ VỀ&rdquo;
             </h2>
             <p className="relative z-10 mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
@@ -159,7 +159,7 @@ export default async function Home() {
         <div className="mt-24 mx-auto max-w-4xl text-left">
           <Reveal delay={300}>
             <div className="flex flex-col items-center text-center mb-12">
-              <h3 className="text-3xl font-black text-slate-900 sm:text-4xl">
+              <h3 className="text-2xl font-extrabold text-slate-900 sm:text-4xl">
                 Chương trình dự kiến
               </h3>
               <p className="mt-3 text-slate-600">Lịch trình các hoạt động chính trong Ngày trở về (08/11/2026)</p>
@@ -224,7 +224,7 @@ export default async function Home() {
               </div>
             </Reveal>
             <Reveal delay={100} variant="left">
-              <h2 className="mt-5 text-3xl font-black text-slate-900 sm:text-4xl">
+              <h2 className="mt-5 text-2xl font-extrabold text-slate-900 sm:text-4xl">
                 Viết tiếp hành trình 40 năm
               </h2>
             </Reveal>
@@ -291,7 +291,7 @@ export default async function Home() {
               </div>
             </Reveal>
             <Reveal variant="up" delay={100}>
-              <h2 className="mt-5 text-3xl font-black leading-tight sm:text-4xl">
+              <h2 className="mt-5 text-2xl font-extrabold leading-tight sm:text-4xl">
                 Lưu giữ lại một thời để nhớ
               </h2>
             </Reveal>

@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     R2_SECRET_ACCESS_KEY: str = ""
     R2_BUCKET_MEDIA: str = "40th-anniversary-media"
     R2_PUBLIC_URL_MEDIA: str = "https://media-r2.nct40.poln.id.vn"
+    R2_BUCKET_RECEIPT: str = "40th-anniversary-receipts"
+    R2_PUBLIC_URL_RECEIPT: str = ""
     
     # Resend Email
     RESEND_API_KEY: str = ""

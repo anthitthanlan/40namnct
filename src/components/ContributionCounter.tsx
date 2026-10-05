@@ -137,20 +137,20 @@ export default function ContributionCounter({
             <Reveal variant="left">
               <div className="inline-flex items-center gap-3 text-xs font-extrabold tracking-widest text-emerald-300 sm:text-sm">
                 <span className="h-0.5 w-6 rounded-full bg-emerald-400" />
-                <span>ĐÓNG GÓP & VÉ THAM DỰ</span>
+                <span>THÂN CÙNG HỘI NGỘ & GIAO LƯU</span>
               </div>
             </Reveal>
 
             <Reveal delay={100} variant="left">
               <h2 className="mt-5 text-4xl font-black leading-tight sm:text-5xl">
-                Cùng nhau gieo 40 năm yêu thương
+                Sống lại miền ký ức
               </h2>
             </Reveal>
 
             <Reveal delay={160} variant="left">
               <p className="mt-4 max-w-xl text-base leading-relaxed text-emerald-100/80 sm:text-lg">
-                Mỗi tấm vé là một nhành cây được trồng xuống cho hành trình 40 năm
-                của mái trường Nguyễn Công Trứ. Cảm ơn bạn đã chung tay.
+                Sự hiện diện của các bạn là một mảnh ghép quý giá làm nên bức tranh kỷ niệm 40 năm
+                của mái trường Nguyễn Công Trứ. Chào mừng bạn trở về.
               </p>
             </Reveal>
 
@@ -158,7 +158,7 @@ export default function ContributionCounter({
             <Reveal delay={220} variant="zoom">
               <div className="mt-12">
                 <span className="text-xs font-bold uppercase tracking-widest text-emerald-300">
-                  Tổng số suất tham dự dự kiến
+                  Tổng số người đã đăng kí tham dự &quot;Ngày Trở Về&quot;
                 </span>
                 <p className="mt-6 flex flex-wrap items-end gap-2 leading-none">
                   <span
@@ -174,7 +174,7 @@ export default function ContributionCounter({
                 </p>
               </div>
             </Reveal>
-            
+
             {/* CTA */}
             <Reveal delay={340} variant="up">
               <div className="mt-8 flex flex-wrap items-center gap-8">

@@ -23,6 +23,8 @@ class InvitationCreate(InvitationBase):
 class InvitationUpdate(BaseModel):
     status: Optional[str] = None
     size: Optional[str] = None
+    attendeeName: Optional[str] = Field(None, alias="attendeeName")
+    nienKhoa: Optional[str] = Field(None, alias="nienKhoa")
     sizes: Optional[Dict[str, int]] = None
     snacks: Optional[int] = None
     amount: Optional[int] = None

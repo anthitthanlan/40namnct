@@ -853,7 +853,7 @@ export default function AdminRegistrations({
                         </button>
                       )}
 
-                      {t.status === "pending_payment" && (
+                      {(t.status === "pending_payment" || t.status === "pending") && (
                         <a
                           href={`/thanh-toan?id=${t.id}`}
                           target="_blank"

@@ -22,8 +22,13 @@ export default async function BaiVietPage() {
   const categories = await listCategories();
   const catMap = Object.fromEntries(categories.map((c) => [c.id, c.name]));
 
-  const [featured, ...rest] = posts;
   const pinnedPosts = posts.filter((p) => p.pinned);
+  
+  // Nổi bật là bài được ghim đầu tiên, hoặc bài mới nhất nếu không ghim bài nào
+  const featured = pinnedPosts.length > 0 ? pinnedPosts[0] : posts[0];
+  
+  // Những bài còn lại
+  const rest = posts.filter((p) => p.id !== featured?.id);
   const adminPosts = rest.filter((p) => p.source === "admin" && !p.pinned);
   const communityPosts = rest.filter((p) => p.source !== "admin" && !p.pinned);
 

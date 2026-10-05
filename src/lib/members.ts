@@ -235,6 +235,20 @@ export async function setShirtReceived(
   return await res.json();
 }
 
+export async function updateInvitationDetails(
+  id: string,
+  updates: any,
+  token?: string,
+): Promise<Invitation | null> {
+  const res = await fetch(`${API_URL}/api/invitations/${id}`, {
+    method: "PATCH",
+    headers: getHeaders(token),
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) return null;
+  return await res.json();
+}
+
 export async function claimPayment(
   id: string,
   sessionId?: string,

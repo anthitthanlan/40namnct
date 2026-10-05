@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 
 function formatTime(sec: number): string {
   if (isNaN(sec) || sec < 0) return "00:00";
@@ -12,6 +13,8 @@ function formatTime(sec: number): string {
 }
 
 export default function MusicPlayer() {
+  const pathname = usePathname();
+  const isOverlapPage = pathname === "/thu-moi" || pathname === "/xac-nhan-dong-gop";
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -179,7 +182,7 @@ export default function MusicPlayer() {
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 select-none flex items-end justify-end"
+      className={`fixed right-5 sm:bottom-6 sm:right-6 z-50 select-none flex items-end justify-end transition-all duration-300 ${isOverlapPage ? "bottom-24" : "bottom-5"}`}
     >
       <motion.div
         animate={{

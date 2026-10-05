@@ -101,6 +101,7 @@ export default function RegisterForm() {
   // Individual Combo
   const [size, setSize] = useState<Size>("M");
   const [sizeDropdownOpen, setSizeDropdownOpen] = useState(false);
+  const [gender, setGender] = useState<"Nam" | "Nữ">("Nam");
 
   // Group Combo
   const [quantity, setQuantity] = useState(1);
@@ -269,7 +270,7 @@ export default function RegisterForm() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => setIsMobile(window.innerWidth < 1024);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -281,7 +282,7 @@ export default function RegisterForm() {
   useEffect(() => {
     if (buyCombo && rightBoxRef.current) {
       setTimeout(() => {
-        if (window.innerWidth < 768) {
+        if (window.innerWidth < 1024) {
           rightBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }, 100);
@@ -430,7 +431,7 @@ export default function RegisterForm() {
         subscribeNews, // add subscribeNews state to payload
         ...(buyCombo
           ? type === "individual"
-            ? { size, comboCount: 1, quantity: 1 }
+            ? { size: `${gender}-${size}`, comboCount: 1, quantity: 1 }
             : { quantity: comboCount, comboCount, sizes }
           : { size: null, comboCount: 0, quantity: 1 }),
       };
@@ -531,13 +532,13 @@ export default function RegisterForm() {
             noValidate
           >
             {/* Parent Container WITHOUT gap. Gap is handled by padding on the sliding child. */}
-            <motion.div layout transition={boxTransition} className="flex flex-col md:flex-row items-start justify-center">
+            <motion.div layout transition={boxTransition} className="flex flex-col lg:flex-row items-start justify-center">
 
               {/* CỘT TRÁI (BOX 1): THÔNG TIN CƠ BẢN */}
               <motion.div
                 layout
                 transition={boxTransition}
-                className="w-full md:w-[36rem] flex-shrink-0 bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6"
+                className="w-full lg:w-[36rem] flex-shrink-0 bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6"
               >
                 {/* Full Name */}
                 <div>
@@ -758,10 +759,10 @@ export default function RegisterForm() {
                       duration: 0.4,
                       ease: modalEase
                     }}
-                    className="w-full md:w-auto flex-shrink-0 origin-top md:origin-left"
+                    className="w-full lg:w-auto flex-shrink-0 origin-top lg:origin-left"
                   >
                     {/* Padding thay cho Gap để chống nhảy giật layout khi unmount */}
-                  <div className="pt-6 pb-2 pr-2 md:pt-2 md:pb-2 md:pr-2 md:pl-8 h-full">
+                  <div className="pt-6 pb-2 pr-2 lg:pt-2 lg:pb-2 lg:pr-2 lg:pl-8 h-full">
                       <motion.div
                         ref={rightBoxRef}
                         initial={{ scale: 0.96 }}
@@ -771,7 +772,7 @@ export default function RegisterForm() {
                           duration: 0.4,
                           ease: modalEase
                         }}
-                        className="origin-left w-full md:w-[28rem] bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
+                        className="origin-left w-full lg:w-[28rem] bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
                       >
                         <div className="space-y-6">
                           {/* Placeholder Áo */}
@@ -826,11 +827,36 @@ export default function RegisterForm() {
                                   exit={{ opacity: 0, height: 0, overflow: "hidden" }}
                                   transition={{ duration: 0.4, ease: modalEase }}
                                 >
-                                <div className="py-2">
-                                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                      Chọn size áo của bạn
+                                <div className="py-2 space-y-5">
+                                  {/* Giới tính */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Giới tính
                                     </label>
+                                    <div className="flex gap-3">
+                                      {(["Nam", "Nữ"] as const).map((g) => (
+                                        <button
+                                          key={g}
+                                          type="button"
+                                          onClick={() => setGender(g)}
+                                          className={`flex-1 py-2.5 px-4 rounded-xl border text-sm font-medium transition-all ${
+                                            gender === g
+                                              ? "border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600"
+                                              : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                                          }`}
+                                        >
+                                          {g}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Chọn Size */}
+                                  <div>
+                                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                      <label className="block text-sm font-medium text-gray-700">
+                                        Chọn size áo của bạn
+                                      </label>
                                     <button
                                       type="button"
                                       onClick={() => setShowSizeModal(true)}
@@ -899,7 +925,8 @@ export default function RegisterForm() {
                                         )}
                                       </AnimatePresence>
                                     </div>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
                               </motion.div>
                             ) : (

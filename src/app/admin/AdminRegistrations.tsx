@@ -56,6 +56,7 @@ export default function AdminRegistrations({
   const [mobileSubTab, setMobileSubTab] = useState<"overview" | "list">("overview");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [mainTab, setMainTab] = useState<"approve" | "sizes" | "transactions" | "logs">("approve");
+  const [editingInvitation, setEditingInvitation] = useState<InvitationRow | null>(null);
 
   const flash = useCallback((ok: boolean, text: string) => {
     setBanner({ ok, text });
@@ -199,6 +200,43 @@ export default function AdminRegistrations({
       }
       setInvitations((prev) => prev ? prev.filter((x) => x.id !== t.id) : prev);
       flash(true, "Đã xóa thư mời.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleUpdateInvitation(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingInvitation) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/registrations/${editingInvitation.id}/edit`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attendeeName: editingInvitation.attendeeName,
+          nienKhoa: editingInvitation.nienKhoa,
+          size: editingInvitation.size,
+          note: editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "",
+        }),
+      });
+      if (res.status === 401) {
+        onAuthError?.();
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        flash(false, data.message || "Cập nhật thất bại.");
+        return;
+      }
+      const finalNote = editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "";
+      setInvitations((prev) =>
+        prev ? prev.map((t) => (t.id === editingInvitation.id ? { ...t, attendeeName: editingInvitation.attendeeName, nienKhoa: editingInvitation.nienKhoa, size: editingInvitation.size, note: finalNote } : t)) : prev
+      );
+      flash(true, "Đã cập nhật thông tin thành công.");
+      setEditingInvitation(null);
+    } catch (err) {
+      flash(false, "Có lỗi xảy ra khi cập nhật.");
     } finally {
       setBusy(false);
     }
@@ -853,6 +891,17 @@ export default function AdminRegistrations({
                         </button>
                       )}
 
+                      <button
+                        type="button"
+                        onClick={() => setEditingInvitation({
+                          ...t,
+                          note: t.note ? t.note.replace(/^Lớp:\s*/, "").split(" | ")[0] : ""
+                        })}
+                        className="rounded-xl bg-indigo-50 px-3 py-1.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                      >
+                        <span className="material-symbols-rounded text-[14px]">edit</span> Sửa
+                      </button>
+
                       {(t.status === "pending_payment" || t.status === "pending") && (
                         <a
                           href={`/xac-nhan-dong-gop?id=${t.id}`}
@@ -1077,6 +1126,119 @@ export default function AdminRegistrations({
                 Hiển thị {filteredInvitations.length} kết quả
               </button>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {editingInvitation && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
+            <form onSubmit={handleUpdateInvitation}>
+              <div className="flex items-center justify-between border-b border-slate-100 p-5">
+                <h3 className="text-lg font-bold text-slate-900">Chi tiết / Sửa Đăng Ký</h3>
+                <button
+                  type="button"
+                  onClick={() => setEditingInvitation(null)}
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                >
+                  <span className="material-symbols-rounded block text-xl">close</span>
+                </button>
+              </div>
+              <div className="max-h-[65vh] overflow-y-auto p-5 space-y-4 text-left">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Mã đăng ký</label>
+                  <input type="text" disabled value={editingInvitation.code} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Tên người dự</label>
+                  <input
+                    type="text"
+                    value={editingInvitation.attendeeName || ""}
+                    onChange={(e) => setEditingInvitation({ ...editingInvitation, attendeeName: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Niên khóa</label>
+                  <input
+                    type="text"
+                    value={editingInvitation.nienKhoa || ""}
+                    onChange={(e) => setEditingInvitation({ ...editingInvitation, nienKhoa: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                {editingInvitation.type === "individual" && (() => {
+                  const parts = (editingInvitation.size || "Nam-M").split("-");
+                  const gender = parts.length === 2 ? parts[0] : "Nam";
+                  const sizeVal = parts.length === 2 ? parts[1] : (editingInvitation.size || "M");
+                  return (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Giới tính</label>
+                        <select
+                          value={gender}
+                          onChange={(e) => setEditingInvitation({ ...editingInvitation, size: `${e.target.value}-${sizeVal}` })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        >
+                          <option value="Nam">Nam</option>
+                          <option value="Nữ">Nữ</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-1">Size áo</label>
+                        <select
+                          value={sizeVal}
+                          onChange={(e) => setEditingInvitation({ ...editingInvitation, size: `${gender}-${e.target.value}` })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                        >
+                          {["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"].map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {editingInvitation.type === "group" && (
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Phân bổ size (Tập thể)</label>
+                    <textarea
+                      disabled
+                      rows={3}
+                      value={JSON.stringify(editingInvitation.sizes, null, 2)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono text-xs"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">*Để sửa phân bổ size tập thể vui lòng thao tác trực tiếp vào CSDL.</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Lớp</label>
+                  <input
+                    type="text"
+                    value={editingInvitation.note || ""}
+                    onChange={(e) => setEditingInvitation({ ...editingInvitation, note: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+              </div>
+              <div className="border-t border-slate-100 p-5 bg-slate-50 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingInvitation(null)}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {busy ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>,
         document.body

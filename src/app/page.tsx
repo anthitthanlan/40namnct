@@ -169,27 +169,21 @@ export default async function Home() {
           <div className="relative border-l-2 border-[#16a34a]/20 pl-8 ml-4 md:ml-12 space-y-10">
             {[
               {
-                time: "07:30 - 8:00",
-                title: "Đón tiếp & Tham quan",
-                desc: "Đón tiếp, giao lưu, tham quan Phòng Truyền thống và cơ sở vật chất nhà trường.",
+                time: "07:30 - 08:00",
+                title: "Đón tiếp và Check-in Kỷ niệm",
+                desc: "Tiếp đón các thế hệ cựu học sinh, quý thầy cô giáo và khách mời về thăm lại trường xưa.",
                 icon: "groups"
               },
               {
                 time: "08:00 - 10:00",
-                title: "Chương trình Họp mặt",
-                desc: "Chương trình Họp mặt kỷ niệm 40 năm.",
+                title: 'Chương trình "Ngày hội trở về"',
+                desc: "• Phát biểu chào mừng\n• Phát biểu tri ân và Cảm tưởng của thầy/cô\n• Đại diện Cựu học sinh phát biểu tri ân\n• Chương trình Văn nghệ kết nối thế hệ\n• Chụp ảnh lưu niệm tập thể theo thời kỳ",
                 icon: "celebration"
               },
               {
                 time: "10:00",
-                title: "Chụp ảnh & Giao lưu",
-                desc: "Chụp ảnh lưu niệm và giao lưu tự do.\nTiệc thân mật và văn nghệ.",
-                icon: "photo_camera"
-              },
-              {
-                time: "10:00",
-                title: "Tiệc thân mật & Văn nghệ",
-                desc: "Tiệc thân mật, gặp gỡ, giao lưu các thế hệ và thưởng thức văn nghệ.",
+                title: "Bế mạc chương trình và Tiệc giao lưu",
+                desc: "Khép lại phần lễ kỷ niệm chính thức và bắt đầu chương trình tiệc liên hoan, giao lưu ấm cúng giữa các thế hệ.",
                 icon: "restaurant"
               }
             ].map((item, i) => (
@@ -206,7 +200,7 @@ export default async function Home() {
                     </div>
                     <div>
                       <h4 className="text-xl font-bold text-slate-900 group-hover:text-[#1d4ed8] transition-colors duration-[var(--duration-fast)]">{item.title}</h4>
-                      <p className="mt-2 text-base leading-relaxed text-slate-600">{item.desc}</p>
+                      <p className="mt-2 text-base leading-relaxed text-slate-600 whitespace-pre-line">{item.desc}</p>
                     </div>
                   </div>
                 </div>
@@ -416,7 +410,7 @@ export default async function Home() {
                     Địa chỉ
                   </span>
                   <span className="block mt-1 text-[11px] lg:text-sm font-extrabold text-white break-words">
-                    97 Quang Trung, P. Thông Tây Hội, Gò Vấp
+                    97 Quang Trung, P. Thông Tây Hội
                   </span>
                 </span>
               </div>

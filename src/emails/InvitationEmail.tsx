@@ -45,7 +45,7 @@ export const InvitationEmail = ({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Beau+Rivage&family=Prata&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Beau+Rivage&family=Inter:wght@400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
           rel="stylesheet"
         />
       </Head>
@@ -69,7 +69,7 @@ export const InvitationEmail = ({
           </Text>
 
           {/* BẮT ĐẦU VÉ MỜI */}
-          <Section style={{ ...ticketContainer, backgroundImage: `url('${appUrl}/invitation%20background%20image/thu-moi-NCT-anh-nen.webp')` }}>
+          <Section style={{ ...ticketContainer, backgroundImage: `url('${appUrl}/invitation%20background%20image/thu-moi-NCT-anh-nen.jpg')` }}>
             <div style={ticketContentWrapper}>
 
               {/* Header Logos */}
@@ -277,14 +277,14 @@ const infoLabel = {
 };
 
 const infoValue = {
-  fontFamily: "'Prata', Georgia, serif",
+  fontFamily: "'Playfair Display', Georgia, serif",
   fontSize: "16px",
   fontWeight: "bold",
   color: "#111827",
 };
 
 const infoValueNorm = {
-  fontFamily: "'Prata', Georgia, serif",
+  fontFamily: "'Playfair Display', Georgia, serif",
   fontWeight: "bold",
   color: "#111827",
 };
@@ -307,7 +307,7 @@ const tlLabel = {
 };
 
 const tlValue = {
-  fontFamily: "'Prata', Georgia, serif",
+  fontFamily: "'Playfair Display', Georgia, serif",
   fontSize: "14px",
   fontWeight: "500",
   color: "#1f2937",
@@ -322,7 +322,7 @@ const warningContainer = {
 };
 
 const warningText = {
-  fontFamily: "'Prata', Georgia, serif",
+  fontFamily: "'Playfair Display', Georgia, serif",
   color: "#dc2626",
   fontSize: "14px",
   margin: "0",

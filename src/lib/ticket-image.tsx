@@ -88,12 +88,15 @@ export async function renderTicketPng(
     width: px(110),
     color: "#4b5563",
     fontFamily: "Inter",
+    fontWeight: 700,
     fontSize: px(14),
+    lineHeight: 24 / 14,
   };
   const serif: React.CSSProperties = {
     fontFamily: "Playfair Display",
     fontWeight: 700,
     color: "#111827",
+    lineHeight: 24 / 14,
   };
 
   const tree = (
@@ -102,8 +105,12 @@ export async function renderTicketPng(
         width: "100%",
         height: "100%",
         display: "flex",
+        flexDirection: "column",
         position: "relative",
         backgroundColor: "#ffffff",
+        borderRadius: px(24),
+        border: `${SCALE}px solid #e5e7eb`,
+        overflow: "hidden",
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -130,7 +137,7 @@ export async function renderTicketPng(
             alignItems: "center",
             paddingBottom: px(12),
             marginBottom: px(16),
-            borderBottom: `${SCALE}px solid rgba(229,231,235,0.7)`,
+            borderBottom: `${SCALE}px solid rgba(229,231,235,0.5)`,
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -159,7 +166,7 @@ export async function renderTicketPng(
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrDataUri} alt="" width={160 * SCALE} height={160 * SCALE} />
+            <img src={qrDataUri} alt="" width={160 * SCALE} height={160 * SCALE} style={{ borderRadius: px(8) }} />
           </div>
         </div>
 
@@ -172,7 +179,7 @@ export async function renderTicketPng(
             fontSize: px(36),
             color: "#047857",
             marginBottom: px(16),
-            lineHeight: 1.1,
+            lineHeight: 1,
           }}
         >
           Memories Alive Again
@@ -201,22 +208,22 @@ export async function renderTicketPng(
             flexDirection: "column",
             marginTop: px(16),
             paddingTop: px(16),
-            borderTop: `${SCALE}px solid rgba(229,231,235,0.9)`,
+            borderTop: `${SCALE}px solid rgba(229,231,235,0.7)`,
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", marginBottom: px(12) }}>
-            <span style={{ fontFamily: "Inter", fontWeight: 600, fontSize: px(13), color: "#374151", marginBottom: px(2) }}>
+            <span style={{ fontFamily: "Inter", fontWeight: 600, fontSize: px(13), color: "#374151", marginBottom: px(2), lineHeight: 24/13 }}>
               Thời gian:
             </span>
-            <span style={{ fontFamily: "Playfair Display", fontSize: px(14), color: "#1f2937" }}>
+            <span style={{ fontFamily: "Playfair Display", fontWeight: 400, fontSize: px(14), color: "#1f2937", lineHeight: 24/14 }}>
               08:00 - 08/11/2026
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontFamily: "Inter", fontWeight: 600, fontSize: px(13), color: "#374151", marginBottom: px(2) }}>
+            <span style={{ fontFamily: "Inter", fontWeight: 600, fontSize: px(13), color: "#374151", marginBottom: px(2), lineHeight: 24/13 }}>
               Địa điểm:
             </span>
-            <span style={{ fontFamily: "Playfair Display", fontSize: px(14), color: "#1f2937" }}>
+            <span style={{ fontFamily: "Playfair Display", fontWeight: 400, fontSize: px(14), color: "#1f2937", lineHeight: 24/14 }}>
               Trường THPT Nguyễn Công Trứ
             </span>
           </div>
@@ -229,10 +236,11 @@ export async function renderTicketPng(
             justifyContent: "center",
             marginTop: px(16),
             paddingTop: px(16),
-            borderTop: `${SCALE}px solid rgba(229,231,235,0.9)`,
+            borderTop: `${SCALE}px solid rgba(229,231,235,0.7)`,
             fontFamily: "Playfair Display",
             fontSize: px(14),
             color: "#dc2626",
+            lineHeight: 24/14,
           }}
         >
           Vui lòng không chia sẻ thư mời này cho bất kì ai!

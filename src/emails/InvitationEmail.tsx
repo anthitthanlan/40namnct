@@ -36,8 +36,6 @@ export const InvitationEmail = ({
   shirts = {},
 }: InvitationEmailProps) => {
   const ticketUrl = `${appUrl}/thu-moi?code=${invitationCode}`;
-  const qrText = `${name} - ${phone} - ${invitationCode}`;
-  const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrText)}&size=250&margin=2`;
 
   return (
     <Html>
@@ -65,79 +63,30 @@ export const InvitationEmail = ({
             <br /><br />
             Rất mong được đón tiếp bạn trở lại dưới mái trường xưa vào ngày 08/11/2026!
             <br /><br />
-            Dưới đây là vé điện tử của bạn để tham dự sự kiện:
+            Vé điện tử tham dự sự kiện của bạn nằm ở file đính kèm bên dưới.
           </Text>
-
-          {/* BẮT ĐẦU VÉ MỜI */}
-          <Section style={{ ...ticketContainer, backgroundImage: `url('${appUrl}/invitation%20background%20image/thu-moi-NCT-anh-nen.jpg')` }}>
-            <div style={ticketContentWrapper}>
-
-              {/* Header Logos */}
-              <Row style={ticketHeader}>
-                <Column style={{ width: "85px" }}>
-                  <Img src={`${appUrl}/images/logo_nct.webp`} width="40" height="40" alt="NCT Logo" style={{ display: "inline-block", marginRight: "4px" }} />
-                  <Img src={`${appUrl}/images/Logo_40th_NCT.webp`} width="40" height="40" alt="40th Logo" style={{ display: "inline-block" }} />
-                </Column>
-                <Column>
-                  <Text style={headerTitle}>KỈ NIỆM 40 NĂM THÀNH LẬP</Text>
-                  <Text style={headerTitle}>TRƯỜNG THPT NGUYỄN CÔNG TRỨ</Text>
-                </Column>
-              </Row>
-
-              {/* QR Code */}
-              <Section style={qrContainer}>
-                <div style={qrBorder}>
-                  <Img src={qrUrl} width="160" height="160" alt="QR Code" style={{ display: "block", margin: "0 auto", borderRadius: "8px" }} />
-                </div>
-              </Section>
-
-              {/* Slogan */}
-              <Text style={slogan}>Memories Alive Again</Text>
-
-              {/* User Info */}
-              <Section style={infoContainer}>
-                <Text style={infoLine}>
-                  <strong style={infoLabel}>Cựu học sinh:</strong>
-                  <span style={infoValue}>{name}</span>
-                </Text>
-                <Text style={infoLine}>
-                  <strong style={infoLabel}>Niên khóa:</strong>
-                  <span style={infoValueNorm}>{nienKhoa}</span>
-                </Text>
-                <Text style={infoLine}>
-                  <strong style={infoLabel}>SĐT:</strong>
-                  <span style={infoValueNorm}>{phone}</span>
-                </Text>
-              </Section>
-
-              {/* Time and Location */}
-              <Section style={timeLocationContainer}>
-                <Row style={timeLine}>
-                  <Column>
-                    <Text style={tlLabel}>Thời gian:</Text>
-                    <Text style={tlValue}>08:00 - 08/11/2026</Text>
-                  </Column>
-                </Row>
-                <Row style={timeLine}>
-                  <Column>
-                    <Text style={tlLabel}>Địa điểm:</Text>
-                    <Text style={tlValue}>Trường THPT Nguyễn Công Trứ</Text>
-                  </Column>
-                </Row>
-              </Section>
-
-              {/* Warning Footer */}
-              <Section style={warningContainer}>
-                <Text style={warningText}>Vui lòng không chia sẻ thư mời này cho bất kì ai!</Text>
-              </Section>
-
-            </div>
-          </Section>
-          {/* KẾT THÚC VÉ MỜI */}
 
           <Section style={actionContainer}>
             <Text style={subActionText}>
-              Xem vé online: <br />
+              Vé điện tử của bạn được <strong>đính kèm dưới dạng ảnh PNG</strong> trong email này. Vui lòng lưu lại và xuất trình mã QR khi check-in.
+            </Text>
+            <Link
+              href={ticketUrl}
+              style={{
+                display: "inline-block",
+                backgroundColor: "#047857",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "15px",
+                padding: "12px 28px",
+                borderRadius: "999px",
+                textDecoration: "none",
+              }}
+            >
+              Xem / Tải vé online
+            </Link>
+            <Text style={subActionText}>
+              Hoặc mở liên kết: <br />
               <Link href={ticketUrl} style={{ color: "#2563eb", wordBreak: "break-all" }}>{ticketUrl}</Link>
             </Text>
           </Section>

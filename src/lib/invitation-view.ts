@@ -98,16 +98,25 @@ export function invitationStatusInfo(status: InvitationStatus | string): {
   }
 }
 
-/** "Size L" hoặc "M×2 · L×3 · XL×1" */
+/** Tiền tố giới tính cho key size của đơn tập thể: "Nam-M", "Nữ-L"... */
+export const GENDERS = ["Nam", "Nữ"] as const;
+export type Gender = (typeof GENDERS)[number];
+export const genderSizeKey = (g: Gender, s: string) => `${g}-${s}`;
+
+/** "Size L" hoặc "Nam-M×2 · Nữ-L×3" */
 export function sizesLabel(
   type: InvitationView["type"],
   size: string | null,
   sizes: Record<string, number>,
 ): string {
   if (type === "individual") return size ? `Size ${size}` : "";
-  const parts = SIZES.filter((s) => (sizes[s] ?? 0) > 0).map(
-    (s) => `${s}×${sizes[s]}`,
-  );
+  const keys: string[] = [
+    ...SIZES,
+    ...GENDERS.flatMap((g) => SIZES.map((s) => genderSizeKey(g, s))),
+  ];
+  const parts = keys
+    .filter((k) => (sizes[k] ?? 0) > 0)
+    .map((k) => `${k.replace("-", " ")}×${sizes[k]}`);
   return parts.join(" · ");
 }
 

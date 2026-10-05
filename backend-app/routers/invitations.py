@@ -71,6 +71,17 @@ def get_invitations(
     invitations = query.order_by(Invitation.created_at.desc()).all()
     return [to_response(i) for i in invitations]
 
+@router.get("/public-stats")
+def public_stats(db: Session = Depends(get_db)):
+    """Số liệu tổng hợp công khai (không chứa thông tin cá nhân) cho trang chủ."""
+    rows = db.query(Invitation).filter(Invitation.status == "confirmed").all()
+    return {
+        "orderCount": len(rows),
+        "attendeeCount": sum((r.quantity or 1) for r in rows),
+        "memberCount": len({r.member_id for r in rows}),
+        "totalAmount": sum((r.amount or 0) for r in rows),
+    }
+
 @router.get("/search")
 def search_invitations(
     q: str = Query(..., description="Mã thư mời hoặc số điện thoại"),

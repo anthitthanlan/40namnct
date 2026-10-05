@@ -1,6 +1,7 @@
 import { getMemberById, findInvitationById } from "./members";
 import { render } from "@react-email/render";
 import InvitationEmail from "@/emails/InvitationEmail";
+import { renderTicketPng } from "./ticket-image";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
 
@@ -25,6 +26,13 @@ export async function sendInvitationEmail(invitationId: string) {
       })
     );
 
+    const ticketPng = await renderTicketPng({
+      name: member.name,
+      phone: member.phone,
+      nienKhoa: inv.nienKhoa || undefined,
+      invitationCode: inv.code,
+    });
+
     const res = await fetch(`${BACKEND_URL}/api/email/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -32,7 +40,13 @@ export async function sendInvitationEmail(invitationId: string) {
         to: [member.email.trim()],
         subject: "Thư mời tham dự Hội ngộ 40 năm NCT",
         html: html,
-        from_email: "Thư mời <bantochuc@40namnctru.nctitc.io.vn>"
+        from_email: "Thư mời <bantochuc@40namnctru.nctitc.io.vn>",
+        attachments: [
+          {
+            filename: `ve-moi-NCT40-${inv.code}.png`,
+            content: ticketPng.toString("base64"),
+          },
+        ],
       }),
     });
 

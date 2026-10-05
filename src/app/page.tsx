@@ -6,7 +6,7 @@ import Reveal from "@/components/Reveal";
 import CountdownBadge from "@/components/CountdownBadge";
 import ContributionCounter from "@/components/ContributionCounter";
 import { listPublished } from "@/lib/posts";
-import { listInvitations } from "@/lib/members";
+import { getPublicStats } from "@/lib/members";
 import { listCategories } from "@/lib/categories";
 
 
@@ -24,14 +24,7 @@ export default async function Home() {
   const homePosts = [...pinnedPosts, ...nonPinnedPosts];
 
   // Sổ sao kê đóng góp: chỉ tính các đơn vé ĐÃ DUYỆT (giống AdminRegistrations)
-  const invitations = await listInvitations();
-  const confirmedInvitations = invitations.filter((t) => t.status === "confirmed");
-  const totalAmount = confirmedInvitations.reduce((sum, t) => sum + t.amount, 0);
-  const attendeeCount = confirmedInvitations.reduce(
-    (sum, t) => sum + (t.quantity || 1),
-    0,
-  );
-  const memberCount = new Set(confirmedInvitations.map((t) => t.memberId)).size;
+  const { orderCount, attendeeCount, memberCount } = await getPublicStats();
 
   return (
     <main>
@@ -283,7 +276,7 @@ export default async function Home() {
 
       {/* Sổ sao kê đóng góp - tổng số tiền đã xác nhận */}
       <ContributionCounter
-        orderCount={confirmedInvitations.length}
+        orderCount={orderCount}
         attendeeCount={attendeeCount}
         memberCount={memberCount}
       />

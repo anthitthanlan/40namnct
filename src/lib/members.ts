@@ -146,6 +146,23 @@ export async function listInvitations(token?: string): Promise<Invitation[]> {
   return await res.json();
 }
 
+export type PublicStats = {
+  orderCount: number;
+  attendeeCount: number;
+  memberCount: number;
+  totalAmount: number;
+};
+
+export async function getPublicStats(): Promise<PublicStats> {
+  try {
+    const res = await fetch(`${API_URL}/api/invitations/public-stats`, {
+      next: { revalidate: 60 },
+    });
+    if (res.ok) return await res.json();
+  } catch {}
+  return { orderCount: 0, attendeeCount: 0, memberCount: 0, totalAmount: 0 };
+}
+
 export async function findInvitationByCode(code: string): Promise<Invitation | null> {
   const res = await fetch(`${API_URL}/api/invitations/${code.trim()}`);
   if (!res.ok) return null;

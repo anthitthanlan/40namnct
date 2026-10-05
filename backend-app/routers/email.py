@@ -7,13 +7,18 @@ from app.services.auth_service import get_current_admin
 
 router = APIRouter(prefix="/api/email", tags=["Email"])
 
+class EmailAttachment(BaseModel):
+    filename: str
+    content: str  # base64
+
 class EmailRequest(BaseModel):
     to: List[str]
     subject: str
     html: str
     from_email: Optional[str] = "Thư mời <bantochuc@40namnctru.nctitc.io.vn>"
+    attachments: Optional[List[EmailAttachment]] = None
     
-async def send_resend_email_task(to: List[str], subject: str, html: str, from_email: str):
+async def send_resend_email_task(to: List[str], subject: str, html: str, from_email: str, attachments: Optional[List[dict]] = None):
     if not settings.RESEND_API_KEY:
         print("RESEND_API_KEY is not configured.")
         return
@@ -29,6 +34,8 @@ async def send_resend_email_task(to: List[str], subject: str, html: str, from_em
         "subject": subject,
         "html": html
     }
+    if attachments:
+        payload["attachments"] = attachments
     
     async with httpx.AsyncClient() as client:
         try:
@@ -58,7 +65,8 @@ async def send_email(
         [email.strip() for email in request.to if email.strip()],
         request.subject,
         request.html,
-        request.from_email
+        request.from_email,
+        [a.model_dump() for a in request.attachments] if request.attachments else None,
     )
     
     return {"success": True, "message": "Email is queued for sending"}

@@ -80,7 +80,11 @@ export async function POST(req: NextRequest) {
     if (comboCount > 0) {
       const rawSizes = typeof body.sizes === "object" && body.sizes !== null ? (body.sizes as Record<string, unknown>) : {};
       let totalSizeCount = 0;
-      for (const s of SIZES) {
+      const allowedKeys: string[] = [
+        ...SIZES,
+        ...["Nam", "Nữ"].flatMap((g) => SIZES.map((s) => `${g}-${s}`)),
+      ];
+      for (const s of allowedKeys) {
         const c = typeof rawSizes[s] === "number" ? Math.floor(rawSizes[s] as number) : 0;
         if (c > 0) {
           sizes[s] = c;

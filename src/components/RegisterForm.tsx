@@ -296,7 +296,7 @@ export default function RegisterForm() {
     });
   };
 
-  const currentTotalSizes = SIZES.reduce((sum, s) => sum + (sizes[s] || 0), 0);
+  const currentTotalSizes = Object.values(sizes).reduce((sum, n) => sum + (n || 0), 0);
   const amount = buyCombo
     ? type === "individual"
       ? 500000
@@ -956,45 +956,64 @@ export default function RegisterForm() {
                                         Đã chọn: <AnimatedNumber value={currentTotalSizes} /> / <AnimatedNumber value={comboCount} />
                                       </span>
                                     </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                      {SIZES.map((s) => (
-                                        <div
-                                          key={s}
-                                          className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-100 shadow-sm"
-                                        >
-                                          <span className="font-medium text-gray-700 w-8 shrink-0">
-                                            {s}
-                                          </span>
-                                          <div className="flex items-center gap-1">
-                                            <button
-                                              type="button"
-                                              onClick={() => updateSizeCount(s, -1)}
-                                              className="w-6 h-6 flex items-center justify-center bg-gray-50 rounded text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0"
-                                            >
-                                              -
-                                            </button>
-                                            <input
-                                              type="number"
-                                              min={0}
-                                              value={sizes[s] || 0}
-                                              onWheel={(e) => (e.target as HTMLElement).blur()}
-                                              onChange={(e) => {
-                                                const val = Math.max(0, parseInt(e.target.value) || 0);
-                                                setSizes(prev => ({ ...prev, [s]: val }));
-                                              }}
-                                              className="w-8 text-center text-sm font-medium bg-transparent border-none outline-none appearance-none p-0 focus:ring-0"
-                                              style={{ MozAppearance: 'textfield' }}
-                                            />
-                                            <button
-                                              type="button"
-                                              onClick={() => updateSizeCount(s, 1)}
-                                              className="w-6 h-6 flex items-center justify-center bg-gray-50 rounded text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0"
-                                            >
-                                              +
-                                            </button>
+                                    <div className="space-y-5">
+                                      {([
+                                        { g: "Nam", title: "Áo Nam", color: "text-blue-700", bar: "bg-blue-50 border-blue-100" },
+                                        { g: "Nữ", title: "Áo Nữ", color: "text-pink-700", bar: "bg-pink-50 border-pink-100" },
+                                      ] as const).map(({ g, title, color, bar }) => {
+                                        const groupTotal = SIZES.reduce((sum, s) => sum + (sizes[`${g}-${s}`] || 0), 0);
+                                        return (
+                                          <div key={g}>
+                                            <div className={`flex items-center justify-between rounded-lg border px-3 py-2 mb-2 ${bar}`}>
+                                              <span className={`text-sm font-bold ${color}`}>{title}</span>
+                                              <span className={`text-xs font-semibold ${color}`}>{groupTotal} áo</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                              {SIZES.map((s) => {
+                                                const key = `${g}-${s}`;
+                                                return (
+                                                  <div
+                                                    key={key}
+                                                    className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-100 shadow-sm"
+                                                  >
+                                                    <span className="font-medium text-gray-700 w-8 shrink-0">
+                                                      {s}
+                                                    </span>
+                                                    <div className="flex items-center gap-1">
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => updateSizeCount(key, -1)}
+                                                        className="w-6 h-6 flex items-center justify-center bg-gray-50 rounded text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0"
+                                                      >
+                                                        -
+                                                      </button>
+                                                      <input
+                                                        type="number"
+                                                        min={0}
+                                                        value={sizes[key] || 0}
+                                                        onWheel={(e) => (e.target as HTMLElement).blur()}
+                                                        onChange={(e) => {
+                                                          const val = Math.max(0, parseInt(e.target.value) || 0);
+                                                          setSizes(prev => ({ ...prev, [key]: val }));
+                                                        }}
+                                                        className="w-8 text-center text-sm font-medium bg-transparent border-none outline-none appearance-none p-0 focus:ring-0"
+                                                        style={{ MozAppearance: 'textfield' }}
+                                                      />
+                                                      <button
+                                                        type="button"
+                                                        onClick={() => updateSizeCount(key, 1)}
+                                                        className="w-6 h-6 flex items-center justify-center bg-gray-50 rounded text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0"
+                                                      >
+                                                        +
+                                                      </button>
+                                                    </div>
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
                                           </div>
-                                        </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   </div>
 

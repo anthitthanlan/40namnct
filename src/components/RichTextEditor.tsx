@@ -61,6 +61,8 @@ export default function RichTextEditor({
   const [ytModal, setYtModal] = useState(false);
   const [ytUrl, setYtUrl] = useState("");
 
+  const [, forceUpdate] = useState(0);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3, 4] } }),
@@ -76,6 +78,8 @@ export default function RichTextEditor({
     ],
     content,
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    onSelectionUpdate: () => forceUpdate((n) => n + 1),
+    onTransaction: () => forceUpdate((n) => n + 1),
     editorProps: {
       attributes: {
         class:
@@ -227,7 +231,7 @@ export default function RichTextEditor({
       />
 
       {/* TOOLBAR */}
-      <div className="sticky top-0 z-10 flex flex-wrap gap-1 p-2 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
+      <div className="sticky top-[80px] sm:top-[88px] z-30 flex flex-wrap gap-1 p-2 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
         <TB icon={Heading1} title="Tiêu đề 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive("heading", { level: 1 })} />
         <TB icon={Heading2} title="Tiêu đề 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive("heading", { level: 2 })} />
         <TB icon={Heading3} title="Tiêu đề 3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive("heading", { level: 3 })} />

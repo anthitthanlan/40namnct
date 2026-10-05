@@ -74,7 +74,8 @@ export async function PATCH(
     patch.categoryId = body.categoryId === null ? null : str(body.categoryId as string, 100);
   }
 
-  const post = await updatePost(id, patch);
+  const token = req.cookies.get("nct_admin")?.value;
+  const post = await updatePost(id, patch, token);
   if (!post) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy bài viết." },
@@ -108,7 +109,8 @@ export async function DELETE(
   // Ideally we should get the post title before deleting for the log
   // But deletePost just returns boolean. If needed, we'd fetch it first.
 
-  const success = await deletePost(id);
+  const token = req.cookies.get("nct_admin")?.value;
+  const success = await deletePost(id, token);
   if (!success) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy bài viết để xóa." },

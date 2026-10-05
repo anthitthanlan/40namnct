@@ -48,28 +48,37 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const post = await createPost({
-    title,
-    excerpt: str(body.excerpt, 300),
-    content,
-    author: str(body.author, 80) || "Ban Biên tập",
-    authorRole: str(body.authorRole, 120) || "Ban Tổ chức Lễ kỷ niệm 40 năm",
-    source: "admin",
-    status: body.status === "draft" ? "draft" : "published",
-    pinned: body.pinned === true,
-    cover: str(body.cover, 500) || null,
-    categoryId: typeof body.categoryId === "string" ? body.categoryId : null,
-  });
+  const token = req.cookies.get("nct_admin")?.value;
+  try {
+    const post = await createPost({
+      title,
+      excerpt: str(body.excerpt, 300),
+      content,
+      author: str(body.author, 80) || "Ban Biên tập",
+      authorRole: str(body.authorRole, 120) || "Ban Tổ chức Lễ kỷ niệm 40 năm",
+      source: "admin",
+      status: body.status === "draft" ? "draft" : "published",
+      pinned: body.pinned === true,
+      cover: str(body.cover, 500) || null,
+      categoryId: typeof body.categoryId === "string" ? body.categoryId : null,
+    }, token);
 
-  await logAction(
-    "create_post",
-    "posts",
-    post.id,
-    admin.fullName || admin.username,
-    admin.username,
-    admin.role,
-    `Tạo bài viết mới: ${post.title}`,
-  );
+    await logAction(
+      "create_post",
+      "posts",
+      post.id,
+      admin.fullName || admin.username,
+      admin.username,
+      admin.role,
+      `Tạo bài viết mới: ${post.title}`,
+    );
 
-  return NextResponse.json({ ok: true, post }, { status: 201 });
+    return NextResponse.json({ ok: true, post }, { status: 201 });
+  } catch (error: any) {
+    console.error("POST Error:", error);
+    return NextResponse.json(
+      { ok: false, message: error.message || "Failed to create post" },
+      { status: 500 },
+    );
+  }
 }

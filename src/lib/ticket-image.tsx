@@ -33,12 +33,6 @@ async function webpToPngDataUri(...segments: string[]) {
   return `data:image/png;base64,${png.toString("base64")}`;
 }
 
-function fontFile(pkg: string, file: string) {
-  return fs.readFileSync(
-    path.join(process.cwd(), "node_modules", "@fontsource", pkg, "files", file),
-  );
-}
-
 type FontDef = {
   name: string;
   data: Buffer;
@@ -47,29 +41,27 @@ type FontDef = {
 };
 
 let fontCache: FontDef[] | null = null;
+
 function loadFonts(): FontDef[] {
   if (fontCache) return fontCache;
   const fonts: FontDef[] = [];
-  const add = (
-    name: string,
-    pkg: string,
-    weight: 400 | 600 | 700 | 800,
-  ) => {
-    for (const subset of ["latin", "vietnamese"]) {
-      fonts.push({
-        name,
-        data: fontFile(pkg, `${pkg}-${subset}-${weight}-normal.woff`),
-        weight,
-        style: "normal",
-      });
-    }
+  
+  const add = (name: string, file: string, weight: 400 | 600 | 700 | 800) => {
+    fonts.push({
+      name,
+      data: fs.readFileSync(path.join(process.cwd(), "public", "fonts", file)),
+      weight,
+      style: "normal",
+    });
   };
-  add("Inter", "inter", 400);
-  add("Inter", "inter", 600);
-  add("Inter", "inter", 800);
-  add("Playfair Display", "playfair-display", 400);
-  add("Playfair Display", "playfair-display", 700);
-  add("Beau Rivage", "beau-rivage", 400);
+
+  add("Inter", "Inter-Regular.woff", 400);
+  add("Inter", "Inter-SemiBold.woff", 600);
+  add("Inter", "Inter-Bold.woff", 800);
+  add("Playfair Display", "PlayfairDisplay-Regular.woff", 400);
+  add("Playfair Display", "PlayfairDisplay-Bold.woff", 700);
+  add("Beau Rivage", "BeauRivage-Regular.woff", 400);
+  
   fontCache = fonts;
   return fonts;
 }

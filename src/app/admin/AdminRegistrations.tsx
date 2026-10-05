@@ -829,7 +829,17 @@ export default function AdminRegistrations({
                           <span className="material-symbols-rounded text-[14px]">download</span> Biên lai
                         </a>
                       )}
-                      
+
+                      {t.status === "pending_payment" && (
+                        <a
+                          href={`/thanh-toan?id=${t.id}`}
+                          target="_blank"
+                          className="rounded-xl bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-[14px]">payments</span> Trang thanh toán
+                        </a>
+                      )}
+
                       {isConfirmed && (
                         <a
                           href={`/thu-moi?id=${t.id}`}

@@ -17,7 +17,7 @@ import {
 interface InvitationEmailProps {
   name: string;
   amount: number;
-  invitationCode: string;
+  invitationId: string;
   nienKhoa?: string;
   phone?: string;
   appUrl: string;
@@ -28,14 +28,14 @@ interface InvitationEmailProps {
 export const InvitationEmail = ({
   name = "Cựu học sinh",
   amount = 500000,
-  invitationCode = "sample",
+  invitationId = "sample-id",
   nienKhoa = "Không rõ",
   phone = "",
   appUrl = "https://40namnctru.nctitc.io.vn",
   type = "Cá nhân",
   shirts = {},
 }: InvitationEmailProps) => {
-  const ticketUrl = `${appUrl}/thu-moi?code=${invitationCode}`;
+  const ticketUrl = `${appUrl}/thu-moi?id=${invitationId}`;
 
   return (
     <Html>
@@ -63,12 +63,12 @@ export const InvitationEmail = ({
             <br /><br />
             Rất mong được đón tiếp bạn trở lại dưới mái trường xưa vào ngày 08/11/2026!
             <br /><br />
-            Vé điện tử tham dự sự kiện của bạn nằm ở file đính kèm bên dưới.
+            Vui lòng nhấn vào nút bên dưới để xem và tải vé điện tử tham dự sự kiện của bạn.
           </Text>
 
           <Section style={actionContainer}>
             <Text style={subActionText}>
-              Vé điện tử của bạn được <strong>đính kèm dưới dạng ảnh PNG</strong> trong email này. Vui lòng lưu lại và xuất trình mã QR khi check-in.
+              Vé điện tử của bạn được cung cấp tại liên kết dưới đây. Vui lòng mở ra, lưu lại hình ảnh vé và xuất trình mã QR khi check-in.
             </Text>
             <Link
               href={ticketUrl}

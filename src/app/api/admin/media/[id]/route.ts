@@ -33,7 +33,8 @@ export async function PATCH(
     );
   }
 
-  const updated = await setMediaStatus(id, status);
+  const token = req.cookies.get("nct_admin")?.value;
+  const updated = await setMediaStatus(id, status, token);
   if (!updated) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy khoảnh khắc." },
@@ -63,7 +64,8 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const success = await deleteMedia(id);
+  const token = req.cookies.get("nct_admin")?.value;
+  const success = await deleteMedia(id, token);
   if (!success) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy khoảnh khắc để xóa." },

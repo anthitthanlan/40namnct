@@ -19,7 +19,7 @@ export async function sendInvitationEmail(invitationId: string) {
         invitationId: inv.id,
         nienKhoa: inv.nienKhoa || undefined,
         phone: member.phone,
-        appUrl: `https://nct40.poln.id.vn`,
+        appUrl: process.env.NEXT_PUBLIC_APP_URL || `https://40namnctru.nctitc.io.vn`,
         type: inv.type === "group" ? "Tập thể" : "Cá nhân",
         shirts: inv.sizes || {},
       })

@@ -231,7 +231,7 @@ export default function RichTextEditor({
       />
 
       {/* TOOLBAR */}
-      <div className="sticky top-[80px] sm:top-[88px] z-30 flex flex-wrap gap-1 p-2 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
+      <div className="sticky top-[120px] sm:top-[128px] z-30 flex flex-wrap gap-1 p-2 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
         <TB icon={Heading1} title="Tiêu đề 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive("heading", { level: 1 })} />
         <TB icon={Heading2} title="Tiêu đề 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive("heading", { level: 2 })} />
         <TB icon={Heading3} title="Tiêu đề 3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive("heading", { level: 3 })} />
@@ -251,10 +251,10 @@ export default function RichTextEditor({
             <span className="text-[10px] font-bold">Aa</span>
           </button>
           <div className="absolute top-full left-0 mt-1 hidden group-hover:flex flex-col bg-white border border-slate-200 shadow-xl rounded-xl p-1 z-50 min-w-[140px]">
-            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onClick={() => transformText("uppercase")}>UPPERCASE</button>
-            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onClick={() => transformText("lowercase")}>lowercase</button>
-            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onClick={() => transformText("capitalize")}>Capitalize Each Word</button>
-            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onClick={() => transformText("sentence")}>Sentence case</button>
+            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onMouseDown={(e) => e.preventDefault()} onClick={() => transformText("uppercase")}>UPPERCASE</button>
+            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onMouseDown={(e) => e.preventDefault()} onClick={() => transformText("lowercase")}>lowercase</button>
+            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onMouseDown={(e) => e.preventDefault()} onClick={() => transformText("capitalize")}>Capitalize Each Word</button>
+            <button type="button" className="text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded-lg" onMouseDown={(e) => e.preventDefault()} onClick={() => transformText("sentence")}>Sentence case</button>
           </div>
         </div>
 
@@ -285,7 +285,7 @@ export default function RichTextEditor({
           <input
             type="color"
             title="Màu chữ"
-            onInput={(event: any) => editor.chain().focus().setColor(event.target.value).run()}
+            onChange={(event: any) => editor.chain().focus().setColor(event.target.value).run()}
             value={editor.getAttributes("textStyle").color || "#000000"}
             className="w-6 h-6 p-0 border-0 rounded cursor-pointer"
           />

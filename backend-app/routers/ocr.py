@@ -53,6 +53,8 @@ async def verify_receipt(
 
     # 5. Update invitation in database
     inv.receipt_url = receipt_url
+    ocr_raw["confidence"] = match_result["confidence"]
+    ocr_raw["note"] = match_result["note"]
     inv.ocr_result = ocr_raw
     attempts = list(inv.receipt_attempts or [])
     attempts.append(attempt_entry)

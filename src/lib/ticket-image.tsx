@@ -58,8 +58,7 @@ function loadFonts(): FontDef[] {
   add("Inter", "Inter-Regular.woff", 400);
   add("Inter", "Inter-SemiBold.woff", 600);
   add("Inter", "Inter-Bold.woff", 800);
-  add("Playfair Display", "PlayfairDisplay-Regular.woff", 400);
-  add("Playfair Display", "PlayfairDisplay-Bold.woff", 700);
+  add("Prata", "Prata-Regular.woff", 400);
   add("Beau Rivage", "BeauRivage-Regular.woff", 400);
   
   fontCache = fonts;
@@ -73,37 +72,24 @@ export async function renderTicketPng(
 
   const qrText = `${name} - ${phone} - ${invitationCode}`;
   const qrDataUri = await QRCode.toDataURL(qrText, {
-    width: 400,
-    margin: 1,
-    errorCorrectionLevel: "M",
+    width: 176, // 44 * 4
+    margin: 2,
+    color: { dark: '#000000', light: '#ffffff' }
   });
 
-  const bgBuf = readPublic("invitation background image", "thu-moi-NCT-anh-nen.jpg");
-  const bg = `data:image/jpeg;base64,${bgBuf.toString("base64")}`;
+  const bgBuf = readPublic("invitation_image", "bg.webp");
+  const bgPng = await sharp(bgBuf).png().toBuffer();
+  const bg = `data:image/png;base64,${bgPng.toString("base64")}`;
+  
   const logoNct = await webpToPngDataUri("images", "logo_nct.webp");
   const logo40 = await webpToPngDataUri("images", "Logo_40th_NCT.webp");
 
-  const label: React.CSSProperties = {
-    display: "flex",
-    width: px(110),
-    color: "#4b5563",
-    fontFamily: "Inter",
-    fontWeight: 700,
-    fontSize: px(14),
-    lineHeight: 24 / 14,
-  };
-  const serif: React.CSSProperties = {
-    fontFamily: "Playfair Display",
-    fontWeight: 700,
-    color: "#111827",
-    lineHeight: 24 / 14,
-  };
-
+  // The actual element is 380x600 roughly, we will render it exactly
   const tree = (
     <div
       style={{
-        width: "100%",
-        height: "100%",
+        width: px(380),
+        height: px(610),
         display: "flex",
         flexDirection: "column",
         position: "relative",
@@ -113,14 +99,30 @@ export async function renderTicketPng(
         overflow: "hidden",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={bg}
-        alt=""
-        width={W * SCALE}
-        height={H * SCALE}
-        style={{ position: "absolute", top: 0, left: 0 }}
+      {/* Background Layer (opacity 0.3) with gradient mask simulated by fading to white at edges */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", opacity: 0.3 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={bg} alt="" width={380 * SCALE} height={610 * SCALE} style={{ objectFit: "cover" }} />
+      </div>
+      
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0) 75%, rgba(255,255,255,1) 100%)",
+        }}
       />
+
+      {/* Corner decorations */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: px(56), height: px(56), borderTop: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderLeft: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderTopLeftRadius: px(24) }} />
+      <div style={{ position: "absolute", bottom: 0, right: 0, width: px(56), height: px(56), borderBottom: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderRight: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderBottomRightRadius: px(24) }} />
+
+      {/* Content Wrapper */}
       <div
         style={{
           display: "flex",
@@ -128,34 +130,37 @@ export async function renderTicketPng(
           width: "100%",
           height: "100%",
           padding: px(24),
+          zIndex: 10,
         }}
       >
-        {/* Header */}
+        {/* Header: Logos & Title */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             paddingBottom: px(12),
-            marginBottom: px(16),
-            borderBottom: `${SCALE}px solid rgba(229,231,235,0.5)`,
+            marginBottom: px(8),
+            borderBottom: `${SCALE}px solid #e5e7eb`,
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logoNct} alt="" width={40 * SCALE} height={40 * SCALE} style={{ marginRight: px(4) }} />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo40} alt="" width={40 * SCALE} height={40 * SCALE} style={{ marginRight: px(12) }} />
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontFamily: "Inter", fontWeight: 800, fontSize: px(11), color: "#1e3a8a", lineHeight: 1.4 }}>
+          <div style={{ display: "flex", marginRight: px(12) }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoNct} alt="" width={40 * SCALE} height={40 * SCALE} style={{ marginRight: px(6) }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logo40} alt="" width={40 * SCALE} height={40 * SCALE} />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+            <span style={{ fontFamily: "Inter", fontWeight: 800, fontSize: px(12), color: "#1e3a8a", lineHeight: 1.25, letterSpacing: px(0.5) }}>
               KỈ NIỆM 40 NĂM THÀNH LẬP
             </span>
-            <span style={{ fontFamily: "Inter", fontWeight: 800, fontSize: px(11), color: "#1e3a8a", lineHeight: 1.4 }}>
+            <span style={{ fontFamily: "Inter", fontWeight: 800, fontSize: px(12), color: "#1e3a8a", lineHeight: 1.25, letterSpacing: px(0.5) }}>
               TRƯỜNG THPT NGUYỄN CÔNG TRỨ
             </span>
           </div>
         </div>
 
-        {/* QR */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: px(16) }}>
+        {/* QR Code */}
+        <div style={{ display: "flex", justifyContent: "center", marginTop: px(12), marginBottom: px(20) }}>
           <div
             style={{
               display: "flex",
@@ -163,95 +168,72 @@ export async function renderTicketPng(
               backgroundColor: "#ffffff",
               border: `${SCALE}px solid #e5e7eb`,
               borderRadius: px(16),
+              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrDataUri} alt="" width={160 * SCALE} height={160 * SCALE} style={{ borderRadius: px(8) }} />
+            <img src={qrDataUri} alt="" width={176 * SCALE} height={176 * SCALE} style={{ borderRadius: px(8) }} />
           </div>
         </div>
 
-        {/* Slogan */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: px(20), marginTop: px(-8) }}>
+          <span style={{ fontFamily: "Beau Rivage", fontSize: px(40), color: "#047857", lineHeight: 1, paddingTop: px(8) }}>
+            Memories Alive Again
+          </span>
+        </div>
+
+        {/* Invitation Info */}
+        <div style={{ display: "flex", flexDirection: "column", fontFamily: "Inter", fontSize: px(15), color: "#1f2937" }}>
+          <div style={{ display: "flex", marginBottom: px(6) }}>
+            <span style={{ width: px(112), fontWeight: 600, color: "#374151" }}>Cựu học sinh:</span>
+            <span style={{ fontFamily: "Prata", fontWeight: 400, fontSize: px(18), color: "#111827", letterSpacing: px(0.5) }}>{name}</span>
+          </div>
+          <div style={{ display: "flex", marginBottom: px(6) }}>
+            <span style={{ width: px(112), fontWeight: 600, color: "#374151" }}>Niên khóa:</span>
+            <span style={{ fontFamily: "Prata", fontWeight: 400 }}>{nienKhoa || "Không rõ"}</span>
+          </div>
+          <div style={{ display: "flex", marginBottom: px(6) }}>
+            <span style={{ width: px(112), fontWeight: 600, color: "#374151" }}>SĐT:</span>
+            <span style={{ fontFamily: "Prata", fontWeight: 400 }}>{phone}</span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", paddingTop: px(12), marginTop: px(4), borderTop: `${SCALE}px solid #f3f4f6` }}>
+            <div style={{ display: "flex", alignItems: "flex-start", marginBottom: px(6) }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontWeight: 600, color: "#374151", fontSize: px(13) }}>Thời gian:</span>
+                <span style={{ fontFamily: "Prata", color: "#1f2937" }}>08:00 - 08/11/2026</span>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontWeight: 600, color: "#374151", fontSize: px(13) }}>Địa điểm:</span>
+                <span style={{ fontFamily: "Prata", color: "#1f2937" }}>Trường THPT Nguyễn Công Trứ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Warning Footer */}
         <div
           style={{
             display: "flex",
             justifyContent: "center",
-            fontFamily: "Beau Rivage",
-            fontSize: px(36),
-            color: "#047857",
-            marginBottom: px(16),
-            lineHeight: 1,
+            marginTop: px(24),
+            paddingTop: px(12),
+            borderTop: `${SCALE}px solid #e5e7eb`,
           }}
         >
-          Memories Alive Again
-        </div>
-
-        {/* Info */}
-        <div style={{ display: "flex", flexDirection: "column", paddingTop: px(8) }}>
-          <div style={{ display: "flex", marginBottom: px(6) }}>
-            <span style={label}>Cựu học sinh:</span>
-            <span style={{ ...serif, fontSize: px(16) }}>{name}</span>
-          </div>
-          <div style={{ display: "flex", marginBottom: px(6) }}>
-            <span style={label}>Niên khóa:</span>
-            <span style={{ ...serif, fontSize: px(14) }}>{nienKhoa}</span>
-          </div>
-          <div style={{ display: "flex", marginBottom: px(6) }}>
-            <span style={label}>SĐT:</span>
-            <span style={{ ...serif, fontSize: px(14) }}>{phone}</span>
-          </div>
-        </div>
-
-        {/* Time & place */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            marginTop: px(16),
-            paddingTop: px(16),
-            borderTop: `${SCALE}px solid rgba(229,231,235,0.7)`,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", marginBottom: px(12) }}>
-            <span style={{ fontFamily: "Inter", fontWeight: 600, fontSize: px(13), color: "#374151", marginBottom: px(2), lineHeight: 24/13 }}>
-              Thời gian:
-            </span>
-            <span style={{ fontFamily: "Playfair Display", fontWeight: 400, fontSize: px(14), color: "#1f2937", lineHeight: 24/14 }}>
-              08:00 - 08/11/2026
-            </span>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontFamily: "Inter", fontWeight: 600, fontSize: px(13), color: "#374151", marginBottom: px(2), lineHeight: 24/13 }}>
-              Địa điểm:
-            </span>
-            <span style={{ fontFamily: "Playfair Display", fontWeight: 400, fontSize: px(14), color: "#1f2937", lineHeight: 24/14 }}>
-              Trường THPT Nguyễn Công Trứ
-            </span>
-          </div>
-        </div>
-
-        {/* Warning */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginTop: px(16),
-            paddingTop: px(16),
-            borderTop: `${SCALE}px solid rgba(229,231,235,0.7)`,
-            fontFamily: "Playfair Display",
-            fontSize: px(14),
-            color: "#dc2626",
-            lineHeight: 24/14,
-          }}
-        >
-          Vui lòng không chia sẻ thư mời này cho bất kì ai!
+          <span style={{ fontFamily: "Prata", fontSize: px(14), color: "#dc2626" }}>
+            Vui lòng không chia sẻ thư mời này cho bất kì ai!
+          </span>
         </div>
       </div>
     </div>
   );
 
   const res = new ImageResponse(tree, {
-    width: W * SCALE,
-    height: H * SCALE,
+    width: 380 * SCALE,
+    height: 610 * SCALE,
     fonts: loadFonts(),
   });
   return Buffer.from(await res.arrayBuffer());

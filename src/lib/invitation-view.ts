@@ -52,6 +52,7 @@ export type InvitationView = {
   shirtReceivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  receiptAttempts?: any[];
 };
 
 export function formatVnd(amount: number): string {

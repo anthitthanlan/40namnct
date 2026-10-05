@@ -14,11 +14,14 @@ export async function sendInvitationEmail(invitationId: string) {
 
     const html = await render(
       InvitationEmail({
-        recipientName: member.name,
-        ticketUrl: `https://nct40.poln.id.vn/thu-moi?id=${inv.id}`,
-        eventName: "Hội ngộ 40 năm - Kết nối và Lan tỏa",
-        eventDate: "Chủ nhật, 15/11/2026 - 08:30 AM",
-        eventLocation: "Trường THPT Nguyễn Công Trứ, 97 Quang Trung, Gò Vấp, TP.HCM",
+        name: member.name,
+        amount: inv.amount || 0,
+        invitationCode: inv.code,
+        nienKhoa: inv.nienKhoa || undefined,
+        phone: member.phone,
+        appUrl: `https://nct40.poln.id.vn`,
+        type: inv.type === "group" ? "Tập thể" : "Cá nhân",
+        shirts: inv.sizes || {},
       })
     );
 

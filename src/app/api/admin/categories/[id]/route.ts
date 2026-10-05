@@ -22,11 +22,12 @@ export async function PATCH(
   }
 
   try {
+    const token = req.cookies.get("nct_admin")?.value;
     await updateCategory(id, {
       name: body.name,
       description: body.description,
       order: body.order,
-    });
+    }, token);
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
@@ -42,7 +43,8 @@ export async function DELETE(
 
   const { id } = await params;
   try {
-    await deleteCategory(id);
+    const token = req.cookies.get("nct_admin")?.value;
+    await deleteCategory(id, token);
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     return NextResponse.json({ ok: false, message: error.message }, { status: 400 });

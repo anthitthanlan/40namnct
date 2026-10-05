@@ -830,15 +830,7 @@ export default function AdminRegistrations({
                         </a>
                       )}
 
-                      {t.status === "pending_payment" && (
-                        <a
-                          href={`/thanh-toan?id=${t.id}`}
-                          target="_blank"
-                          className="rounded-xl bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-all inline-flex items-center gap-1"
-                        >
-                          <span className="material-symbols-rounded text-[14px]">payments</span> Trang thanh toán
-                        </a>
-                      )}
+
 
                       {isConfirmed && (
                         <a
@@ -859,6 +851,16 @@ export default function AdminRegistrations({
                         >
                           <span className="material-symbols-rounded text-[14px]">mail</span> Gửi lại Mail
                         </button>
+                      )}
+
+                      {t.status === "pending_payment" && (
+                        <a
+                          href={`/thanh-toan?id=${t.id}`}
+                          target="_blank"
+                          className="rounded-xl bg-amber-100 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-[16px]">payments</span> Mở trang thanh toán
+                        </a>
                       )}
 
                       <button

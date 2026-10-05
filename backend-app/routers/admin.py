@@ -7,7 +7,7 @@ from app.models.invitation import Invitation
 from app.models.member import Member
 from app.models.admin import Admin, ActionLog
 from app.models.post import Post
-from app.schemas.admin import AdminCreate, AdminResponse, ActionLogResponse
+from app.schemas.admin import AdminCreate, AdminResponse, ActionLogResponse, ActionLogCreate
 from app.services.auth_service import (
     get_current_admin,
     require_super_admin,
@@ -132,3 +132,30 @@ def get_action_logs(
             createdAt=l.created_at
         ) for l in logs
     ]
+
+@router.post("/logs", response_model=ActionLogResponse)
+def create_action_log(
+    log_in: ActionLogCreate,
+    db: Session = Depends(get_db),
+    admin = Depends(get_current_admin)
+):
+    new_log = ActionLog(
+        action=log_in.action,
+        entity_id=log_in.entityId,
+        admin_name=log_in.adminName,
+        admin_role=log_in.adminRole,
+        details=log_in.details
+    )
+    db.add(new_log)
+    db.commit()
+    db.refresh(new_log)
+
+    return ActionLogResponse(
+        id=new_log.id,
+        action=new_log.action,
+        entityId=new_log.entity_id,
+        adminName=new_log.admin_name,
+        adminRole=new_log.admin_role,
+        details=new_log.details or "",
+        createdAt=new_log.created_at
+    )

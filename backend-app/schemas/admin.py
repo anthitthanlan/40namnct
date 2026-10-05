@@ -44,3 +44,13 @@ class ActionLogResponse(BaseModel):
     class Config:
         populate_by_name = True
         from_attributes = True
+
+class ActionLogCreate(BaseModel):
+    action: str
+    entityId: Optional[str] = Field(None, alias="entityId")
+    adminName: str = Field(alias="adminName")
+    adminRole: str = Field(alias="adminRole")
+    details: str
+
+    class Config:
+        populate_by_name = True

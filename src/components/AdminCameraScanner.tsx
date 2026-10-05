@@ -162,22 +162,25 @@ export default function AdminCameraScanner({
         }
       } else {
         playBeep(false);
-        alert(data.message || "Có lỗi xảy ra khi thực hiện hành động.");
+        setScanResult({
+          ok: false,
+          message: data.message || "Có lỗi xảy ra khi thực hiện hành động.",
+          invitation: data.invitation,
+        });
       }
 
-      if (res.ok && data.ok) {
-        setScanHistory((prev) => [
-          {
-            id: `${now}-${Math.random().toString(36).slice(2, 6)}`,
-            ok: true,
-            mode: mode,
-            message: data.message || "Thành công",
-            invitation: data.invitation || scanResult?.invitation,
-            time: new Date().toLocaleTimeString("vi-VN"),
-          },
-          ...prev,
-        ].slice(0, 10));
-      }
+      // Luôn lưu vào lịch sử dù thành công hay thất bại
+      setScanHistory((prev) => [
+        {
+          id: `${now}-${Math.random().toString(36).slice(2, 6)}`,
+          ok: data.ok,
+          mode: mode,
+          message: data.message || "Thất bại",
+          invitation: data.invitation || scanResult?.invitation,
+          time: new Date().toLocaleTimeString("vi-VN"),
+        },
+        ...prev,
+      ].slice(0, 10));
 
     } catch (err) {
       playBeep(false);

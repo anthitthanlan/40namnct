@@ -72,14 +72,14 @@ export function invitationStatusInfo(status: InvitationStatus | string): {
       };
     case "pending_approval":
       return {
-        label: "Chờ duyệt (24h)",
+        label: "Chờ đối soát (48h)",
         cls: "bg-blue-100 text-blue-800 border border-blue-300",
-        desc: "Đã gửi xác nhận đóng góp, Ban Tổ chức đang đối soát biên lai để phát hành vé",
+        desc: "Đã gửi xác nhận đóng góp, Ban Tổ chức đang đối soát biên lai (tối đa 48h)",
       };
     case "pending_payment":
     case "pending":
       return {
-        label: "Chờ xác nhận",
+        label: "Chờ thanh toán",
         cls: "bg-amber-100 text-amber-800 border border-amber-300",
         desc: "Đang chờ người dùng quét QR và upload biên lai đóng góp",
       };

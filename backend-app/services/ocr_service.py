@@ -23,61 +23,93 @@ async def extract_receipt_info(image_bytes: bytes, mime_type: str = "image/jpeg"
     b64_image = base64.b64encode(image_bytes).decode("utf-8")
     provider = settings.AI_OCR_PROVIDER.lower()
 
-    # 1. Try Ollama (if configured)
-    if provider == "ollama" and settings.OLLAMA_BASE_URL:
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(
-                    f"{settings.OLLAMA_BASE_URL}/api/generate",
-                    json={
-                        "model": settings.OLLAMA_MODEL,
-                        "prompt": SYSTEM_PROMPT,
-                        "images": [b64_image],
-                        "stream": False,
-                        "format": "json"
-                    }
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    response_text = data.get("response", "")
-                    parsed = parse_ocr_json(response_text)
-                    parsed["provider"] = "ollama"
-                    return parsed
-        except Exception as e:
-            print(f"[OCR] Ollama error: {e}, falling back...")
+    providers_to_try = []
+    if provider == "ollama":
+        providers_to_try = ["ollama", "openrouter"]
+    elif provider == "openrouter":
+        providers_to_try = ["openrouter", "ollama"]
+    else:
+        providers_to_try = [provider, "ollama", "openrouter"]
 
-    # 2. Try OpenRouter (if API key present)
-    if settings.OPENROUTER_API_KEY:
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                resp = await client.post(
-                    f"{settings.OPENROUTER_BASE_URL}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": settings.OPENROUTER_MODEL,
-                        "messages": [
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": SYSTEM_PROMPT},
-                                    {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{b64_image}"}}
-                                ]
-                            }
-                        ],
-                        "response_format": {"type": "json_object"}
-                    }
-                )
+    for current_provider in providers_to_try:
+        if current_provider == "ollama" and settings.OLLAMA_BASE_URL:
+            try:
+                headers = {"Content-Type": "application/json"}
+                if getattr(settings, "OLLAMA_API_KEY", None):
+                    headers["Authorization"] = f"Bearer {settings.OLLAMA_API_KEY}"
+                
+                base_url = settings.OLLAMA_BASE_URL.rstrip("/")
+                endpoint = f"{base_url}/v1/chat/completions" if not base_url.endswith("/v1") else f"{base_url}/chat/completions"
+
+                import requests
+                import asyncio
+                def fetch_ollama():
+                    return requests.post(
+                        endpoint,
+                        headers=headers,
+                        json={
+                            "model": settings.OLLAMA_MODEL,
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": [
+                                        {"type": "text", "text": SYSTEM_PROMPT},
+                                        {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{b64_image}"}}
+                                    ]
+                                }
+                            ],
+                            "response_format": {"type": "json_object"}
+                        },
+                        timeout=30.0
+                    )
+                resp = await asyncio.to_thread(fetch_ollama)
                 if resp.status_code == 200:
                     data = resp.json()
                     content = data["choices"][0]["message"]["content"]
                     parsed = parse_ocr_json(content)
-                    parsed["provider"] = "openrouter"
+                    parsed["provider"] = "ollama"
                     return parsed
-        except Exception as e:
-            print(f"[OCR] OpenRouter error: {e}")
+                else:
+                    print(f"[OCR] Ollama status code {resp.status_code}: {resp.text}")
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                print(f"[OCR] Ollama error: {e}, falling back...")
+
+        elif current_provider == "openrouter" and settings.OPENROUTER_API_KEY:
+            try:
+                transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
+                async with httpx.AsyncClient(timeout=30.0, transport=transport) as client:
+                    resp = await client.post(
+                        f"{settings.OPENROUTER_BASE_URL}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {settings.OPENROUTER_API_KEY}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": settings.OPENROUTER_MODEL,
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": [
+                                        {"type": "text", "text": SYSTEM_PROMPT},
+                                        {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{b64_image}"}}
+                                    ]
+                                }
+                            ],
+                            "response_format": {"type": "json_object"}
+                        }
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        content = data["choices"][0]["message"]["content"]
+                        parsed = parse_ocr_json(content)
+                        parsed["provider"] = "openrouter"
+                        return parsed
+                    else:
+                        print(f"[OCR] OpenRouter status code {resp.status_code}: {resp.text}")
+            except Exception as e:
+                print(f"[OCR] OpenRouter error: {e}, falling back...")
 
     # Fallback default if AI models are unavailable
     return {

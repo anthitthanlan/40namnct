@@ -257,11 +257,11 @@ export default function AdminRegistrations({
   // =========================================================================
   const confirmedInvitations = invitations.filter((t) => t.status === "confirmed");
   const totalConfirmedRevenue = confirmedInvitations.reduce(
-    (sum, t) => sum + t.amount,
+    (sum, t) => sum + (t.amount || 0),
     0,
   );
   const totalConfirmedPeople = confirmedInvitations.reduce(
-    (sum, t) => sum + (t.type === "group" ? t.quantity : 1),
+    (sum, t) => sum + (t.type === "group" ? (t.quantity || 1) : 1),
     0,
   );
   const pendingApprovalInvitations = invitations.filter(
@@ -447,7 +447,7 @@ export default function AdminRegistrations({
 
           <div onClick={() => handleStatClick("pending_approval")} className="cursor-pointer transition-transform hover:scale-[1.02] active:scale-95 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 p-4 flex flex-col justify-between shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-wider text-white/90">
-              <span className="material-symbols-rounded inline-block align-middle text-[14px]">hourglass_empty</span> Chờ đối soát (24h)
+              <span className="material-symbols-rounded inline-block align-middle text-[14px]">hourglass_empty</span> Chờ đối soát (48h)
             </span>
             <div className="mt-2">
               <p className="text-xl font-black text-white sm:text-2xl">
@@ -523,7 +523,7 @@ export default function AdminRegistrations({
             <span className="material-symbols-rounded text-[18px]">filter_list</span>
             Bộ lọc hiện tại: {
               statusFilter === "all" ? "Tất cả" :
-              statusFilter === "pending_approval" ? "Chờ duyệt 24h" :
+              statusFilter === "pending_approval" ? "Chờ đối soát (48h)" :
               statusFilter === "confirmed" ? "Đã duyệt" :
               statusFilter === "pending_payment" ? "Chờ thanh toán" :
               statusFilter === "checked_in" ? "Đã check-in" :
@@ -728,7 +728,7 @@ export default function AdminRegistrations({
                             : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Thư mời đã được admin duyệt thủ công.</>)
                         : t.status === "pending_approval"
                           ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">warning</span> Chờ duyệt thủ công do AI phát hiện rủi ro (lệch tiền/nội dung).</>
-                          : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">schedule</span> Đang chờ thành viên thực hiện chuyển khoản.</>}
+                          : (t.receiptAttempts?.length ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">error</span> AI báo lỗi, đang chờ thành viên thử tải lại biên lai.</> : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">schedule</span> Đang chờ thành viên thực hiện chuyển khoản.</>)}
                     </span>
 
                     <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
@@ -1000,7 +1000,7 @@ export default function AdminRegistrations({
                 <div className="flex flex-wrap gap-2">
                   {[
                     { id: "all", label: "Tất cả" },
-                    { id: "pending_approval", label: "Chờ duyệt 24h" },
+                    { id: "pending_approval", label: "Chờ đối soát (48h)" },
                     { id: "confirmed", label: "Đã duyệt" },
                     { id: "pending_payment", label: "Chờ thanh toán" },
                     { id: "checked_in", label: "Đã check-in" },

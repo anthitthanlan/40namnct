@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { sendInvitationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,17 @@ export async function POST(req: NextRequest) {
     });
     
     const backendData = await backendRes.json();
+    
+    if (backendData.ok && backendData.confidence === "high") {
+      // Send email asynchronously without blocking the response
+      const invitationId = formData.get("invitationId") as string;
+      if (invitationId) {
+        sendInvitationEmail(invitationId).catch(err => 
+          console.error("Async email send failed:", err)
+        );
+      }
+    }
+
     return NextResponse.json(backendData, { status: backendRes.status });
   } catch (err) {
     console.error("Lỗi khi chuyển tiếp verify-receipt:", err);

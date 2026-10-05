@@ -110,10 +110,12 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
         const mappedUsers: MemberUser[] = [];
         const seenEmails = new Set<string>();
 
-        // Map from members
+        // Map from members (only those who have at least 1 invitation)
         data.members.forEach((m: any) => {
           const email = (m.email || "").trim().toLowerCase();
-          if (email && !seenEmails.has(email)) {
+          // ONLY push if member has invitations!
+          const memberInvitations = data.invitations?.filter((inv: any) => inv.memberId === m.id) || [];
+          if (email && !seenEmails.has(email) && memberInvitations.length > 0) {
             seenEmails.add(email);
             mappedUsers.push({
               id: m.id || email,
@@ -121,7 +123,7 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
               email: email,
               phone: m.phone || "",
               status: m.confirmedAmount > 0 ? "confirmed" : "pending",
-              ticketCount: m.invitationCount || 0,
+              ticketCount: m.invitationCount || memberInvitations.length,
               source: "member",
             });
           }

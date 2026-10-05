@@ -28,17 +28,38 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "media") -> dict
     if not ext:
         ext = ".jpg"
 
-    safe_name = f"{uuid.uuid4().hex}{ext}"
     content = await file.read()
+
+    # Convert to WebP if it's an image
+    content_type = file.content_type or "application/octet-stream"
+    if content_type.startswith("image/") and ext not in [".webp", ".gif"]:
+        try:
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(content))
+            # Convert RGBA to RGB if necessary for WebP saving
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            out_io = io.BytesIO()
+            img.save(out_io, format="WEBP", quality=85)
+            content = out_io.getvalue()
+            ext = ".webp"
+            content_type = "image/webp"
+        except Exception as e:
+            print(f"Error converting to WebP: {e}")
+
+    safe_name = f"{uuid.uuid4().hex}{ext}"
     
     s3 = get_s3_client()
     if s3 and settings.R2_BUCKET_MEDIA:
-        # Upload to R2
-        s3.put_object(
+        import asyncio
+        # Upload to R2 (non-blocking)
+        await asyncio.to_thread(
+            s3.put_object,
             Bucket=settings.R2_BUCKET_MEDIA,
             Key=safe_name,
             Body=content,
-            ContentType=file.content_type or "application/octet-stream"
+            ContentType=content_type
         )
         web_url = f"{settings.R2_PUBLIC_URL_MEDIA}/{safe_name}"
         file_path = f"r2://{settings.R2_BUCKET_MEDIA}/{safe_name}"
@@ -59,5 +80,5 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "media") -> dict
         "path": file_path,
         "url": web_url,
         "size": len(content),
-        "content_type": file.content_type,
+        "content_type": content_type,
     }

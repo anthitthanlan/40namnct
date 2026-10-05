@@ -240,7 +240,7 @@ export default function XacNhanDongGopContent() {
               setUploadState({
                 phase: "success",
                 confidence: "low",
-                message: "Giao dịch đã được đưa vào hàng chờ. Ban Tổ chức sẽ đối soát và xác nhận trong vòng 24 giờ."
+                message: "Giao dịch đã được đưa vào hàng chờ. Ban Tổ chức sẽ đối soát và xác nhận trong vòng 48 giờ."
               });
               setIsMobileModalOpen(true);
             }
@@ -534,6 +534,16 @@ export default function XacNhanDongGopContent() {
                 </p>
               </div>
             </div>
+            <button
+              onClick={() => {
+                setIsMobileModalOpen(false);
+                setIsExiting(true);
+                router.push(`/thu-moi?id=${invitationId === "DEV" ? "sample" : invitationId}`);
+              }}
+              className="w-full mt-4 py-3.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors"
+            >
+              Xem thư mời
+            </button>
           </motion.div>
         )}
 

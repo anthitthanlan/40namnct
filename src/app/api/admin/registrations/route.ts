@@ -9,6 +9,7 @@ import {
   type InvitationStatus,
 } from "@/lib/members";
 import { logAction, listActionLogs } from "@/lib/action-logs";
+import { sendInvitationEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -45,13 +46,13 @@ export async function GET(req: NextRequest) {
       email: m.email ?? "",
       createdAt: m.createdAt,
       invitationCount: mine.length,
-      peopleCount: mine.reduce((sum, t) => sum + t.quantity, 0),
+      peopleCount: mine.reduce((sum, t) => sum + (t.quantity || 1), 0),
       confirmedAmount: mine
         .filter((t) => t.status === "confirmed")
-        .reduce((sum, t) => sum + t.amount, 0),
+        .reduce((sum, t) => sum + (t.amount || 0), 0),
       pendingAmount: mine
         .filter((t) => t.status === "pending")
-        .reduce((sum, t) => sum + t.amount, 0),
+        .reduce((sum, t) => sum + (t.amount || 0), 0),
     };
   });
 
@@ -100,10 +101,11 @@ export async function PATCH(req: NextRequest) {
       { status: 400 },
     );
   }
+  const token = req.cookies.get("nct_admin")?.value;
 
   if (action === "update_shirt") {
     const shirtReceived = typeof (body as any).shirtReceived === "boolean" ? (body as any).shirtReceived : false;
-    const invitation = await setShirtReceived(id, shirtReceived);
+    const invitation = await setShirtReceived(id, shirtReceived, token);
     if (!invitation) return NextResponse.json({ ok: false, message: "Không tìm thấy thư mời." }, { status: 404 });
     await logAction(
       "update_status",
@@ -125,7 +127,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const invitation = await setInvitationStatus(id, status);
+  const invitation = await setInvitationStatus(id, status, token);
   if (!invitation) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy thư mời." },
@@ -142,6 +144,12 @@ export async function PATCH(req: NextRequest) {
     admin.role,
     `Cập nhật trạng thái thành: ${status}`,
   );
+
+  if (status === "confirmed") {
+    sendInvitationEmail(id).catch(err => 
+      console.error("Async admin email send failed:", err)
+    );
+  }
 
   return NextResponse.json({ ok: true, invitation });
 }

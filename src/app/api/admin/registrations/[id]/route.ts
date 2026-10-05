@@ -22,10 +22,11 @@ export async function DELETE(
     );
   }
 
-  const success = await deleteInvitation(id);
+  const token = req.cookies.get("nct_admin")?.value;
+  const success = await deleteInvitation(id, token);
   if (!success) {
     return NextResponse.json(
-      { ok: false, message: "Không tìm thấy thư mời để xóa." },
+      { ok: false, message: "Không tìm thấy thư mời để xóa hoặc lỗi xác thực." },
       { status: 404 }
     );
   }

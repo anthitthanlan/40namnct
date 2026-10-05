@@ -118,8 +118,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const token = req.cookies.get(process.env.COOKIE_NAME || "nct_admin")?.value;
+
     if (existingInvitation.id !== "sample" && existingInvitation.id !== "sample-group") {
-      const members = await listMembers();
+      const members = await listMembers(token);
       const member = members.find((m) => m.id === existingInvitation.memberId);
       if (member) {
         existingInvitation = {
@@ -147,7 +149,7 @@ export async function POST(req: NextRequest) {
       if (validInvitationId === "sample" || validInvitationId === "sample-group") {
         checkInResult = { ok: true, invitation: { ...existingInvitation, checkedIn: true } };
       } else {
-        checkInResult = await checkInInvitation(validInvitationId);
+        checkInResult = await checkInInvitation(validInvitationId, token);
       }
 
       if (!checkInResult.ok) {
@@ -157,8 +159,7 @@ export async function POST(req: NextRequest) {
             mode: "checkin",
             invitation: existingInvitation,
             message: checkInResult.message,
-          },
-          { status: 409 },
+          }
         );
       }
 
@@ -185,7 +186,7 @@ export async function POST(req: NextRequest) {
     if (validInvitationId === "sample" || validInvitationId === "sample-group") {
       shirtResult = { ok: true, invitation: { ...existingInvitation, shirtReceived: true } };
     } else {
-      shirtResult = await shirtCheckInByQr(validInvitationId);
+      shirtResult = await shirtCheckInByQr(validInvitationId, token);
     }
     
     if (!shirtResult.ok) {
@@ -195,8 +196,7 @@ export async function POST(req: NextRequest) {
           mode: "shirt",
           invitation: existingInvitation,
           message: shirtResult.message,
-        },
-        { status: 409 },
+        }
       );
     }
 

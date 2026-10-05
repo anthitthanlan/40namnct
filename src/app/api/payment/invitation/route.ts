@@ -69,6 +69,9 @@ export async function GET(req: NextRequest) {
     });
     if (res.ok) {
       const inv = await res.json();
+      const memberInfo = await getMemberById(inv.memberId);
+      const phone = memberInfo ? memberInfo.phone : "";
+
       return NextResponse.json({
         ok: true,
         invitation: {
@@ -82,7 +85,7 @@ export async function GET(req: NextRequest) {
         member: {
           name: inv.attendeeName || "Thành viên",
           nienKhoa: inv.nienKhoa || "",
-          phone: inv.phone || "",
+          phone: phone,
         },
         addInfo: inv.code,
         isFallback: false,

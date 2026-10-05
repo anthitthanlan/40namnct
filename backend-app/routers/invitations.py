@@ -19,8 +19,12 @@ router = APIRouter(prefix="/api/invitations", tags=["Invitations"])
 UNIT_PRICE = 500000
 
 def generate_invitation_code(db: Session) -> str:
+    # Lấy số lượng ticket hiện tại để làm số thứ tự
+    count = db.query(Invitation).count() + 1
+    seq_str = f"{count:03d}"
     while True:
-        code = "NCT" + "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        random_str = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        code = f"NCT19862026-{seq_str}{random_str}"
         if not db.query(Invitation).filter(Invitation.code == code).first():
             return code
 

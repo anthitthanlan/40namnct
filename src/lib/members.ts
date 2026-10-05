@@ -132,10 +132,9 @@ export async function createMember(
 }
 
 export async function getMemberById(id: string): Promise<Member | null> {
-  const res = await fetch(`${API_URL}/api/members`);
+  const res = await fetch(`${API_URL}/api/members/${id}`);
   if (!res.ok) return null;
-  const members: Member[] = await res.json();
-  return members.find((m) => m.id === id) || null;
+  return await res.json();
 }
 
 export async function listInvitations(token?: string): Promise<Invitation[]> {

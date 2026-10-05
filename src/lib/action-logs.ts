@@ -42,8 +42,31 @@ export async function logAction(
   adminRole: string,
   details: string
 ): Promise<ActionLog | null> {
-  // Action logs are handled automatically by the FastAPI backend
-  // when the Next.js app sends the authenticated API request.
-  // This function is kept for backward compatibility if needed.
-  return null;
+  if (entityId === "sample" || entityId === "sample-group") {
+    return null;
+  }
+
+  try {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    const token = cookieStore.get(process.env.COOKIE_NAME || "nct_admin")?.value;
+
+    const res = await fetch(`${API_URL}/api/admin/logs`, {
+      method: "POST",
+      headers: getHeaders(token),
+      body: JSON.stringify({
+        action,
+        entityId,
+        adminName,
+        adminRole,
+        details
+      }),
+    });
+    
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to log action:", err);
+    return null;
+  }
 }

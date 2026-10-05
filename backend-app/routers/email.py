@@ -55,7 +55,7 @@ async def send_email(
         
     background_tasks.add_task(
         send_resend_email_task,
-        request.to,
+        [email.strip() for email in request.to if email.strip()],
         request.subject,
         request.html,
         request.from_email

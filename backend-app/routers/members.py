@@ -64,6 +64,19 @@ def create_or_get_member(member_in: MemberCreate, db: Session = Depends(get_db))
         createdAt=new_member.created_at
     )
 
+@router.get("/{id}", response_model=MemberResponse)
+def get_member(id: str, db: Session = Depends(get_db)):
+    member = db.query(Member).filter(Member.id == id).first()
+    if not member:
+        raise HTTPException(status_code=404, detail="Không tìm thấy thành viên")
+    return MemberResponse(
+        id=member.id,
+        name=member.name,
+        phone=member.phone,
+        email=member.email or "",
+        createdAt=member.created_at
+    )
+
 @router.delete("/{id}")
 def delete_member(
     id: str,

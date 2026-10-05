@@ -20,19 +20,21 @@ async def verify_receipt(
     if not inv:
         raise HTTPException(status_code=404, detail="Không tìm thấy thông tin thư mời")
 
-    # 1. Save receipt directly to server disk under /uploads/receipts
-    saved = await save_uploaded_file(file, subfolder="receipts")
-    receipt_url = saved["url"]
+    # 1. Read original image content for OCR BEFORE saving/converting to WebP
+    image_bytes = await file.read()
+    await file.seek(0)
+    original_mime_type = file.content_type or "image/jpeg"
 
-    # 2. Read image content for OCR
-    with open(saved["path"], "rb") as f:
-        image_bytes = f.read()
-
-    # 3. Run AI OCR
-    ocr_raw = await extract_receipt_info(
+    # 2. Run AI OCR and Save to Storage concurrently to save time
+    import asyncio
+    saved_task = save_uploaded_file(file, subfolder="receipts")
+    ocr_task = extract_receipt_info(
         image_bytes=image_bytes,
-        mime_type=file.content_type or "image/jpeg"
+        mime_type=original_mime_type
     )
+    
+    saved, ocr_raw = await asyncio.gather(saved_task, ocr_task)
+    receipt_url = saved["url"]
 
     # 4. Verify match against invitation
     match_result = verify_match(
@@ -56,15 +58,39 @@ async def verify_receipt(
     attempts.append(attempt_entry)
     inv.receipt_attempts = attempts[-3:] # keep last 3 attempts
 
-    # If confidence is high, record payment claimed
+    max_attempts = 3
+    attempts_left = max_attempts - len(attempts)
+
+    # Update status based on OCR result
     if match_result["confidence"] == "high":
         inv.payment_claimed_at = now_iso
+        inv.status = "confirmed"
+    elif attempts_left <= 0:
+        inv.status = "pending_approval"
 
     db.commit()
     db.refresh(inv)
 
+    is_ok = match_result["confidence"] == "high"
+
+    # Determine confidence for frontend
+    if is_ok:
+        conf = "high"
+        msg = "Xác nhận thành công"
+    elif attempts_left > 0:
+        conf = "mismatch"
+        msg = "Không tìm thấy thông tin chuyển khoản khớp với yêu cầu."
+    else:
+        conf = "mismatch_fallback"
+        msg = "Hệ thống không thể tự động xác nhận sau nhiều lần thử. Chúng tôi đã lưu biên lai của bạn và sẽ duyệt thủ công trong thời gian sớm nhất."
+
     return {
-        "success": True,
+        "ok": is_ok,
+        "success": is_ok,
+        "confidence": conf,
+        "message": msg,
+        "attemptsLeft": attempts_left,
+        "canRetry": attempts_left > 0,
         "receiptUrl": receipt_url,
         "ocrResult": ocr_raw,
         "matchResult": match_result

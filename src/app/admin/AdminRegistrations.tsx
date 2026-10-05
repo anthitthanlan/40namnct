@@ -151,6 +151,28 @@ export default function AdminRegistrations({
     }
   }
 
+  async function sendEmail(t: InvitationRow) {
+    if (!window.confirm(`Xác nhận gửi lại thư mời về email của ${t.memberName}?`)) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/registrations/${t.id}`, {
+        method: "POST",
+      });
+      if (res.status === 401) {
+        onAuthError?.();
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        flash(false, data.message || "Gửi email thất bại.");
+        return;
+      }
+      flash(true, `Đã gửi lại thư mời ${t.code} qua email.`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function handleStatClick(status: typeof statusFilter) {
     setStatusFilter(status);
     setTypeFilter("all");
@@ -816,6 +838,17 @@ export default function AdminRegistrations({
                         >
                           <span className="material-symbols-rounded text-[14px]">visibility</span> Thẻ thư mời
                         </a>
+                      )}
+
+                      {isConfirmed && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => sendEmail(t)}
+                          className="rounded-xl bg-purple-50 px-3 py-1.5 text-[11px] font-bold text-purple-600 hover:bg-purple-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-[14px]">mail</span> Gửi lại Mail
+                        </button>
                       )}
 
                       <button

@@ -140,23 +140,7 @@ export default function HeroSlideshow() {
           </p>
         </Reveal>
 
-        <Reveal delay={300}>
-          <div className="mt-9 flex flex-wrap items-center justify-center lg:justify-start gap-4">
-            <Link
-              href="/khoanh-khac"
-              className="group/btn relative overflow-hidden rounded-[1.25rem] bg-[#1d4ed8] px-7 py-3.5 text-base font-bold text-white shadow-md transition-all duration-300 active:scale-95 hover:shadow-yellow-500/30"
-            >
-              <div className="absolute inset-0 bg-live-gradient opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300 ease-in-out pointer-events-none"></div>
-              <span className="relative z-10">Khám phá hành trình 40 năm</span>
-            </Link>
-            <a
-              href="#gioi-thieu"
-              className="btn-lightship-soft bg-white px-7 py-3.5 text-base font-bold text-slate-900"
-            >
-              Về ngôi trường
-            </a>
-          </div>
-        </Reveal>
+
       </div>
 
       {/* Chấm điều hướng + progress */}

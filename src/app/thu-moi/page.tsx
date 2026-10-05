@@ -332,10 +332,18 @@ function InvitationContent() {
 
               {/* --- DESKTOP BUTTON --- */}
               <div className="hidden lg:flex flex-row items-center justify-end gap-6 mt-10 pt-8 border-t border-gray-200 w-full">
+                {invitation.status === "pending_payment" && (
+                  <Link
+                    href={`/xac-nhan-dong-gop?id=${id}`}
+                    className="relative overflow-hidden bg-emerald-600 text-white rounded-xl px-6 py-3.5 font-bold inline-flex items-center justify-center shadow-lg hover:shadow-emerald-500/30 hover:bg-emerald-500 transition-all active:scale-95 shrink-0"
+                  >
+                    Mở trang thanh toán
+                  </Link>
+                )}
                 <button
                   onClick={handleDownload}
                   disabled={downloading || !invitationQrUrl}
-                  className="group/btn relative overflow-hidden bg-[#1d4ed8] text-white rounded-xl px-6 py-3.5 font-bold inline-flex items-center justify-center shadow-lg hover:shadow-yellow-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                  className="group/btn relative overflow-hidden bg-[#1d4ed8] text-white rounded-xl px-6 py-3.5 font-bold inline-flex items-center justify-center shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                 >
                   <div className={`absolute inset-0 bg-live-gradient transition-opacity duration-300 pointer-events-none ${downloading ? 'opacity-100' : 'opacity-0 group-hover/btn:opacity-100'}`}></div>
                   <div className="relative flex items-center gap-2 z-10 overflow-hidden text-[15px]">
@@ -365,16 +373,36 @@ function InvitationContent() {
                     }}
                   />
                   <div className={`fixed inset-x-0 bottom-0 z-[100] px-4 flex justify-center pointer-events-none lg:hidden ${isIosSafari ? "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]" : "pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"}`}>
-                    <button
-                      onClick={handleDownload}
-                      disabled={downloading || !invitationQrUrl}
-                      className="pointer-events-auto bg-[#1d4ed8] text-white shadow-[0_10px_40px_rgba(29,78,216,0.3)] rounded-full w-[220px] h-[56px] flex items-center justify-center font-bold text-[15px] active:scale-95 transition-transform"
-                    >
-                      <svg className="w-5 h-5 shrink-0 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      {downloading ? "Đang tải..." : "Tải thư mời về máy"}
-                    </button>
+                    <div className="flex gap-3 pointer-events-auto">
+                      {invitation.status === "pending_payment" ? (
+                        <>
+                          <button
+                            onClick={handleDownload}
+                            disabled={downloading || !invitationQrUrl}
+                            className="bg-white text-[#1d4ed8] border border-[#1d4ed8] shadow-lg rounded-full w-[56px] h-[56px] flex items-center justify-center font-bold active:scale-95 transition-transform shrink-0"
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                          </button>
+                          <Link
+                            href={`/xac-nhan-dong-gop?id=${id}`}
+                            className="bg-emerald-600 text-white shadow-[0_10px_40px_rgba(5,150,105,0.3)] rounded-full px-6 h-[56px] flex items-center justify-center font-bold text-[15px] active:scale-95 transition-transform whitespace-nowrap"
+                          >
+                            Mở trang thanh toán
+                          </Link>
+                        </>
+                      ) : (
+                        <button
+                          onClick={handleDownload}
+                          disabled={downloading || !invitationQrUrl}
+                          className="bg-[#1d4ed8] text-white shadow-[0_10px_40px_rgba(29,78,216,0.3)] rounded-full w-[220px] h-[56px] flex items-center justify-center font-bold text-[15px] active:scale-95 transition-transform"
+                        >
+                          <svg className="w-5 h-5 shrink-0 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          {downloading ? "Đang tải..." : "Tải thư mời về máy"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </>,
                 document.body

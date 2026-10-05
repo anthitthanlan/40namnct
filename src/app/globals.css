@@ -83,6 +83,8 @@ h6,
   inset: 0;
   opacity: 0;
   transition: opacity 1.4s ease-in-out;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity;
 }
 
 .hero-slide.active {
@@ -91,15 +93,17 @@ h6,
 
 .hero-slide.active img {
   animation: kenburns 9s ease-out forwards;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 @keyframes kenburns {
   from {
-    transform: scale(1.12) translateX(1.5%);
+    transform: scale(1.1) translate3d(1%, 0, 0);
   }
 
   to {
-    transform: scale(1) translateX(0);
+    transform: scale(1) translate3d(0, 0, 0);
   }
 }
 
@@ -131,17 +135,35 @@ html {
     radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.8) 0%, transparent 60%),
     linear-gradient(90deg, #16a34a 0%, #eab308 25%, #16a34a 50%, #eab308 75%, #16a34a 100%);
   background-size: 200% 200%, 200% 200%, 200% 100%;
-  animation: liquid-wave 4s linear infinite;
+  animation: liquid-wave 5s linear infinite;
+  transform: translate3d(0, 0, 0);
 }
 
-.hover\:bg-live-gradient:hover {
-  background-color: #16a34a;
-  background-image:
-    radial-gradient(circle at 50% 50%, rgba(234, 179, 8, 0.9) 0%, transparent 60%),
-    radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.8) 0%, transparent 60%),
-    linear-gradient(90deg, #16a34a 0%, #eab308 25%, #16a34a 50%, #eab308 75%, #16a34a 100%);
-  background-size: 200% 200%, 200% 200%, 200% 100%;
-  animation: liquid-wave 4s linear infinite;
+.opacity-0 .bg-live-gradient,
+.opacity-0.bg-live-gradient {
+  animation-play-state: paused !important;
+}
+
+/* Pure CSS Marquee for Audio Player (0% CPU Compositor thread) */
+@keyframes css-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee-slow {
+  animation: css-marquee 6s linear infinite;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+.animate-marquee-slower {
+  animation: css-marquee 9s linear infinite;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 /* ===== Shake Error Animation (Transitions.dev) ===== */
@@ -386,9 +408,9 @@ body {
   position: absolute;
   border-radius: 9999px;
   background: #ffffff;
-  box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 3px rgba(255, 255, 255, 0.7);
   animation: twinkle 3.4s ease-in-out infinite;
-  will-change: opacity, transform;
+  transform: translate3d(0, 0, 0);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -396,6 +418,15 @@ body {
     animation: none;
     opacity: 0.6;
   }
+}
+
+/* Performance: Offscreen content rendering optimization */
+#gioi-thieu,
+#sao-ke,
+#khoanh-khac,
+#cau-chuyen {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
 }
 
 /* ===== Glassmorphic Kính Đen (Refined Glass) ===== */
@@ -536,7 +567,7 @@ body {
   --digit-dur: 500ms;
   --digit-distance: 8px;
   --digit-stagger: 70ms;
-  --digit-blur: 2px;
+  --digit-blur: 0px;
   --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
   --digit-dir-x: 0;
   --digit-dir-y: 1;
@@ -544,16 +575,14 @@ body {
 
 @keyframes t-digit-pop-in {
   0% {
-    transform: translate(calc(var(--digit-distance) * var(--digit-dir-x)),
-        calc(var(--digit-distance) * var(--digit-dir-y)));
+    transform: translate3d(calc(var(--digit-distance) * var(--digit-dir-x)),
+        calc(var(--digit-distance) * var(--digit-dir-y)), 0);
     opacity: 0;
-    filter: blur(var(--digit-blur));
   }
 
   100% {
-    transform: translate(0, 0);
+    transform: translate3d(0, 0, 0);
     opacity: 1;
-    filter: blur(0);
   }
 }
 
@@ -564,7 +593,7 @@ body {
 
 .t-digit {
   display: inline-block;
-  will-change: transform, opacity, filter;
+  transform: translate3d(0, 0, 0);
 }
 
 .t-digit-group.is-animating .t-digit {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 const EVENT_DATE = new Date("2026-10-11T23:00:00+07:00");
 
@@ -28,9 +28,21 @@ function calculateTimeLeft(): TimeLeft {
 }
 
 function AnimatedDigits({ value, className = "" }: { value: number; className?: string }) {
+  const [animating, setAnimating] = useState(false);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (prevValue.current !== value) {
+      prevValue.current = value;
+      setAnimating(true);
+      const t = setTimeout(() => setAnimating(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [value]);
+
   const str = String(value).padStart(2, "0");
   return (
-    <span className={`t-digit-group is-animating ${className}`}>
+    <span className={`t-digit-group ${animating ? "is-animating" : ""} ${className}`}>
       {str.split("").map((char, i) => (
         <span key={`${i}-${char}`} className="t-digit" data-stagger={i > 0 ? i : undefined}>
           {char}
@@ -47,11 +59,34 @@ export default function CountdownBadge() {
   useEffect(() => {
     setIsClient(true);
     setTimeLeft(calculateTimeLeft());
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
 
-    return () => clearInterval(timer);
+    let timer: NodeJS.Timeout;
+
+    const startTimer = () => {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        if (!document.hidden) {
+          setTimeLeft(calculateTimeLeft());
+        }
+      }, 1000);
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(timer);
+      } else {
+        setTimeLeft(calculateTimeLeft());
+        startTimer();
+      }
+    };
+
+    startTimer();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   if (!isClient) return null;

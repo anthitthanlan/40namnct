@@ -238,10 +238,9 @@ export default function MusicPlayer() {
                     className="w-[100px] overflow-hidden whitespace-nowrap"
                     style={{ WebkitMaskImage: 'linear-gradient(to right, black 80%, transparent 100%)', maskImage: 'linear-gradient(to right, black 80%, transparent 100%)' }}
                   >
-                    <motion.div
-                      animate={{ x: ["0%", "-50%"] }}
-                      transition={{ repeat: Infinity, ease: "linear", duration: 5 }}
-                      className="flex w-fit"
+                    <div
+                      className={`flex w-fit ${isPlaying ? "animate-marquee-slow" : ""}`}
+                      style={{ animationPlayState: isPlaying ? "running" : "paused" }}
                     >
                       <span className="text-xs font-bold text-slate-900 tracking-wide leading-none pr-6">
                         NCT Đón Chào Ngày Mai
@@ -249,7 +248,7 @@ export default function MusicPlayer() {
                       <span className="text-xs font-bold text-slate-900 tracking-wide leading-none pr-6">
                         NCT Đón Chào Ngày Mai
                       </span>
-                    </motion.div>
+                    </div>
                   </div>
                   <span className="text-[10px] text-slate-500 font-medium leading-none mt-0.5 tabular-nums">
                     {formatTime(currentTime)}
@@ -332,10 +331,9 @@ export default function MusicPlayer() {
                       className="w-[170px] overflow-hidden whitespace-nowrap mt-0.5"
                       style={{ WebkitMaskImage: 'linear-gradient(to right, black 85%, transparent 100%)', maskImage: 'linear-gradient(to right, black 85%, transparent 100%)' }}
                     >
-                      <motion.div
-                        animate={{ x: ["0%", "-50%"] }}
-                        transition={{ repeat: Infinity, ease: "linear", duration: 8 }}
-                        className="flex w-fit"
+                      <div
+                        className={`flex w-fit ${isPlaying ? "animate-marquee-slower" : ""}`}
+                        style={{ animationPlayState: isPlaying ? "running" : "paused" }}
                       >
                         <h4 className="text-sm font-bold text-slate-900 leading-snug pr-8">
                           Trường Nguyễn Công Trứ đón chào ngày mai
@@ -343,7 +341,7 @@ export default function MusicPlayer() {
                         <h4 className="text-sm font-bold text-slate-900 leading-snug pr-8">
                           Trường Nguyễn Công Trứ đón chào ngày mai
                         </h4>
-                      </motion.div>
+                      </div>
                     </div>
                     <motion.p layout="position" className="text-[11px] text-slate-500 truncate mt-0.5">
                       Phạm Gia Khang

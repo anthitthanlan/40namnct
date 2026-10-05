@@ -93,8 +93,9 @@ export default function RegisterForm() {
   const [readNote, setReadNote] = useState(false);
   const [subscribeNews, setSubscribeNews] = useState(false);
 
-  // Combo Toggle
+  // Combo & Lock State
   const [buyCombo, setBuyCombo] = useState(false);
+  const [isInfoLocked, setIsInfoLocked] = useState(false);
   const [type, setType] = useState<"individual" | "group">("individual");
 
   // Individual Combo
@@ -302,10 +303,7 @@ export default function RegisterForm() {
       : comboCount * 500000
     : 0;
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    setError("");
-
+  const validateStep1 = () => {
     const newFieldErrors: Record<string, boolean> = {};
     const errorMsgs: string[] = [];
     let hasMissingRequired = false;
@@ -342,7 +340,58 @@ export default function RegisterForm() {
       hasMissingRequired = true;
     }
 
-    if (buyCombo && type === "group") {
+    if (hasMissingRequired) {
+      errorMsgs.unshift("Vui lòng hoàn thành các phần bắt buộc trước khi tiếp tục.");
+    }
+
+    return { isValid: errorMsgs.length === 0, newFieldErrors, errorMsgs };
+  };
+
+  const handleContinue = (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) e.preventDefault();
+    setError("");
+
+    const { isValid, newFieldErrors, errorMsgs } = validateStep1();
+    if (!isValid) {
+      setError(errorMsgs.join("\n"));
+      setFieldErrors({});
+      setTimeout(() => {
+        setFieldErrors(newFieldErrors);
+        setTimeout(() => {
+          const firstErrNode = document.querySelector(".shake-error");
+          if (firstErrNode) {
+            firstErrNode.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 50);
+      }, 10);
+      return;
+    }
+
+    setIsInfoLocked(true);
+    setBuyCombo(true);
+  };
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    if (!isInfoLocked) {
+      handleContinue(e);
+      return;
+    }
+
+    const { isValid: step1Valid, newFieldErrors, errorMsgs } = validateStep1();
+    if (!step1Valid) {
+      setIsInfoLocked(false);
+      setError(errorMsgs.join("\n"));
+      setFieldErrors({});
+      setTimeout(() => {
+        setFieldErrors(newFieldErrors);
+      }, 10);
+      return;
+    }
+
+    if (type === "group") {
       if (comboCount < 2) {
         newFieldErrors["comboCount"] = true;
         errorMsgs.push("Đăng ký tập thể vui lòng chọn số lượng tối thiểu là 2.");
@@ -351,10 +400,6 @@ export default function RegisterForm() {
         newFieldErrors["sizes"] = true;
         errorMsgs.push(`Vui lòng phân bổ chính xác ${comboCount} áo vào các size (đang chọn ${currentTotalSizes}).`);
       }
-    }
-
-    if (hasMissingRequired) {
-      errorMsgs.unshift("Vui lòng hoàn thành các phần bắt buộc."); // Put missing required first
     }
 
     if (errorMsgs.length > 0) {
@@ -505,6 +550,7 @@ export default function RegisterForm() {
                   <input
                     type="text"
                     value={name}
+                    disabled={isInfoLocked}
                     onChange={(e) => {
                       const val = e.target.value;
                       // Auto-capitalize: viết hoa chữ cái đầu của mỗi từ (hỗ trợ cả tiếng Việt có dấu)
@@ -512,7 +558,7 @@ export default function RegisterForm() {
                     }}
                     placeholder="Nguyễn Văn A"
                     required
-                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
                       fieldErrors["name"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
                     }`}
                   />
@@ -527,9 +573,10 @@ export default function RegisterForm() {
                     <input
                       type="text"
                       value={nienKhoa}
+                      disabled={isInfoLocked}
                       onChange={handleNienKhoaChange}
                       placeholder="VD: 1986 - 1989"
-                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
                         fieldErrors["nienKhoa"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
                       }`}
                     />
@@ -541,9 +588,10 @@ export default function RegisterForm() {
                     <input
                       type="text"
                       value={lop}
+                      disabled={isInfoLocked}
                       onChange={(e) => setLop(e.target.value)}
                       placeholder="VD: 12A1"
-                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
                         fieldErrors["lop"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
                       }`}
                     />
@@ -558,10 +606,11 @@ export default function RegisterForm() {
                   <input
                     type="tel"
                     value={phone}
+                    disabled={isInfoLocked}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="0901234567"
                     required
-                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
                       fieldErrors["phone"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
                     }`}
                   />
@@ -575,9 +624,10 @@ export default function RegisterForm() {
                   <input
                     type="email"
                     value={email}
+                    disabled={isInfoLocked}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 ${
+                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
                       fieldErrors["email"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
                     }`}
                   />
@@ -590,9 +640,10 @@ export default function RegisterForm() {
                   </label>
                   <textarea
                     value={note}
+                    disabled={isInfoLocked}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="Bạn có muốn gửi gắm điều gì cho BTC chương trình không?"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 resize-y"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 resize-y disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed"
                     maxLength={500}
                     rows={3}
                   />
@@ -607,15 +658,17 @@ export default function RegisterForm() {
 
                     <div className="flex flex-col gap-3 mt-4">
                       <div
-                        className={`flex items-center gap-3 cursor-pointer group w-fit rounded-lg p-1 -ml-1 transition-all ${
+                        className={`flex items-center gap-3 w-fit rounded-lg p-1 -ml-1 transition-all ${
+                          isInfoLocked ? "opacity-70 cursor-not-allowed" : "cursor-pointer group"
+                        } ${
                           fieldErrors["readNote"] ? "shake-error ring-2 ring-red-500/50 bg-red-50" : ""
                         }`}
-                        onClick={() => setReadNote(!readNote)}
+                        onClick={() => !isInfoLocked && setReadNote(!readNote)}
                       >
                         <CustomCheckbox
                           checked={readNote}
-                          onChange={setReadNote}
-                          className={`w-5 h-5 group-hover:border-blue-400 ${fieldErrors["readNote"] ? "border-red-500" : ""}`}
+                          onChange={(val) => !isInfoLocked && setReadNote(val)}
+                          className={`w-5 h-5 ${isInfoLocked ? "" : "group-hover:border-blue-400"} ${fieldErrors["readNote"] ? "border-red-500" : ""}`}
                         />
                         <span className="text-sm font-medium text-gray-800 select-none group-hover:text-blue-900 transition-colors">
                           Tôi đã đọc và hiểu rõ thông tin trên <span className="text-red-500">*</span>
@@ -623,13 +676,15 @@ export default function RegisterForm() {
                       </div>
 
                       <div
-                        className="flex items-center gap-3 cursor-pointer group w-fit rounded-lg p-1 -ml-1 transition-all"
-                        onClick={() => setSubscribeNews(!subscribeNews)}
+                        className={`flex items-center gap-3 w-fit rounded-lg p-1 -ml-1 transition-all ${
+                          isInfoLocked ? "opacity-70 cursor-not-allowed" : "cursor-pointer group"
+                        }`}
+                        onClick={() => !isInfoLocked && setSubscribeNews(!subscribeNews)}
                       >
                         <CustomCheckbox
                           checked={subscribeNews}
-                          onChange={setSubscribeNews}
-                          className="w-5 h-5 group-hover:border-blue-400"
+                          onChange={(val) => !isInfoLocked && setSubscribeNews(val)}
+                          className={`w-5 h-5 ${isInfoLocked ? "" : "group-hover:border-blue-400"}`}
                         />
                         <span className="text-sm font-medium text-gray-700 select-none group-hover:text-gray-900 transition-colors">
                           Đăng ký nhận thông báo nhắc nhở qua email về chương trình
@@ -638,35 +693,56 @@ export default function RegisterForm() {
                     </div>
                   </div>
 
-                {/* Footer Section: Grouped to prevent flex gap snap when unmounting */}
-                <motion.div layout className="flex flex-col">
-                  <div className="pt-2">
-                    <div
-                      onClick={() => setBuyCombo(!buyCombo)}
-                      className={`flex items-center gap-4 p-4 rounded-xl border transition-colors cursor-pointer group ${buyCombo
-                          ? "border-blue-500 bg-blue-50 shadow-sm"
-                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                        }`}
-                    >
-                      <CustomCheckbox
-                        checked={buyCombo}
-                        onChange={setBuyCombo}
-                        className="w-6 h-6 border-2 group-hover:border-blue-400"
-                      />
-                      <div>
-                        <p className={`font-medium transition-colors ${buyCombo ? "text-blue-900" : "text-gray-900"}`}>
-                          Đăng ký Áo kỉ niệm
-                        </p>
-                        <p className={`text-sm mt-0.5 transition-colors ${buyCombo ? "text-blue-700/80" : "text-gray-500"}`}>
-                          Giá 500.000đ/suất bao gồm áo kỷ niệm 40 năm và F&B liên hoan giao lưu.
-                          <br />
-                          <span className="text-blue-600/90 font-medium inline-block mt-1">Có thể đăng kí áo tập thể.</span>
-                        </p>
-                      </div>
+                {/* Section Tiếp tục hoặc Đã khóa thông tin */}
+                <motion.div layout className="flex flex-col pt-3 border-t border-gray-100">
+                  {/* Hiển thị lỗi nếu có khi chưa khóa thông tin */}
+                  {!isInfoLocked && error && (
+                    <div className="mb-3 p-3.5 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs font-medium space-y-1">
+                      {error.split("\n").map((msg, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-red-500 font-bold">•</span>
+                          <span>{msg}</span>
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Khi chưa chọn áo: không hiển thị nút submit */}
+                  {!isInfoLocked ? (
+                    <button
+                      type="button"
+                      onClick={handleContinue}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-6 rounded-xl transition-all shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2 group text-base cursor-pointer"
+                    >
+                      <span>Tiếp tục</span>
+                      <svg
+                        className="w-5 h-5 transition-transform group-hover:translate-x-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-between p-3.5 bg-blue-50 border border-blue-200/80 rounded-xl text-blue-900 text-sm">
+                      <div className="flex items-center gap-2.5 font-semibold">
+                        <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs shrink-0">
+                          ✓
+                        </div>
+                        <span>Đã xác nhận thông tin cơ bản</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsInfoLocked(false);
+                          setBuyCombo(false);
+                        }}
+                        className="text-xs font-bold text-blue-700 hover:text-blue-900 underline underline-offset-2 transition-colors ml-2 cursor-pointer"
+                      >
+                        Chỉnh sửa lại
+                      </button>
+                    </div>
+                  )}
                 </motion.div>
               </motion.div>
 

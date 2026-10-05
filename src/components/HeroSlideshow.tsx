@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Reveal from "@/components/Reveal";
 
 type Slide = { src: string; alt: string };
@@ -40,16 +40,54 @@ export default function HeroSlideshow() {
     setCurrent(0);
   }, [slides]);
 
+  const headerRef = useRef<HTMLElement | null>(null);
+  const [isInView, setIsInView] = useState(true);
+
   useEffect(() => {
-    const id = setInterval(
-      () => setCurrent((c) => (c + 1) % slides.length),
-      DURATION,
+    const el = headerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
     );
-    return () => clearInterval(id);
-  }, [slides.length]);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    let id: NodeJS.Timeout;
+    const start = () => {
+      clearInterval(id);
+      id = setInterval(() => {
+        if (!document.hidden) {
+          setCurrent((c) => (c + 1) % slides.length);
+        }
+      }, DURATION);
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearInterval(id);
+      } else {
+        start();
+      }
+    };
+
+    start();
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [slides.length, isInView]);
 
   return (
-    <header className="relative h-screen min-h-[600px] w-full overflow-hidden">
+    <header ref={headerRef} className="relative h-screen min-h-[600px] w-full overflow-hidden">
       {/* Slideshow - full width */}
       {slides.map((slide, i) => (
         <div key={slide.src} className={`hero-slide ${i === current ? "active" : ""}`}>

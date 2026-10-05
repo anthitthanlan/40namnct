@@ -45,16 +45,39 @@ export default function SchoolAnimatedBg() {
   }, [images]);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % images.length);
-    }, SLIDE_DURATION);
-    return () => clearInterval(timer);
+    if (images.length <= 1) return;
+    let timer: NodeJS.Timeout | null = null;
+    const start = () => {
+      if (!timer) {
+        timer = setInterval(() => {
+          if (!document.hidden) {
+            setCurrent((prev) => (prev + 1) % images.length);
+          }
+        }, SLIDE_DURATION);
+      }
+    };
+    const stop = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+    start();
+    const handleVisibility = () => {
+      if (document.hidden) stop();
+      else start();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [images.length]);
 
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden [contain:strict] [transform:translateZ(0)]"
     >
       {/* Slideshow background trường */}
       {images.map((img, index) => {
@@ -63,7 +86,7 @@ export default function SchoolAnimatedBg() {
           <div
             key={img.src}
             className={`absolute inset-0 transition-opacity duration-[var(--duration-very-slow)] ease-[var(--ease-in-out)] ${
-              isActive ? "opacity-100" : "opacity-0"
+              isActive ? "opacity-100" : "opacity-0 pointer-events-none invisible"
             }`}
           >
             <div

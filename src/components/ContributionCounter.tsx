@@ -22,7 +22,7 @@ const STARS = (() => {
     seed = (seed * 1664525 + 1013904223) % 4294967296;
     return seed / 4294967296;
   };
-  return Array.from({ length: 70 }, () => ({
+  return Array.from({ length: 24 }, () => ({
     top: `${(rand() * 78).toFixed(2)}%`,
     left: `${(rand() * 100).toFixed(2)}%`,
     size: `${(1 + rand() * 2).toFixed(2)}px`,

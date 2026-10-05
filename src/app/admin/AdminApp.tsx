@@ -12,6 +12,7 @@ import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
 import AdminEditPost from "./AdminEditPost";
 import AdminCategories from "./AdminCategories";
+import AdminEmail from "./AdminEmail";
 import AdminCameraScanner from "@/components/AdminCameraScanner";
 import { useConfirm } from "@/components/useConfirm";
 
@@ -22,7 +23,7 @@ declare global {
 }
 
 type View = "checking" | "anon" | "admin";
-type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "media" | "accounts" | "scanner" | "edit" | "categories";
+type Tab = "pending" | "published" | "draft" | "all" | "invitations" | "email" | "media" | "accounts" | "scanner" | "edit" | "categories";
 
 type Draft = {
   id: string | null;
@@ -501,6 +502,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
       title: "Hệ thống",
       items: [
         ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
+        ...(!isEditor ? [{ key: "email", label: "Gửi Email" } as const] : []),
         ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
         ...(!isEditor ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
         { key: "accounts", label: "Quản lý tài khoản" },
@@ -508,7 +510,7 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
     },
   ].filter((g) => g.items.length > 0);
 
-  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "categories", "invitations", "scanner", "media", "accounts", "edit"];
+  const ALL_TABS: Tab[] = ["pending", "published", "draft", "all", "categories", "invitations", "email", "scanner", "media", "accounts", "edit"];
   const activeIndex = ALL_TABS.indexOf(tab);
 
   return (
@@ -632,6 +634,27 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
 
 
 
+          {/* Mobile Tabs Bar */}
+          <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 custom-scrollbar">
+            {menuGroups.flatMap((g) => g.items).map(({ key, label }) => {
+              const isCurrent = tab === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleTabChange(key as Tab)}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-extrabold whitespace-nowrap transition-all ${
+                    isCurrent
+                      ? "bg-[#1d4ed8] text-white shadow-xs"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
           <div className="t-page-slide relative">
             {ALL_TABS.map((k, i) => {
               if (!visited.has(k)) return null;
@@ -641,6 +664,8 @@ export default function AdminApp({ initialTab = "all" }: { initialTab?: Tab }) {
               let content = null;
               if (k === "invitations") {
                 content = <AdminRegistrations onAuthError={() => setView("anon")} />;
+              } else if (k === "email") {
+                content = <AdminEmail onAuthError={() => setView("anon")} />;
               } else if (k === "media") {
                 content = <AdminMedia onAuthError={() => setView("anon")} />;
               } else if (k === "scanner") {

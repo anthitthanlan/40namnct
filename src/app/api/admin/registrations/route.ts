@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { getAdminFromRequest, unauthorized, COOKIE_NAME } from "@/lib/auth";
 import {
   listMembers,
   listInvitations,
@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
   const admin = getAdminFromRequest(req);
   if (!admin || admin.role === "editor") return unauthorized();
 
-  const [members, invitations] = await Promise.all([listMembers(), listInvitations()]);
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  const [members, invitations] = await Promise.all([listMembers(token), listInvitations(token)]);
   const byId = new Map(members.map((m) => [m.id, m]));
 
   const invitationViews = invitations
@@ -29,6 +30,7 @@ export async function GET(req: NextRequest) {
         ...t,
         memberName: m?.name ?? "(đã xoá)",
         memberPhone: m?.phone ?? "",
+        memberEmail: m?.email ?? "",
       };
     });
 
@@ -40,6 +42,7 @@ export async function GET(req: NextRequest) {
       id: m.id,
       name: m.name,
       phone: m.phone,
+      email: m.email ?? "",
       createdAt: m.createdAt,
       invitationCount: mine.length,
       peopleCount: mine.reduce((sum, t) => sum + t.quantity, 0),
@@ -52,7 +55,7 @@ export async function GET(req: NextRequest) {
     };
   });
 
-  const logs = admin.role === "super_admin" ? await listActionLogs() : [];
+  const logs = admin.role === "super_admin" ? await listActionLogs(token) : [];
 
   return NextResponse.json({ 
     ok: true, 

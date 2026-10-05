@@ -547,7 +547,7 @@ export default function AdminRegistrations({
               statusFilter === "all" ? "Tất cả" :
               statusFilter === "pending_approval" ? "Chờ đối soát (48h)" :
               statusFilter === "confirmed" ? "Đã duyệt" :
-              statusFilter === "pending_payment" ? "Chờ đóng góp" :
+              statusFilter === "pending_payment" ? "Chờ thanh toán" :
               statusFilter === "checked_in" ? "Đã check-in" :
               statusFilter === "shirt_received" ? "Đã nhận áo" :
               statusFilter === "rejected" ? "Đã từ chối" :
@@ -855,11 +855,11 @@ export default function AdminRegistrations({
 
                       {(t.status === "pending_payment" || t.status === "pending") && (
                         <a
-                          href={`/thanh-toan?id=${t.id}`}
+                          href={`/xac-nhan-dong-gop?id=${t.id}`}
                           target="_blank"
                           className="rounded-xl bg-amber-100 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
                         >
-                          <span className="material-symbols-rounded text-[16px]">payments</span> Trang đóng góp
+                          <span className="material-symbols-rounded text-[16px]">payments</span> Mở trang thanh toán
                         </a>
                       )}
 

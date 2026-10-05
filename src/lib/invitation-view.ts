@@ -80,7 +80,7 @@ export function invitationStatusInfo(status: InvitationStatus | string): {
     case "pending_payment":
     case "pending":
       return {
-        label: "Chờ đóng góp",
+        label: "Chờ thanh toán",
         cls: "bg-amber-100 text-amber-800 border border-amber-300",
         desc: "Đang chờ người dùng quét QR và upload biên lai đóng góp",
       };

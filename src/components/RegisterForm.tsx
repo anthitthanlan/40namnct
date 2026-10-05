@@ -687,7 +687,7 @@ export default function RegisterForm() {
                           className={`w-5 h-5 ${isInfoLocked ? "" : "group-hover:border-blue-400"}`}
                         />
                         <span className="text-sm font-medium text-gray-700 select-none group-hover:text-gray-900 transition-colors">
-                          Đăng ký nhận thông báo nhắc nhở qua email về chương trình
+                          Đăng ký nhận thông báo qua email về chương trình
                         </span>
                       </div>
                     </div>

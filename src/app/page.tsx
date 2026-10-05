@@ -176,25 +176,25 @@ export default async function Home() {
           <div className="relative border-l-2 border-[#16a34a]/20 pl-8 ml-4 md:ml-12 space-y-10">
             {[
               {
-                time: "07:30",
+                time: "07:30 - 8:00",
                 title: "Đón tiếp & Tham quan",
                 desc: "Đón tiếp, giao lưu, tham quan Phòng Truyền thống và cơ sở vật chất nhà trường.",
                 icon: "groups"
               },
               {
-                time: "09:00",
+                time: "08:00 - 10:00",
                 title: "Chương trình Họp mặt",
                 desc: "Chương trình Họp mặt kỷ niệm 40 năm.",
                 icon: "celebration"
               },
               {
-                time: "10:30",
+                time: "10:00",
                 title: "Chụp ảnh & Giao lưu",
-                desc: "Chụp ảnh lưu niệm và giao lưu tự do.",
+                desc: "Chụp ảnh lưu niệm và giao lưu tự do.\nTiệc thân mật và văn nghệ.",
                 icon: "photo_camera"
               },
               {
-                time: "11:30",
+                time: "10:00",
                 title: "Tiệc thân mật & Văn nghệ",
                 desc: "Tiệc thân mật, gặp gỡ, giao lưu các thế hệ và thưởng thức văn nghệ.",
                 icon: "restaurant"

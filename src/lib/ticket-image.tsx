@@ -58,6 +58,8 @@ function loadFonts(): FontDef[] {
   add("Inter", "Inter-Regular.woff", 400);
   add("Inter", "Inter-SemiBold.woff", 600);
   add("Inter", "Inter-Bold.woff", 800);
+  add("Unbounded", "Unbounded-Regular.woff", 400);
+  add("Unbounded", "Unbounded-Bold.woff", 700);
   add("Prata", "Prata-Regular.woff", 400);
   add("Beau Rivage", "BeauRivage-Regular.woff", 400);
   
@@ -72,24 +74,21 @@ export async function renderTicketPng(
 
   const qrText = `${name} - ${phone} - ${invitationCode}`;
   const qrDataUri = await QRCode.toDataURL(qrText, {
-    width: 176, // 44 * 4
-    margin: 2,
-    color: { dark: '#000000', light: '#ffffff' }
+    width: 400,
+    margin: 1,
+    errorCorrectionLevel: "M",
   });
 
-  const bgBuf = readPublic("invitation_image", "bg.webp");
-  const bgPng = await sharp(bgBuf).png().toBuffer();
-  const bg = `data:image/png;base64,${bgPng.toString("base64")}`;
-  
+  const bgBuf = readPublic("invitation background image", "thu-moi-NCT-anh-nen.jpg");
+  const bg = `data:image/jpeg;base64,${bgBuf.toString("base64")}`;
   const logoNct = await webpToPngDataUri("images", "logo_nct.webp");
   const logo40 = await webpToPngDataUri("images", "Logo_40th_NCT.webp");
 
-  // The actual element is 380x600 roughly, we will render it exactly
   const tree = (
     <div
       style={{
-        width: px(380),
-        height: px(610),
+        width: "100%",
+        height: "100%",
         display: "flex",
         flexDirection: "column",
         position: "relative",
@@ -99,12 +98,17 @@ export async function renderTicketPng(
         overflow: "hidden",
       }}
     >
-      {/* Background Layer (opacity 0.3) with gradient mask simulated by fading to white at edges */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", opacity: 0.3 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={bg} alt="" width={380 * SCALE} height={610 * SCALE} style={{ objectFit: "cover" }} />
-      </div>
+      {/* Background Image */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={bg}
+        alt=""
+        width={W * SCALE}
+        height={H * SCALE}
+        style={{ position: "absolute", top: 0, left: 0, objectFit: "cover" }}
+      />
       
+      {/* Overlay to fade background */}
       <div
         style={{
           position: "absolute",
@@ -112,17 +116,10 @@ export async function renderTicketPng(
           left: 0,
           width: "100%",
           height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,1) 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0) 75%, rgba(255,255,255,1) 100%)",
+          backgroundImage: "linear-gradient(to bottom, rgba(255,255,255,0.95) 5%, rgba(255,255,255,0.7) 25%, rgba(255,255,255,0.7) 75%, rgba(255,255,255,0.95) 95%)",
         }}
       />
 
-      {/* Corner decorations */}
-      <div style={{ position: "absolute", top: 0, left: 0, width: px(56), height: px(56), borderTop: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderLeft: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderTopLeftRadius: px(24) }} />
-      <div style={{ position: "absolute", bottom: 0, right: 0, width: px(56), height: px(56), borderBottom: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderRight: `${4 * SCALE}px solid rgba(30,58,138,0.1)`, borderBottomRightRadius: px(24) }} />
-
-      {/* Content Wrapper */}
       <div
         style={{
           display: "flex",
@@ -133,7 +130,7 @@ export async function renderTicketPng(
           zIndex: 10,
         }}
       >
-        {/* Header: Logos & Title */}
+        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -149,17 +146,13 @@ export async function renderTicketPng(
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logo40} alt="" width={40 * SCALE} height={40 * SCALE} />
           </div>
-          <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-            <span style={{ fontFamily: "Inter", fontWeight: 800, fontSize: px(12), color: "#1e3a8a", lineHeight: 1.25, letterSpacing: px(0.5) }}>
-              KỈ NIỆM 40 NĂM THÀNH LẬP
-            </span>
-            <span style={{ fontFamily: "Inter", fontWeight: 800, fontSize: px(12), color: "#1e3a8a", lineHeight: 1.25, letterSpacing: px(0.5) }}>
-              TRƯỜNG THPT NGUYỄN CÔNG TRỨ
-            </span>
+          <div style={{ display: "flex", flexDirection: "column", fontFamily: "Unbounded", fontWeight: 700, color: "#1e3a8a", fontSize: px(12), textTransform: "uppercase", letterSpacing: "0.025em" }}>
+            <span>Kỉ niệm 40 năm thành lập</span>
+            <span>Trường THPT Nguyễn Công Trứ</span>
           </div>
         </div>
 
-        {/* QR Code */}
+        {/* QR */}
         <div style={{ display: "flex", justifyContent: "center", marginTop: px(12), marginBottom: px(20) }}>
           <div
             style={{
@@ -168,7 +161,6 @@ export async function renderTicketPng(
               backgroundColor: "#ffffff",
               border: `${SCALE}px solid #e5e7eb`,
               borderRadius: px(16),
-              boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -176,44 +168,61 @@ export async function renderTicketPng(
           </div>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: px(20), marginTop: px(-8) }}>
-          <span style={{ fontFamily: "Beau Rivage", fontSize: px(40), color: "#047857", lineHeight: 1, paddingTop: px(8) }}>
-            Memories Alive Again
-          </span>
+        {/* Slogan */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            fontFamily: "Beau Rivage",
+            fontSize: px(40),
+            color: "#047857",
+            marginBottom: px(20),
+            marginTop: px(-8),
+            lineHeight: 1,
+          }}
+        >
+          Memories Alive Again
         </div>
 
-        {/* Invitation Info */}
-        <div style={{ display: "flex", flexDirection: "column", fontFamily: "Inter", fontSize: px(15), color: "#1f2937" }}>
-          <div style={{ display: "flex", marginBottom: px(6) }}>
-            <span style={{ width: px(112), fontWeight: 600, color: "#374151" }}>Cựu học sinh:</span>
-            <span style={{ fontFamily: "Prata", fontWeight: 400, fontSize: px(18), color: "#111827", letterSpacing: px(0.5) }}>{name}</span>
+        {/* Info */}
+        <div style={{ display: "flex", flexDirection: "column", fontSize: px(15), color: "#1f2937", gap: px(6) }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <span style={{ fontFamily: "Inter", fontWeight: 600, color: "#374151", width: px(112) }}>Cựu học sinh:</span>
+            <span style={{ fontFamily: "Prata", fontWeight: 400, color: "#111827", fontSize: px(18), letterSpacing: "0.025em" }}>{name}</span>
           </div>
-          <div style={{ display: "flex", marginBottom: px(6) }}>
-            <span style={{ width: px(112), fontWeight: 600, color: "#374151" }}>Niên khóa:</span>
-            <span style={{ fontFamily: "Prata", fontWeight: 400 }}>{nienKhoa || "Không rõ"}</span>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <span style={{ fontFamily: "Inter", fontWeight: 600, color: "#374151", width: px(112) }}>Niên khóa:</span>
+            <span style={{ fontFamily: "Prata", fontWeight: 400, color: "#111827" }}>{nienKhoa}</span>
           </div>
-          <div style={{ display: "flex", marginBottom: px(6) }}>
-            <span style={{ width: px(112), fontWeight: 600, color: "#374151" }}>SĐT:</span>
-            <span style={{ fontFamily: "Prata", fontWeight: 400 }}>{phone}</span>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <span style={{ fontFamily: "Inter", fontWeight: 600, color: "#374151", width: px(112) }}>SĐT:</span>
+            <span style={{ fontFamily: "Prata", fontWeight: 400, color: "#111827" }}>{phone}</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", paddingTop: px(12), marginTop: px(4), borderTop: `${SCALE}px solid #f3f4f6` }}>
-            <div style={{ display: "flex", alignItems: "flex-start", marginBottom: px(6) }}>
+          {/* Time & place */}
+          <div style={{ display: "flex", flexDirection: "column", paddingTop: px(12), marginTop: px(4), borderTop: `${SCALE}px solid #f3f4f6`, gap: px(6) }}>
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
+              <svg width={18*SCALE} height={18*SCALE} viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: px(8), marginTop: px(2) }}>
+                <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 600, color: "#374151", fontSize: px(13) }}>Thời gian:</span>
-                <span style={{ fontFamily: "Prata", color: "#1f2937" }}>08:00 - 08/11/2026</span>
+                <span style={{ fontFamily: "Inter", fontWeight: 600, color: "#374151", fontSize: px(13) }}>Thời gian:</span>
+                <span style={{ fontFamily: "Prata", fontWeight: 400, color: "#1f2937" }}>08:00 - 08/11/2026</span>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "flex-start" }}>
+              <svg width={18*SCALE} height={18*SCALE} viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: px(8), marginTop: px(2) }}>
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle>
+              </svg>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontWeight: 600, color: "#374151", fontSize: px(13) }}>Địa điểm:</span>
-                <span style={{ fontFamily: "Prata", color: "#1f2937" }}>Trường THPT Nguyễn Công Trứ</span>
+                <span style={{ fontFamily: "Inter", fontWeight: 600, color: "#374151", fontSize: px(13) }}>Địa điểm:</span>
+                <span style={{ fontFamily: "Prata", fontWeight: 400, color: "#1f2937" }}>Trường THPT Nguyễn Công Trứ</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Warning Footer */}
+        {/* Warning */}
         <div
           style={{
             display: "flex",
@@ -228,12 +237,16 @@ export async function renderTicketPng(
           </span>
         </div>
       </div>
+      
+      {/* Corner decorations */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: px(56), height: px(56), borderTop: `${SCALE*4}px solid rgba(30,58,138,0.1)`, borderLeft: `${SCALE*4}px solid rgba(30,58,138,0.1)`, borderTopLeftRadius: px(24) }} />
+      <div style={{ position: "absolute", bottom: 0, right: 0, width: px(56), height: px(56), borderBottom: `${SCALE*4}px solid rgba(30,58,138,0.1)`, borderRight: `${SCALE*4}px solid rgba(30,58,138,0.1)`, borderBottomRightRadius: px(24) }} />
     </div>
   );
 
   const res = new ImageResponse(tree, {
-    width: 380 * SCALE,
-    height: 610 * SCALE,
+    width: W * SCALE,
+    height: H * SCALE,
     fonts: loadFonts(),
   });
   return Buffer.from(await res.arrayBuffer());

@@ -93,13 +93,7 @@ export default async function PostDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {post.cover && post.cover !== extractFirstImage(post.content) && (
-          <img
-            src={post.cover}
-            alt={post.title}
-            className="mt-8 w-full rounded-3xl h-auto"
-          />
-        )}
+
 
         <div 
           className="mt-6 prose prose-slate sm:prose-lg max-w-none prose-img:rounded-2xl prose-img:mx-auto prose-video:w-full prose-video:rounded-2xl" 

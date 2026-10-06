@@ -109,7 +109,11 @@ export function sizesLabel(
   size: string | null,
   sizes: Record<string, number>,
 ): string {
-  if (type === "individual") return size ? `Size ${size}` : "";
+  if (type === "individual") {
+    if (!size) return "";
+    const parts = size.split("-");
+    return parts.length === 2 ? `Size ${parts[1]} (${parts[0]})` : `Size ${size}`;
+  }
   const keys: string[] = [
     ...SIZES,
     ...GENDERS.flatMap((g) => SIZES.map((s) => genderSizeKey(g, s))),

@@ -206,7 +206,7 @@ function InvitationContent() {
                     {/* Header: Logos & Title */}
                     <div className="flex items-center gap-3 mb-2 border-b border-gray-200 pb-3">
                       <div className="flex gap-1.5 shrink-0">
-                        <img src="/images/logo_nct.webp" alt="NCT Logo" className="w-10 h-10 object-contain" crossOrigin="anonymous" />
+                        <img src="/images/NCT.webp" alt="NCT Logo" className="w-10 h-10 object-contain" crossOrigin="anonymous" />
                         <img src="/images/Logo_40th_NCT.webp" alt="40th Logo" className="w-10 h-10 object-contain" crossOrigin="anonymous" />
                       </div>
                       <div className="text-left text-blue-900 font-black leading-tight uppercase text-[12px] tracking-wide w-full">

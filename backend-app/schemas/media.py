@@ -12,6 +12,7 @@ class MediaResponse(BaseModel):
     author: str
     authorRole: str = Field(alias="authorRole")
     caption: str
+    media_type: str = Field(alias="mediaType", default="media")
     status: str
     createdAt: str = Field(alias="createdAt")
 

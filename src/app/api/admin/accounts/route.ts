@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
   const admin = getAdminFromRequest(req);
   if (!admin || admin.role !== "super_admin") return unauthorized();
 
-  const accounts = await listAdminAccounts();
+  const token = req.cookies.get("nct_admin")?.value;
+  const accounts = await listAdminAccounts(token);
   return NextResponse.json({ ok: true, accounts });
 }
 
@@ -21,7 +22,8 @@ export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ ok: false, message: "Thiếu ID" }, { status: 400 });
 
-  const success = await deleteAdminAccount(id);
+  const token = req.cookies.get("nct_admin")?.value;
+  const success = await deleteAdminAccount(id, token);
   if (!success) {
     return NextResponse.json({ ok: false, message: "Không tìm thấy tài khoản" }, { status: 404 });
   }
@@ -35,7 +37,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const input = (await req.json()) as CreateAdminInput;
-    const result = await createAdminAccount(input);
+    const token = req.cookies.get("nct_admin")?.value;
+    const result = await createAdminAccount(input, token);
     if (!result.ok) {
       return NextResponse.json({ ok: false, message: result.message }, { status: 400 });
     }

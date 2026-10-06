@@ -29,11 +29,27 @@ export default async function BaiVietPage() {
   
   // Những bài còn lại
   const rest = posts.filter((p) => p.id !== featured?.id);
-  const adminPosts = rest.filter((p) => p.source === "admin" && !p.pinned);
+  const syntheticMotionPost = {
+    id: "nct-motion-breakdown",
+    slug: "NCTru-breakdown",
+    title: "Logo Breakdown - 40 năm Nguyễn Công Trứ",
+    excerpt: "Trải nghiệm tương tác: Phân rã và khám phá ý nghĩa các biểu tượng cấu thành nên logo THPT Nguyễn Công Trứ qua thao tác cuộn (scroll).",
+    author: "Ban Tổ chức",
+    authorRole: "Motion Graphic",
+    source: "admin",
+    status: "published",
+    pinned: false,
+    cover: null, // Sẽ được xử lý đặc biệt trong PostCard để render CSS animation
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  } as const;
+
+  const adminPosts = [syntheticMotionPost as any, ...rest.filter((p) => p.source === "admin" && !p.pinned)];
   const communityPosts = rest.filter((p) => p.source !== "admin" && !p.pinned);
 
   const allMedia = await listApprovedMediaChronological();
-  const shuffled = allMedia.sort(() => 0.5 - Math.random()).slice(0, 5);
+  const validMoments = allMedia.filter(m => m.mediaType !== "post" && (m.caption || m.author || m.mediaType === "feed"));
+  const shuffled = validMoments.sort(() => 0.5 - Math.random()).slice(0, 5);
   const carouselMoments: WallMemory[] = shuffled.map((m) => ({
     id: m.id,
     title: m.caption || "Kỷ niệm dưới mái trường Trứ",

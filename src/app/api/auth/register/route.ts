@@ -52,7 +52,11 @@ export async function POST(req: NextRequest) {
   if (type === "individual") {
     const rawSize = typeof body.size === "string" ? body.size : null;
     if (rawSize) {
-      if (!SIZES.includes(rawSize as Size)) {
+      const allowedKeys: string[] = [
+        ...SIZES,
+        ...["Nam", "Nữ"].flatMap((g) => SIZES.map((s) => `${g}-${s}`)),
+      ];
+      if (!allowedKeys.includes(rawSize)) {
         return NextResponse.json(
           { ok: false, message: "Size áo không hợp lệ." },
           { status: 400 },

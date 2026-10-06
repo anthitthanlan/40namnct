@@ -46,8 +46,14 @@ export async function createAdminAccount(
       body: JSON.stringify(input),
     });
     if (!res.ok) {
-      const err = await res.json();
-      return { ok: false, message: err.detail || "Không thể tạo tài khoản" };
+      let message = "Không thể tạo tài khoản";
+      try {
+        const err = await res.json();
+        message = err.detail || message;
+      } catch (e) {
+        message = `Server lỗi (${res.status}): ${await res.text()}`;
+      }
+      return { ok: false, message };
     }
     return { ok: true, account: await res.json() };
   } catch (err: any) {

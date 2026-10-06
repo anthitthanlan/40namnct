@@ -63,6 +63,7 @@ export async function hasAdminCookie(): Promise<boolean> {
 
 export const adminCookieOptions = {
   httpOnly: true as const,
+  secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
   path: "/",
   maxAge: SEVEN_DAYS_SECONDS,

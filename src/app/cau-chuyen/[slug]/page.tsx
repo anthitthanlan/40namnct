@@ -64,34 +64,30 @@ export default async function PostDetailPage({ params }: Props) {
 
           <h1 className="news-title mt-3 mb-4">{post.title}</h1>
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#1d4ed8] text-sm font-semibold text-white">
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-y border-[#ebebeb] py-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1d4ed8] text-base font-semibold text-white">
                 {post.author.charAt(0).toUpperCase()}
               </span>
-              <div className="font-[Inter] leading-tight">
-                <p className="text-[13px] font-semibold text-[#454545]">
+              <div className="leading-tight">
+                <p className="text-[14px] font-semibold text-[#1a1a1a]">
                   {post.author}
                 </p>
-                <p className="text-[12px] text-[#8b8b8b]">{post.authorRole}</p>
+                <p className="text-[13px] text-[#666] mt-0.5">
+                  {post.authorRole}
+                </p>
               </div>
             </div>
-            <p className="font-[Inter] text-[13px] text-[#454545]">
-              {formatDate(post.createdAt)} · {readingMinutes} phút đọc
-            </p>
+            <div className="flex items-center gap-2 text-[13px] text-[#666]">
+              <time dateTime={new Date(post.createdAt).toISOString()}>{formatDate(post.createdAt)}</time>
+              <span className="h-1 w-1 rounded-full bg-[#ccc]"></span>
+              <span>{readingMinutes} phút đọc</span>
+            </div>
           </div>
 
           <div className="mt-4">
             <NewsShare title={post.title} />
           </div>
-
-          {post.cover && post.cover !== extractFirstImage(post.content) && (
-            <img
-              src={post.cover}
-              alt={post.title}
-              className="mb-6 mt-2 h-auto w-full"
-            />
-          )}
 
           <div
             className="news-content mt-4"

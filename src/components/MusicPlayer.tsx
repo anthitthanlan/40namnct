@@ -223,7 +223,7 @@ export default function MusicPlayer() {
                   <div className="absolute inset-1 rounded-full border border-slate-800/40" />
                   {/* Logo trường Nguyễn Công Trứ làm tâm đĩa */}
                   <Image
-                    src="/images/logo_nct.webp"
+                    src="/images/NCT.webp"
                     alt="NCT Vinyl"
                     width={24}
                     height={24}
@@ -317,7 +317,7 @@ export default function MusicPlayer() {
 
                       {/* Logo NCT ở tâm đĩa */}
                       <Image
-                        src="/images/logo_nct.webp"
+                        src="/images/NCT.webp"
                         alt="NCT Vinyl Disc"
                         width={28}
                         height={28}

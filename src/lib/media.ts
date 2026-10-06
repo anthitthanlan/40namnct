@@ -11,6 +11,7 @@ export type MediaItem = {
   author: string;
   authorRole: string;
   caption: string;
+  mediaType?: string;
   status: MediaStatus;
   createdAt: string;
 };

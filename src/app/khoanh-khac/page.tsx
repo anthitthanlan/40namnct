@@ -17,6 +17,8 @@ async function readMemories(): Promise<WallMemory[]> {
   const memories: WallMemory[] = [];
 
   for (const m of await listApprovedMediaChronological()) {
+    if (m.mediaType === "post") continue;
+    if (!m.caption && !m.author && m.mediaType !== "feed") continue; // Bỏ qua ảnh upload cho bài viết cũ
     memories.push({
       id: m.id,
       title: m.caption || "Kỷ niệm dưới mái trường Trứ",

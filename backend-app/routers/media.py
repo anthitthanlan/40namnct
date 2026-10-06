@@ -33,6 +33,7 @@ def get_media(
             author=m.author or "",
             authorRole=m.author_role or "",
             caption=m.caption or "",
+            mediaType=m.media_type or "media",
             status=m.status,
             createdAt=m.created_at
         ) for m in items
@@ -92,6 +93,7 @@ async def upload_media(
         author=author,
         author_role=authorRole,
         caption=caption,
+        media_type=mediaType,
         status="approved"
     )
     db.add(media_record)

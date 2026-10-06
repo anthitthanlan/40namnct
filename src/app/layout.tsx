@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description:
     "Kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ - hành trình 40 năm trồng người.",
   icons: {
-    icon: [{ url: "/images/logo_nct.webp", type: "image/png" }],
-    apple: [{ url: "/images/logo_nct.webp" }],
+    icon: [{ url: "/images/NCT.webp", type: "image/png" }],
+    apple: [{ url: "/images/NCT.webp" }],
   },
 };
 

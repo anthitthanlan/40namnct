@@ -22,5 +22,6 @@ class MediaItem(Base):
     author = Column(String(255), default="")
     author_role = Column(String(255), default="")
     caption = Column(Text, default="")
+    media_type = Column(String(50), default="media")
     status = Column(String(50), default="approved")  # "pending" | "approved" | "rejected"
     created_at = Column(String(64), default=utc_now_iso)

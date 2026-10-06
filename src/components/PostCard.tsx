@@ -29,6 +29,21 @@ export function PostBadges({ post, categoryName }: { post: Post; categoryName?: 
 
 /** Ảnh bìa bài viết - fallback gradient khi bài không có ảnh + skeleton cross-fade reveal */
 export function PostCover({ post, className = "" }: { post: Post; className?: string }) {
+  if (post.id === "nct-motion-breakdown") {
+    return (
+      <div className={`relative overflow-hidden bg-[#03050b] flex items-center justify-center ${className}`}>
+        {/* Animated stars/particles gradient background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_10%,_rgba(3,5,11,1)_100%)] z-10" />
+        
+        {/* Glowing Logo */}
+        <div className="relative z-20 w-32 h-32 md:w-40 md:h-40 transition-transform duration-700 group-hover:scale-110">
+          <div className="absolute inset-0 rounded-full bg-yellow-500/30 blur-2xl animate-pulse" />
+          <img src="/images/NCT.webp" alt="NCT Logo" className="w-full h-full object-contain drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]" />
+        </div>
+      </div>
+    );
+  }
+  
   if (post.cover) {
     // Delegate to Client Component to handle onLoad (skeleton cross-fade)
     return <ClientPostCover src={post.cover} alt={post.title} className={className} />;

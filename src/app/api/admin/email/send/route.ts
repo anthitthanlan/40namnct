@@ -9,6 +9,9 @@ export const dynamic = "force-dynamic";
 type Recipient = {
   name?: string;
   email: string;
+  amount?: string | number;
+  donate_code?: string;
+  invi_id?: string;
 };
 
 type SendEmailPayload = {
@@ -19,14 +22,17 @@ type SendEmailPayload = {
   fromEmail?: string;
 };
 
-function formatEmailHtml(content: string, recipientName: string, recipientEmail: string): string {
-  const safeName = recipientName?.trim() || "Quý Thầy Cô / Cựu học sinh / Quý Khách";
+function formatEmailHtml(content: string, recipient: Recipient): string {
+  const safeName = recipient.name?.trim() || "Quý Thầy Cô / Cựu học sinh / Quý Khách";
   
-  // Replace placeholders like {name}, {ten}, {email}
+  // Replace placeholders like {name}, {ten}, {email}, {amount}, {donate_code}, {invi_id}
   let personalizedContent = content
     .replace(/\{name\}/gi, safeName)
     .replace(/\{ten\}/gi, safeName)
-    .replace(/\{email\}/gi, recipientEmail);
+    .replace(/\{email\}/gi, recipient.email)
+    .replace(/\{amount\}/gi, recipient.amount ? recipient.amount.toString() : "")
+    .replace(/\{donate_code\}/gi, recipient.donate_code || "")
+    .replace(/\{invi_id\}/gi, recipient.invi_id || "");
 
   return `
 <!DOCTYPE html>
@@ -110,7 +116,7 @@ function formatEmailHtml(content: string, recipientName: string, recipientEmail:
       </div>
       <div class="footer">
         Ban Tổ Chức chương trình Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ<br>
-        Email được gửi tới: <strong>${recipientEmail}</strong>
+        Email được gửi tới: <strong>${recipient.email}</strong>
       </div>
     </div>
   </div>
@@ -186,7 +192,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           to: validRecipients.map((r) => r.email.trim()),
           subject: subject.trim(),
-          html: formatEmailHtml(content, validRecipients[0]?.name || "", validRecipients[0]?.email || ""),
+          html: formatEmailHtml(content, validRecipients[0] || { email: "" }),
           from_email: formattedFrom,
         }),
       });
@@ -209,8 +215,19 @@ export async function POST(req: NextRequest) {
           failedCount: 0,
           message: `Đã đưa ${validRecipients.length} email vào hàng đợi gửi thành công!`,
         });
+      } else {
+        const errorText = await backendRes.text();
+        console.error("Backend email send failed:", backendRes.status, errorText);
+        return NextResponse.json(
+          {
+            ok: false,
+            message: `Lỗi từ Backend (${backendRes.status}): ${errorText}`,
+          },
+          { status: backendRes.status }
+        );
       }
-    } catch {
+    } catch (err) {
+      console.error("Fetch to backend failed:", err);
       // Continue to error reporting below
     }
 
@@ -244,7 +261,7 @@ export async function POST(req: NextRequest) {
         from: formattedFrom,
         to: [recipient.email.trim()],
         subject: subject.trim(),
-        html: formatEmailHtml(content, recipient.name || "", recipient.email.trim()),
+        html: formatEmailHtml(content, recipient),
       }));
 
       const { data, error } = await resend.batch.send(emailBatch);

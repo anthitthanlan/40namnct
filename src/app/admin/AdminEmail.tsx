@@ -29,6 +29,9 @@ type MemberUser = {
   phone: string;
   status?: string;
   ticketCount?: number;
+  amount?: string | number;
+  donate_code?: string;
+  invi_id?: string;
   source: "member" | "manual";
 };
 
@@ -124,6 +127,9 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
               phone: m.phone || "",
               status: m.confirmedAmount > 0 ? "confirmed" : "pending",
               ticketCount: m.invitationCount || memberInvitations.length,
+              amount: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(memberInvitations[0]?.amount || 0),
+              donate_code: memberInvitations[0]?.code || "",
+              invi_id: memberInvitations[0]?.id || "",
               source: "member",
             });
           }
@@ -142,6 +148,9 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                 phone: inv.memberPhone || "",
                 status: inv.status || "confirmed",
                 ticketCount: inv.quantity || 1,
+                amount: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.amount || 0),
+                donate_code: inv.code || "",
+                invi_id: inv.id || "",
                 source: "member",
               });
             }
@@ -283,6 +292,9 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
         return {
           name: found?.name || email.split("@")[0],
           email: email,
+          amount: found?.amount,
+          donate_code: found?.donate_code,
+          invi_id: found?.invi_id,
         };
       })
       .filter((r) => r.email && r.email.includes("@"));
@@ -770,11 +782,13 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
             <div className="flex items-start gap-2 rounded-2xl bg-amber-50/80 border border-amber-200/80 p-3 text-xs text-amber-800">
               <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold">Mẹo cá nhân hóa:</span> Dùng thẻ{" "}
-                <code className="rounded bg-amber-100 px-1 py-0.5 font-bold text-amber-900 font-mono">
-                  {"{name}"}
-                </code>{" "}
-                trong tiêu đề hoặc nội dung để hệ thống tự động thay thế bằng họ và tên của từng người nhận!
+                <span className="font-bold">Các thẻ cá nhân hóa:</span> Hệ thống sẽ tự động thay thế các thẻ sau trong nội dung thành dữ liệu của từng người nhận:
+                <div className="mt-1 flex flex-wrap gap-1">
+                  <code className="rounded bg-amber-100 px-1 py-0.5 font-bold text-amber-900 font-mono">{"{name}"}</code> (Họ tên)
+                  <code className="rounded bg-amber-100 px-1 py-0.5 font-bold text-amber-900 font-mono">{"{amount}"}</code> (Số tiền đóng góp)
+                  <code className="rounded bg-amber-100 px-1 py-0.5 font-bold text-amber-900 font-mono">{"{donate_code}"}</code> (Mã đóng góp)
+                  <code className="rounded bg-amber-100 px-1 py-0.5 font-bold text-amber-900 font-mono">{"{invi_id}"}</code> (Mã thư mời)
+                </div>
               </div>
             </div>
 

@@ -314,11 +314,17 @@ function InvitationContent() {
                 <div className="flex justify-between items-start pb-4 border-b border-gray-200 gap-4">
                   <span className="text-gray-500 font-medium shrink-0 sm:mt-0.5">Số lượng áo đăng ký</span>
                   <div className="text-right text-base sm:text-lg">
-                    {Object.entries(invitation.sizes || {}).map(([size, qty]) => (
-                      <div key={size} className="font-bold text-gray-900 mb-1">
-                        Size {size} <span className="text-gray-400 font-normal ml-2">x {qty as number}</span>
+                    {invitation.type === "individual" && invitation.size ? (
+                      <div className="font-bold text-gray-900 mb-1">
+                        Size {invitation.size} <span className="text-gray-400 font-normal ml-2">x 1</span>
                       </div>
-                    ))}
+                    ) : (
+                      Object.entries(invitation.sizes || {}).map(([size, qty]) => (
+                        <div key={size} className="font-bold text-gray-900 mb-1">
+                          Size {size} <span className="text-gray-400 font-normal ml-2">x {qty as number}</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 

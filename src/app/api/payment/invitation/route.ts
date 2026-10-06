@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
           amount: inv.amount,
           status: inv.status,
           type: inv.type,
+          size: inv.size || null,
           sizes: inv.sizes || {},
           snacks: inv.snacks || 0,
           checkedIn: inv.checkedIn || false,
@@ -114,17 +115,18 @@ export async function GET(req: NextRequest) {
   const nienKhoaFormatted = (invitation.nienKhoa || "").replace(/\D/g, "").trim(); // Remove space and dash
   const addInfo = `${nameUnaccented} ${nienKhoaFormatted} ${member.phone}`.trim();
 
-  return NextResponse.json({
-    ok: true,
-    invitation: {
-      code: invitation.code,
-      amount: invitation.amount,
-      status: invitation.status,
-      type: invitation.type,
-      sizes: invitation.sizes,
-      snacks: invitation.snacks,
-      checkedIn: invitation.checkedIn,
-    },
+    return NextResponse.json({
+      ok: true,
+      invitation: {
+        code: invitation.code,
+        amount: invitation.amount,
+        status: invitation.status,
+        type: invitation.type,
+        size: invitation.size,
+        sizes: invitation.sizes,
+        snacks: invitation.snacks,
+        checkedIn: invitation.checkedIn,
+      },
     member: {
       name: member.name,
       nienKhoa: invitation.nienKhoa,

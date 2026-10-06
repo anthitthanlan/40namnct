@@ -84,8 +84,8 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
   // Email Composer State
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
-  const [fromName, setFromName] = useState("Lễ Kỷ Niệm 40 Năm NCT");
-  const [fromEmail, setFromEmail] = useState("hi@nctitc.io.vn");
+  const [fromName, setFromName] = useState("BTC chương trình kỷ niệm 40 năm NCTrứ");
+  const [fromEmail, setFromEmail] = useState("bantochuc@40namnctru.nctitc.io.vn");
   const [previewMode, setPreviewMode] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -794,24 +794,11 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                   Giao diện email thực tế hiển thị trong hòm thư người nhận
                 </label>
                 {/* Email Client Mock Frame */}
-                <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-100 p-4 sm:p-6 shadow-inner">
-                  <div className="max-w-[600px] mx-auto bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-200/70">
-                    {/* Branded Header */}
-                    <div className="bg-gradient-to-br from-blue-700 to-blue-900 p-6 text-center text-white">
-                      <span className="inline-block rounded-full bg-white/20 border border-white/30 px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider mb-2">
-                        1986 — 2026
-                      </span>
-                      <h4 className="text-lg font-black tracking-tight text-white m-0">
-                        TRƯỜNG THPT NGUYỄN CÔNG TRỨ
-                      </h4>
-                      <p className="text-xs text-blue-100 m-0 mt-1 font-medium">
-                        Kỷ Niệm 40 Năm Thành Lập Trường
-                      </p>
-                    </div>
-
+                <div className="rounded-2xl border border-slate-200 overflow-hidden bg-[#f8fafc] p-4 sm:p-6 shadow-inner">
+                  <div className="max-w-[600px] mx-auto bg-transparent">
                     {/* Email Body */}
                     <div
-                      className="p-6 text-sm text-slate-700 leading-relaxed prose prose-sm max-w-none"
+                      className="p-5 text-[15px] text-slate-700 leading-relaxed prose prose-sm max-w-none text-left"
                       dangerouslySetInnerHTML={{
                         __html: content
                           .replace(/\{name\}/gi, "Nguyễn Văn A")
@@ -820,12 +807,12 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                     />
 
                     {/* Email Footer */}
-                    <div className="bg-slate-50 p-5 text-center border-t border-slate-100 text-xs text-slate-400">
-                      <p className="font-bold text-slate-600 m-0">
-                        Ban Tổ Chức Lễ Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ
+                    <div className="mt-8 pt-5 text-center border-t border-slate-200 text-[13px] text-slate-400">
+                      <p className="font-medium text-slate-500 m-0">
+                        Ban Tổ Chức chương trình Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ
                       </p>
                       <p className="text-[11px] mt-1 m-0">
-                        Email được gửi đến: nguyenvana@gmail.com
+                        Email được gửi đến: <strong>nguyenvana@gmail.com</strong>
                       </p>
                     </div>
                   </div>

@@ -231,7 +231,7 @@ export default function RichTextEditor({
       />
 
       {/* TOOLBAR */}
-      <div className="sticky top-[120px] sm:top-[128px] z-30 flex flex-wrap gap-1 p-2 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
+      <div className="relative z-30 flex flex-wrap gap-1 p-2 bg-white border-2 border-slate-100 rounded-2xl shadow-sm">
         <TB icon={Heading1} title="Tiêu đề 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive("heading", { level: 1 })} />
         <TB icon={Heading2} title="Tiêu đề 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive("heading", { level: 2 })} />
         <TB icon={Heading3} title="Tiêu đề 3" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} isActive={editor.isActive("heading", { level: 3 })} />

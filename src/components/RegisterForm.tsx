@@ -65,16 +65,16 @@ export default function RegisterForm() {
   const handleNienKhoaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const prevRaw = nienKhoa.replace(/\D/g, "");
     let val = e.target.value.replace(/\D/g, "");
-    
+
     if (val.length >= 4) {
       let startYear = parseInt(val.slice(0, 4), 10);
-      
+
       // Validate Min/Max (Khóa đầu tiên 1986, tương lai tối đa 2026)
       if (startYear < 1986) startYear = 1986;
       if (startYear > 2026) startYear = 2026;
-      
+
       const rest = val.slice(4, 8);
-      
+
       // Nếu vừa gõ đủ 4 số đầu tiên (chưa có phần sau), tự động tính năm kết thúc (+3)
       if (val.length === 4 && prevRaw.length < 4) {
         val = `${startYear} - ${startYear + 3}`;
@@ -87,7 +87,7 @@ export default function RegisterForm() {
         val = `${startYear}`;
       }
     }
-    
+
     setNienKhoa(val);
   };
   const [email, setEmail] = useState("");
@@ -117,7 +117,7 @@ export default function RegisterForm() {
   const [copied, setCopied] = useState("");
   const [showSizeModal, setShowSizeModal] = useState(false);
   const sizeChartRef = useRef<HTMLDivElement>(null);
-  
+
   const handleDownloadPNG = async () => {
     // Load fonts to match website rendering exactly
     // Unbounded (titles) — static weight 700 woff2
@@ -322,7 +322,7 @@ export default function RegisterForm() {
       newFieldErrors["lop"] = true;
       hasMissingRequired = true;
     }
-    
+
     const phoneDigits = phone.replace(/\D/g, "");
     if (phoneDigits.length === 0) {
       newFieldErrors["phone"] = true;
@@ -332,11 +332,11 @@ export default function RegisterForm() {
       errorMsgs.push("Vui lòng nhập số điện thoại hợp lệ (VD: 0912345678).");
     }
 
-    if (email && !email.includes("@")) {
+    if (!email || !email.includes("@")) {
       newFieldErrors["email"] = true;
       errorMsgs.push("Vui lòng nhập địa chỉ email hợp lệ.");
     }
-    
+
     if (!readNote) {
       newFieldErrors["readNote"] = true;
       hasMissingRequired = true;
@@ -510,7 +510,7 @@ export default function RegisterForm() {
         ) : (
           <>
             {amount > 0
-              ? `Đăng ký & Xác nhận đóng góp ${(amount).toLocaleString("vi-VN")}đ`
+              ? `Xác nhận Đăng ký & Đóng góp ${(amount).toLocaleString("vi-VN")}đ`
               : "Xác nhận Đăng ký"}
           </>
         )}
@@ -529,7 +529,7 @@ export default function RegisterForm() {
         <span className="material-symbols-rounded text-6xl text-rose-500 mb-4 block">event_busy</span>
         <h2 className="text-2xl font-bold text-slate-900 mb-4">Đã Đóng Đăng Ký</h2>
         <p className="text-slate-600 mb-8 leading-relaxed text-lg">
-          Rất tiếc, thời gian đăng ký đợt 1 cho Ngày Trở Về đã kết thúc vào lúc 23h ngày 11/10/2026. 
+          Rất tiếc, thời gian đăng ký đợt 1 cho Ngày Trở Về đã kết thúc vào lúc 23h ngày 11/10/2026.
           Xin cảm ơn sự quan tâm của quý vị.
         </p>
         <Link
@@ -552,9 +552,31 @@ export default function RegisterForm() {
             layout
             onSubmit={submit}
             noValidate
+            className="flex flex-col items-center"
           >
+            {/* Thông báo tính chất sự kiện - Box riêng */}
+            <motion.div 
+              layout
+              transition={boxTransition}
+              className="w-full max-w-[64rem] bg-blue-50/80 border border-blue-100 rounded-2xl p-5 sm:p-6 mb-6 shadow-sm"
+            >
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="w-12 h-12 bg-blue-100/80 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-rounded text-blue-600 text-2xl">campaign</span>
+                </div>
+                <div>
+                  <p className="text-blue-900 leading-relaxed text-sm sm:text-base">
+                    <strong className="font-bold text-blue-800">Thông tin sự kiện:</strong> Sự kiện Họp mặt Kỷ niệm 40 năm là chương trình có đóng góp kinh phí tổ chức (<strong className="font-semibold text-blue-700">500.000đ/người</strong>). Khi tham gia đóng góp, Quý khách sẽ nhận được một chiếc Áo Kỷ Niệm 40 Năm làm quà tặng.
+                  </p>
+                  <p className="mt-1.5 text-blue-800/80 text-sm">
+                    Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Parent Container WITHOUT gap. Gap is handled by padding on the sliding child. */}
-            <motion.div layout transition={boxTransition} className="flex flex-col lg:flex-row items-start justify-center">
+            <motion.div layout transition={boxTransition} className="flex flex-col lg:flex-row items-start justify-center w-full max-w-[64rem]">
 
               {/* CỘT TRÁI (BOX 1): THÔNG TIN CƠ BẢN */}
               <motion.div
@@ -581,9 +603,8 @@ export default function RegisterForm() {
                     }}
                     placeholder="Nguyễn Văn A"
                     required
-                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
-                      fieldErrors["name"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
-                    }`}
+                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${fieldErrors["name"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
+                      }`}
                   />
                 </div>
 
@@ -599,9 +620,8 @@ export default function RegisterForm() {
                       disabled={isInfoLocked}
                       onChange={handleNienKhoaChange}
                       placeholder="VD: 1986 - 1989"
-                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
-                        fieldErrors["nienKhoa"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
-                      }`}
+                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${fieldErrors["nienKhoa"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
+                        }`}
                     />
                   </div>
                   <div className="col-span-2">
@@ -614,9 +634,8 @@ export default function RegisterForm() {
                       disabled={isInfoLocked}
                       onChange={(e) => setLop(e.target.value)}
                       placeholder="VD: 12A1"
-                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
-                        fieldErrors["lop"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
-                      }`}
+                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${fieldErrors["lop"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
+                        }`}
                     />
                   </div>
                 </div>
@@ -633,16 +652,15 @@ export default function RegisterForm() {
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="0901234567"
                     required
-                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
-                      fieldErrors["phone"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
-                    }`}
+                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${fieldErrors["phone"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
+                      }`}
                   />
                 </div>
 
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -650,9 +668,8 @@ export default function RegisterForm() {
                     disabled={isInfoLocked}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${
-                      fieldErrors["email"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
-                    }`}
+                    className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${fieldErrors["email"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
+                      }`}
                   />
                 </div>
 
@@ -674,47 +691,44 @@ export default function RegisterForm() {
 
                 {/* Notice and Checkboxes */}
                 <div className="mt-2">
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      <span className="text-amber-600 font-medium">Lưu ý:</span> Bạn có thể nhập email để hệ thống tự động gửi Phiếu đăng kí, hoặc tải về thủ công sau khi hoàn tất.
-                      <strong className="font-semibold text-gray-900 block mt-1">Mã QR này sẽ được dùng để kiểm tra nhận áo và check-in vào ngày 08/11.</strong>
-                    </p>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    <span className="text-amber-600 font-medium">Lưu ý:</span> Hệ thống sẽ tự động gửi Phiếu đăng ký (Vé QR) về email của bạn sau khi hoàn tất.
+                    <strong className="font-semibold text-gray-900 block mt-1">Mã QR này sẽ được dùng để kiểm tra nhận áo và check-in vào ngày 08/11.</strong>
+                  </p>
 
-                    <div className="flex flex-col gap-3 mt-4">
-                      <div
-                        className={`flex items-center gap-3 w-fit rounded-lg p-1 -ml-1 transition-all ${
-                          isInfoLocked ? "opacity-70 cursor-not-allowed" : "cursor-pointer group"
-                        } ${
-                          fieldErrors["readNote"] ? "shake-error ring-2 ring-red-500/50 bg-red-50" : ""
+                  <div className="flex flex-col gap-3 mt-4">
+                    <div
+                      className={`flex items-center gap-3 w-fit rounded-lg p-1 -ml-1 transition-all ${isInfoLocked ? "opacity-70 cursor-not-allowed" : "cursor-pointer group"
+                        } ${fieldErrors["readNote"] ? "shake-error ring-2 ring-red-500/50 bg-red-50" : ""
                         }`}
-                        onClick={() => !isInfoLocked && setReadNote(!readNote)}
-                      >
-                        <CustomCheckbox
-                          checked={readNote}
-                          onChange={(val) => !isInfoLocked && setReadNote(val)}
-                          className={`w-5 h-5 ${isInfoLocked ? "" : "group-hover:border-blue-400"} ${fieldErrors["readNote"] ? "border-red-500" : ""}`}
-                        />
-                        <span className="text-sm font-medium text-gray-800 select-none group-hover:text-blue-900 transition-colors">
-                          Tôi đã đọc và hiểu rõ thông tin trên <span className="text-red-500">*</span>
-                        </span>
-                      </div>
+                      onClick={() => !isInfoLocked && setReadNote(!readNote)}
+                    >
+                      <CustomCheckbox
+                        checked={readNote}
+                        onChange={(val) => !isInfoLocked && setReadNote(val)}
+                        className={`w-5 h-5 ${isInfoLocked ? "" : "group-hover:border-blue-400"} ${fieldErrors["readNote"] ? "border-red-500" : ""}`}
+                      />
+                      <span className="text-sm font-medium text-gray-800 select-none group-hover:text-blue-900 transition-colors">
+                        Tôi đã đọc và hiểu rõ thông tin trên <span className="text-red-500">*</span>
+                      </span>
+                    </div>
 
-                      <div
-                        className={`flex items-center gap-3 w-fit rounded-lg p-1 -ml-1 transition-all ${
-                          isInfoLocked ? "opacity-70 cursor-not-allowed" : "cursor-pointer group"
+                    <div
+                      className={`flex items-center gap-3 w-fit rounded-lg p-1 -ml-1 transition-all ${isInfoLocked ? "opacity-70 cursor-not-allowed" : "cursor-pointer group"
                         }`}
-                        onClick={() => !isInfoLocked && setSubscribeNews(!subscribeNews)}
-                      >
-                        <CustomCheckbox
-                          checked={subscribeNews}
-                          onChange={(val) => !isInfoLocked && setSubscribeNews(val)}
-                          className={`w-5 h-5 ${isInfoLocked ? "" : "group-hover:border-blue-400"}`}
-                        />
-                        <span className="text-sm font-medium text-gray-700 select-none group-hover:text-gray-900 transition-colors">
-                          Đăng ký nhận thông báo qua email về chương trình
-                        </span>
-                      </div>
+                      onClick={() => !isInfoLocked && setSubscribeNews(!subscribeNews)}
+                    >
+                      <CustomCheckbox
+                        checked={subscribeNews}
+                        onChange={(val) => !isInfoLocked && setSubscribeNews(val)}
+                        className={`w-5 h-5 ${isInfoLocked ? "" : "group-hover:border-blue-400"}`}
+                      />
+                      <span className="text-sm font-medium text-gray-700 select-none group-hover:text-gray-900 transition-colors">
+                        Đăng ký nhận thông báo qua email về chương trình
+                      </span>
                     </div>
                   </div>
+                </div>
 
                 {/* Section Tiếp tục hoặc Đã khóa thông tin */}
                 <motion.div layout className="flex flex-col pt-3 border-t border-gray-100">
@@ -784,7 +798,7 @@ export default function RegisterForm() {
                     className="w-full lg:w-auto flex-shrink-0 origin-top lg:origin-left"
                   >
                     {/* Padding thay cho Gap để chống nhảy giật layout khi unmount */}
-                  <div className="pt-6 pb-2 pr-2 lg:pt-2 lg:pb-2 lg:pr-2 lg:pl-8 h-full">
+                    <div className="pt-6 pb-2 pr-2 lg:pt-2 lg:pb-2 lg:pr-2 lg:pl-8 h-full">
                       <motion.div
                         ref={rightBoxRef}
                         initial={{ scale: 0.96 }}
@@ -797,7 +811,7 @@ export default function RegisterForm() {
                         className="origin-left w-full lg:w-[28rem] bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"
                       >
                         <div className="space-y-6">
-                          {/* Placeholder Áo */}
+                          {/* Banner đóng góp */}
                           <div className="flex flex-col items-center justify-center p-4">
                             <div className="relative w-32 h-32 opacity-80 mix-blend-multiply rounded-2xl overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100">
                               <Image
@@ -808,8 +822,11 @@ export default function RegisterForm() {
                                 className="object-contain drop-shadow-md"
                               />
                             </div>
-                            <p className="mt-3 text-sm font-medium text-gray-500">
-                              Áo Kỷ Niệm 40 Năm
+                            <h3 className="mt-4 text-base font-bold text-gray-900 text-center">
+                              Đóng góp kinh phí tổ chức sự kiện
+                            </h3>
+                            <p className="mt-1 text-sm font-medium text-gray-500 text-center px-4 leading-relaxed">
+                              Khi tham gia đóng góp 500.000đ, bạn sẽ nhận được một Áo Kỷ Niệm 40 Năm.
                             </p>
                           </div>
 
@@ -823,9 +840,8 @@ export default function RegisterForm() {
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setType(tab.id as "individual" | "group")}
-                                className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${
-                                  type === tab.id ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
-                                }`}
+                                className={`relative flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-colors ${type === tab.id ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
+                                  }`}
                               >
                                 <span className="relative z-10">{tab.label}</span>
                                 {type === tab.id && (
@@ -842,13 +858,13 @@ export default function RegisterForm() {
                           {/* Form Chi Tiết Combo */}
                           <AnimatePresence mode="wait" initial={false}>
                             {type === "individual" ? (
-                                <motion.div
-                                  key="individual-options"
-                                  initial={{ opacity: 0, height: 0, overflow: "hidden" }}
-                                  animate={{ opacity: 1, height: "auto", overflow: "visible" }}
-                                  exit={{ opacity: 0, height: 0, overflow: "hidden" }}
-                                  transition={{ duration: 0.4, ease: modalEase }}
-                                >
+                              <motion.div
+                                key="individual-options"
+                                initial={{ opacity: 0, height: 0, overflow: "hidden" }}
+                                animate={{ opacity: 1, height: "auto", overflow: "visible" }}
+                                exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+                                transition={{ duration: 0.4, ease: modalEase }}
+                              >
                                 <div className="py-2 space-y-5">
                                   {/* Giới tính */}
                                   <div>
@@ -861,11 +877,10 @@ export default function RegisterForm() {
                                           key={g}
                                           type="button"
                                           onClick={() => setGender(g)}
-                                          className={`flex-1 py-2.5 px-4 rounded-xl border text-sm font-medium transition-all ${
-                                            gender === g
+                                          className={`flex-1 py-2.5 px-4 rounded-xl border text-sm font-medium transition-all ${gender === g
                                               ? "border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-600"
                                               : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
-                                          }`}
+                                            }`}
                                         >
                                           {g}
                                         </button>
@@ -879,74 +894,74 @@ export default function RegisterForm() {
                                       <label className="block text-sm font-medium text-gray-700">
                                         Chọn size áo của bạn
                                       </label>
-                                    <button
-                                      type="button"
-                                      onClick={() => setShowSizeModal(true)}
-                                      className="group/link relative z-10 rounded-full px-2 py-1 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap"
-                                    >
-                                      <span>Xem bảng size</span>
-                                      <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-blue-600 opacity-0 scale-x-0 transition-all duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/link:opacity-60 group-hover/link:scale-x-100" />
-                                    </button>
-                                  </div>
-                                  {isMobile ? (
-                                    <select
-                                      title="Chọn size áo của bạn"
-                                      value={size}
-                                      onChange={(e) => setSize(e.target.value as Size)}
-                                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900"
-                                    >
-                                      {SIZES.map((s) => (
-                                        <option key={s} value={s}>
-                                          Size {s}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  ) : (
-                                    <div
-                                      className="relative"
-                                      tabIndex={-1}
-                                      onBlur={(e) => {
-                                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                                          setSizeDropdownOpen(false);
-                                        }
-                                      }}
-                                    >
                                       <button
                                         type="button"
-                                        onClick={() => setSizeDropdownOpen(!sizeDropdownOpen)}
-                                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900"
+                                        onClick={() => setShowSizeModal(true)}
+                                        className="group/link relative z-10 rounded-full px-2 py-1 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors whitespace-nowrap"
                                       >
-                                        <span>Size {size}</span>
-                                        <svg className={`w-5 h-5 text-gray-500 transition-transform ${sizeDropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        <span>Xem bảng size</span>
+                                        <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-blue-600 opacity-0 scale-x-0 transition-all duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/link:opacity-60 group-hover/link:scale-x-100" />
                                       </button>
-                                      <AnimatePresence>
-                                        {sizeDropdownOpen && (
-                                          <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            transition={{ duration: 0.2 }}
-                                            className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col"
-                                          >
-                                            {SIZES.map((s) => (
-                                              <button
-                                                key={s}
-                                                type="button"
-                                                onClick={() => {
-                                                  setSize(s);
-                                                  setSizeDropdownOpen(false);
-                                                }}
-                                                className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${size === s ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-700"}`}
-                                              >
-                                                Size {s}
-                                              </button>
-                                            ))}
-                                          </motion.div>
-                                        )}
-                                      </AnimatePresence>
                                     </div>
+                                    {isMobile ? (
+                                      <select
+                                        title="Chọn size áo của bạn"
+                                        value={size}
+                                        onChange={(e) => setSize(e.target.value as Size)}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900"
+                                      >
+                                        {SIZES.map((s) => (
+                                          <option key={s} value={s}>
+                                            Size {s}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    ) : (
+                                      <div
+                                        className="relative"
+                                        tabIndex={-1}
+                                        onBlur={(e) => {
+                                          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                                            setSizeDropdownOpen(false);
+                                          }
+                                        }}
+                                      >
+                                        <button
+                                          type="button"
+                                          onClick={() => setSizeDropdownOpen(!sizeDropdownOpen)}
+                                          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-white hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900"
+                                        >
+                                          <span>Size {size}</span>
+                                          <svg className={`w-5 h-5 text-gray-500 transition-transform ${sizeDropdownOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                          </svg>
+                                        </button>
+                                        <AnimatePresence>
+                                          {sizeDropdownOpen && (
+                                            <motion.div
+                                              initial={{ opacity: 0, y: -10 }}
+                                              animate={{ opacity: 1, y: 0 }}
+                                              exit={{ opacity: 0, y: -10 }}
+                                              transition={{ duration: 0.2 }}
+                                              className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col"
+                                            >
+                                              {SIZES.map((s) => (
+                                                <button
+                                                  key={s}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSize(s);
+                                                    setSizeDropdownOpen(false);
+                                                  }}
+                                                  className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${size === s ? "bg-blue-50 text-blue-600 font-medium" : "text-gray-700"}`}
+                                                >
+                                                  Size {s}
+                                                </button>
+                                              ))}
+                                            </motion.div>
+                                          )}
+                                        </AnimatePresence>
+                                      </div>
                                     )}
                                   </div>
                                 </div>
@@ -962,7 +977,7 @@ export default function RegisterForm() {
                                 <div className="space-y-4 pt-2 pb-1">
                                   <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                      Số lượng áo kỉ niệm muốn mua
+                                      Số lượng áo kỉ niệm muốn đăng kí
                                     </label>
                                     <input
                                       type="number"
@@ -974,9 +989,8 @@ export default function RegisterForm() {
                                         )
                                       }
                                       min={0}
-                                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900 ${
-                                        fieldErrors["comboCount"] ? "shake-error border-red-500 bg-red-50" : "border-gray-200 bg-white"
-                                      }`}
+                                      className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-colors text-gray-900 ${fieldErrors["comboCount"] ? "shake-error border-red-500 bg-red-50" : "border-gray-200 bg-white"
+                                        }`}
                                     />
                                   </div>
 
@@ -998,8 +1012,8 @@ export default function RegisterForm() {
                                       </div>
                                       <span
                                         className={`text-sm font-bold ${currentTotalSizes === comboCount
-                                            ? "text-green-600"
-                                            : "text-amber-600"
+                                          ? "text-green-600"
+                                          : "text-amber-600"
                                           }`}
                                       >
                                         Đã chọn: <AnimatedNumber value={currentTotalSizes} /> / <AnimatedNumber value={comboCount} />
@@ -1068,7 +1082,7 @@ export default function RegisterForm() {
 
                                   {/* Tổng tiền */}
                                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                    <span className="text-sm font-medium text-gray-700">Tổng tiền áo kỉ niệm</span>
+                                    <span className="text-sm font-medium text-gray-700">Tổng mức đóng góp</span>
                                     <span className="text-lg font-bold text-amber-600 flex items-center">
                                       <AnimatedNumber value={(comboCount * 500000).toLocaleString("vi-VN")} /><span className="ml-0.5">đ</span>
                                     </span>
@@ -1180,139 +1194,139 @@ export default function RegisterForm() {
           <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
             <div ref={sizeChartRef} className="bg-white">
               <div className="mb-6">
-              <h4 className="font-bold text-blue-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nam</h4>
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
-                <table className="w-full text-sm text-center whitespace-nowrap">
-                  <thead className="bg-blue-50 text-blue-900 font-semibold">
-                    <tr>
-                      <th className="px-3 py-2 border-b border-r border-gray-200 bg-blue-50 sticky left-0 z-10 text-left">SIZE</th>
-                      <th className="px-3 py-2 border-b border-gray-200">S</th>
-                      <th className="px-3 py-2 border-b border-gray-200">M</th>
-                      <th className="px-3 py-2 border-b border-gray-200">L</th>
-                      <th className="px-3 py-2 border-b border-gray-200">XL</th>
-                      <th className="px-3 py-2 border-b border-gray-200">XXL</th>
-                      <th className="px-3 py-2 border-b border-gray-200">NC1</th>
-                      <th className="px-3 py-2 border-b border-gray-200">NC2</th>
-                      <th className="px-3 py-2 border-b border-gray-200">NC3</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700">
-                    <tr>
-                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                      <td className="px-3 py-2 border-b border-gray-200">&lt;160</td>
-                      <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
-                      <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
-                      <td className="px-3 py-2 border-b border-gray-200">170 - 175</td>
-                      <td className="px-3 py-2 border-b border-gray-200">175 - 180</td>
-                      <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
-                      <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
-                      <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
-                    </tr>
-                    <tr className="bg-gray-50">
-                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
-                      <td className="px-3 py-2 border-b border-gray-200">45 - 55</td>
-                      <td className="px-3 py-2 border-b border-gray-200">55 - 62</td>
-                      <td className="px-3 py-2 border-b border-gray-200">63 - 69</td>
-                      <td className="px-3 py-2 border-b border-gray-200">70 - 75</td>
-                      <td className="px-3 py-2 border-b border-gray-200">76 - 82</td>
-                      <td className="px-3 py-2 border-b border-gray-200">82 - 90</td>
-                      <td className="px-3 py-2 border-b border-gray-200">90 - 110</td>
-                      <td className="px-3 py-2 border-b border-gray-200">110 - 130</td>
-                    </tr>
-                    <tr>
-                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                      <td className="px-3 py-2 border-b border-gray-200">46</td>
-                      <td className="px-3 py-2 border-b border-gray-200">48</td>
-                      <td className="px-3 py-2 border-b border-gray-200">50</td>
-                      <td className="px-3 py-2 border-b border-gray-200">52</td>
-                      <td className="px-3 py-2 border-b border-gray-200">54</td>
-                      <td className="px-3 py-2 border-b border-gray-200">55</td>
-                      <td className="px-3 py-2 border-b border-gray-200">61</td>
-                      <td className="px-3 py-2 border-b border-gray-200">67</td>
-                    </tr>
-                    <tr className="bg-gray-50">
-                      <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                      <td className="px-3 py-2">64</td>
-                      <td className="px-3 py-2">66</td>
-                      <td className="px-3 py-2">68</td>
-                      <td className="px-3 py-2">70</td>
-                      <td className="px-3 py-2">72</td>
-                      <td className="px-3 py-2">73</td>
-                      <td className="px-3 py-2">75</td>
-                      <td className="px-3 py-2">76</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <h4 className="font-bold text-blue-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nam</h4>
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="w-full text-sm text-center whitespace-nowrap">
+                    <thead className="bg-blue-50 text-blue-900 font-semibold">
+                      <tr>
+                        <th className="px-3 py-2 border-b border-r border-gray-200 bg-blue-50 sticky left-0 z-10 text-left">SIZE</th>
+                        <th className="px-3 py-2 border-b border-gray-200">S</th>
+                        <th className="px-3 py-2 border-b border-gray-200">M</th>
+                        <th className="px-3 py-2 border-b border-gray-200">L</th>
+                        <th className="px-3 py-2 border-b border-gray-200">XL</th>
+                        <th className="px-3 py-2 border-b border-gray-200">XXL</th>
+                        <th className="px-3 py-2 border-b border-gray-200">NC1</th>
+                        <th className="px-3 py-2 border-b border-gray-200">NC2</th>
+                        <th className="px-3 py-2 border-b border-gray-200">NC3</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-700">
+                      <tr>
+                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                        <td className="px-3 py-2 border-b border-gray-200">&lt;160</td>
+                        <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
+                        <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
+                        <td className="px-3 py-2 border-b border-gray-200">170 - 175</td>
+                        <td className="px-3 py-2 border-b border-gray-200">175 - 180</td>
+                        <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
+                        <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
+                        <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
+                      </tr>
+                      <tr className="bg-gray-50">
+                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
+                        <td className="px-3 py-2 border-b border-gray-200">45 - 55</td>
+                        <td className="px-3 py-2 border-b border-gray-200">55 - 62</td>
+                        <td className="px-3 py-2 border-b border-gray-200">63 - 69</td>
+                        <td className="px-3 py-2 border-b border-gray-200">70 - 75</td>
+                        <td className="px-3 py-2 border-b border-gray-200">76 - 82</td>
+                        <td className="px-3 py-2 border-b border-gray-200">82 - 90</td>
+                        <td className="px-3 py-2 border-b border-gray-200">90 - 110</td>
+                        <td className="px-3 py-2 border-b border-gray-200">110 - 130</td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                        <td className="px-3 py-2 border-b border-gray-200">46</td>
+                        <td className="px-3 py-2 border-b border-gray-200">48</td>
+                        <td className="px-3 py-2 border-b border-gray-200">50</td>
+                        <td className="px-3 py-2 border-b border-gray-200">52</td>
+                        <td className="px-3 py-2 border-b border-gray-200">54</td>
+                        <td className="px-3 py-2 border-b border-gray-200">55</td>
+                        <td className="px-3 py-2 border-b border-gray-200">61</td>
+                        <td className="px-3 py-2 border-b border-gray-200">67</td>
+                      </tr>
+                      <tr className="bg-gray-50">
+                        <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                        <td className="px-3 py-2">64</td>
+                        <td className="px-3 py-2">66</td>
+                        <td className="px-3 py-2">68</td>
+                        <td className="px-3 py-2">70</td>
+                        <td className="px-3 py-2">72</td>
+                        <td className="px-3 py-2">73</td>
+                        <td className="px-3 py-2">75</td>
+                        <td className="px-3 py-2">76</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <h4 className="font-bold text-pink-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nữ</h4>
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
-                <table className="w-full text-sm text-center whitespace-nowrap">
-                  <thead className="bg-pink-50 text-pink-900 font-semibold">
-                    <tr>
-                      <th className="px-3 py-2 border-b border-r border-gray-200 bg-pink-50 sticky left-0 z-10 text-left">SIZE</th>
-                      <th className="px-3 py-2 border-b border-gray-200">S</th>
-                      <th className="px-3 py-2 border-b border-gray-200">M</th>
-                      <th className="px-3 py-2 border-b border-gray-200">L</th>
-                      <th className="px-3 py-2 border-b border-gray-200">XL</th>
-                      <th className="px-3 py-2 border-b border-gray-200">XXL</th>
-                      <th className="px-3 py-2 border-b border-gray-200">NC1</th>
-                      <th className="px-3 py-2 border-b border-gray-200">NC2</th>
-                      <th className="px-3 py-2 border-b border-gray-200">NC3</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700">
-                    <tr>
-                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                      <td className="px-3 py-2 border-b border-gray-200">145 - 150</td>
-                      <td className="px-3 py-2 border-b border-gray-200">150 - 155</td>
-                      <td className="px-3 py-2 border-b border-gray-200">155 - 160</td>
-                      <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
-                      <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
-                      <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
-                      <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
-                      <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
-                    </tr>
-                    <tr className="bg-gray-50">
-                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
-                      <td className="px-3 py-2 border-b border-gray-200">38 - 42</td>
-                      <td className="px-3 py-2 border-b border-gray-200">42 - 46</td>
-                      <td className="px-3 py-2 border-b border-gray-200">47 - 53</td>
-                      <td className="px-3 py-2 border-b border-gray-200">54 - 59</td>
-                      <td className="px-3 py-2 border-b border-gray-200">60 - 65</td>
-                      <td className="px-3 py-2 border-b border-gray-200">65 - 75</td>
-                      <td className="px-3 py-2 border-b border-gray-200">75 - 85</td>
-                      <td className="px-3 py-2 border-b border-gray-200">85 - 95</td>
-                    </tr>
-                    <tr>
-                      <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                      <td className="px-3 py-2 border-b border-gray-200">41</td>
-                      <td className="px-3 py-2 border-b border-gray-200">43</td>
-                      <td className="px-3 py-2 border-b border-gray-200">45</td>
-                      <td className="px-3 py-2 border-b border-gray-200">47</td>
-                      <td className="px-3 py-2 border-b border-gray-200">49</td>
-                      <td className="px-3 py-2 border-b border-gray-200">50</td>
-                      <td className="px-3 py-2 border-b border-gray-200">54</td>
-                      <td className="px-3 py-2 border-b border-gray-200">58</td>
-                    </tr>
-                    <tr className="bg-gray-50">
-                      <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                      <td className="px-3 py-2">57.5</td>
-                      <td className="px-3 py-2">59.5</td>
-                      <td className="px-3 py-2">61.5</td>
-                      <td className="px-3 py-2">63</td>
-                      <td className="px-3 py-2">64.5</td>
-                      <td className="px-3 py-2">65.5</td>
-                      <td className="px-3 py-2">68.5</td>
-                      <td className="px-3 py-2">71.5</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div>
+                <h4 className="font-bold text-pink-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nữ</h4>
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <table className="w-full text-sm text-center whitespace-nowrap">
+                    <thead className="bg-pink-50 text-pink-900 font-semibold">
+                      <tr>
+                        <th className="px-3 py-2 border-b border-r border-gray-200 bg-pink-50 sticky left-0 z-10 text-left">SIZE</th>
+                        <th className="px-3 py-2 border-b border-gray-200">S</th>
+                        <th className="px-3 py-2 border-b border-gray-200">M</th>
+                        <th className="px-3 py-2 border-b border-gray-200">L</th>
+                        <th className="px-3 py-2 border-b border-gray-200">XL</th>
+                        <th className="px-3 py-2 border-b border-gray-200">XXL</th>
+                        <th className="px-3 py-2 border-b border-gray-200">NC1</th>
+                        <th className="px-3 py-2 border-b border-gray-200">NC2</th>
+                        <th className="px-3 py-2 border-b border-gray-200">NC3</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-700">
+                      <tr>
+                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                        <td className="px-3 py-2 border-b border-gray-200">145 - 150</td>
+                        <td className="px-3 py-2 border-b border-gray-200">150 - 155</td>
+                        <td className="px-3 py-2 border-b border-gray-200">155 - 160</td>
+                        <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
+                        <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
+                        <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
+                        <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
+                        <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
+                      </tr>
+                      <tr className="bg-gray-50">
+                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
+                        <td className="px-3 py-2 border-b border-gray-200">38 - 42</td>
+                        <td className="px-3 py-2 border-b border-gray-200">42 - 46</td>
+                        <td className="px-3 py-2 border-b border-gray-200">47 - 53</td>
+                        <td className="px-3 py-2 border-b border-gray-200">54 - 59</td>
+                        <td className="px-3 py-2 border-b border-gray-200">60 - 65</td>
+                        <td className="px-3 py-2 border-b border-gray-200">65 - 75</td>
+                        <td className="px-3 py-2 border-b border-gray-200">75 - 85</td>
+                        <td className="px-3 py-2 border-b border-gray-200">85 - 95</td>
+                      </tr>
+                      <tr>
+                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                        <td className="px-3 py-2 border-b border-gray-200">41</td>
+                        <td className="px-3 py-2 border-b border-gray-200">43</td>
+                        <td className="px-3 py-2 border-b border-gray-200">45</td>
+                        <td className="px-3 py-2 border-b border-gray-200">47</td>
+                        <td className="px-3 py-2 border-b border-gray-200">49</td>
+                        <td className="px-3 py-2 border-b border-gray-200">50</td>
+                        <td className="px-3 py-2 border-b border-gray-200">54</td>
+                        <td className="px-3 py-2 border-b border-gray-200">58</td>
+                      </tr>
+                      <tr className="bg-gray-50">
+                        <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
+                        <td className="px-3 py-2">57.5</td>
+                        <td className="px-3 py-2">59.5</td>
+                        <td className="px-3 py-2">61.5</td>
+                        <td className="px-3 py-2">63</td>
+                        <td className="px-3 py-2">64.5</td>
+                        <td className="px-3 py-2">65.5</td>
+                        <td className="px-3 py-2">68.5</td>
+                        <td className="px-3 py-2">71.5</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
           </div>
           <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 flex justify-end gap-3">
             <button type="button" onClick={handleDownloadPNG} className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2">

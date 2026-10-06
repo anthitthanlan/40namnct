@@ -823,6 +823,25 @@ export default function AdminRegistrations({
                         </button>
                       )}
 
+                      {!isConfirmed && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            const domain = typeof window !== "undefined" ? window.location.origin : "https://nctitc.io.vn";
+                            const link = `${domain}/xac-nhan-dong-gop?id=${t.id}`;
+                            const msg = `Xin chào, BTC xin gửi lại link xác nhận đóng góp cho cựu học sinh ${t.attendeeName || t.memberName}. Lưu ý: BTC không yêu cầu bạn chuyển khoản lại hay đưa ra thông báo hoàn trả.\n\nLink: ${link}`;
+                            navigator.clipboard.writeText(msg).then(() => {
+                              alert("Đã copy tin nhắn nhắc nhở!");
+                            });
+                          }}
+                          className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-[14px]">content_copy</span>
+                          Copy nhắc nhở
+                        </button>
+                      )}
+
                       {isConfirmed && (
                         <button
                           type="button"

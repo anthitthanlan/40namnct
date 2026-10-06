@@ -67,6 +67,7 @@ export async function GET(req: Request) {
         invitationCode: inv.code,
         id: inv.id,
         status: inv.status,
+        attendeeName: inv.attendeeName,
         isFallback: false,
       });
     }
@@ -101,6 +102,7 @@ export async function GET(req: Request) {
     invitationCode: invitation.code,
     id: invitation.id,
     status: invitation.status,
+    attendeeName: invitation.attendeeName,
     isFallback: true,
   });
 }

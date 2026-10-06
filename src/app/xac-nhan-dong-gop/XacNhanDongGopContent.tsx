@@ -22,6 +22,7 @@ type BankInfo = {
   invitationCode: string;
   id: string;
   status: string;
+  attendeeName?: string;
 };
 
 type UploadState =
@@ -598,6 +599,17 @@ export default function XacNhanDongGopContent() {
             {/* Box 1: QR Code & Header */}
             {!isConfirmed && (
               <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col items-center">
+                <div className="w-full text-left mb-6 space-y-3">
+                  {info.attendeeName && (
+                    <p className="font-bold text-xl text-gray-900">Xin chào {info.attendeeName},</p>
+                  )}
+                  <p className="text-[14px] text-red-600 font-semibold leading-relaxed">
+                    * Bắt buộc ghi đúng Nội dung CK để hệ thống xác nhận tự động.
+                  </p>
+                  <p className="text-[14px] text-orange-600 font-semibold leading-relaxed">
+                    * Vui lòng KHÔNG DÙNG ví điện tử (Momo, ZaloPay...). Các giao dịch này sẽ phải chờ xét duyệt thủ công từ 1 đến 3 ngày.
+                  </p>
+                </div>
                 <QrCanvas amount={info.amount} addInfo={info.addInfo} bank={info.bank} />
                 <p className="text-center text-[13px] text-slate-500 mt-5 font-semibold">
                   Quét QR bằng ứng dụng ngân hàng để đóng góp
@@ -647,14 +659,7 @@ export default function XacNhanDongGopContent() {
 
               </div>
 
-              <div className="mt-8 space-y-2">
-                <p className="text-[12px] text-red-500 font-semibold leading-relaxed">
-                  Bắt buộc ghi đúng Nội dung CK để hệ thống xác nhận tự động.
-                </p>
-                <p className="text-[12px] text-orange-500 font-semibold leading-relaxed">
-                  Vui lòng KHÔNG DÙNG ví điện tử (Momo, ZaloPay...). Các giao dịch này sẽ phải chờ xét duyệt thủ công từ 1 đến 3 ngày.
-                </p>
-              </div>
+              <div className="mt-8"></div>
             </div>
           </motion.div>
 

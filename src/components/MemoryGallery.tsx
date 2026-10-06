@@ -13,6 +13,7 @@ type MediaRow = {
   caption: string;
   url: string;
   createdAt: string;
+  mediaType?: string;
 };
 
 export default function MemoryGallery() {
@@ -24,8 +25,15 @@ export default function MemoryGallery() {
       try {
         const res = await fetch("/api/media", { cache: "no-store" });
         const data = await res.json();
-        if (data.ok) setItems(data.media as MediaRow[]);
-        else setItems([]);
+        if (data.ok) {
+          const allMedia = data.media as MediaRow[];
+          const filtered = allMedia.filter(
+            (m) => m.caption || m.author || m.mediaType === "feed"
+          );
+          setItems(filtered);
+        } else {
+          setItems([]);
+        }
       } catch {
         setItems([]);
       }

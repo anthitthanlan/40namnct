@@ -50,6 +50,7 @@ async def upload_media(
     mediaType: str = Form("media"), # "feed" or "post"
     title: str = Form(""), # Tên post hoặc feed
     uploadIndex: int = Form(1),
+    skip_db: bool = Form(False),
     db: Session = Depends(get_db)
 ):
     import re
@@ -61,18 +62,23 @@ async def upload_media(
         if not input_str: return ""
         return unicodedata.normalize('NFKD', input_str).encode('ASCII', 'ignore').decode('utf-8')
     
-    # Nếu là feed/post và có title, tiến hành format thư mục và tên
-    if mediaType in ["feed", "post"] and title:
+    media_type_plural = f"{mediaType}s" if mediaType in ["feed", "post"] else mediaType
+
+    # Tiến hành format thư mục và tên
+    if title:
         # Làm sạch tên title
         unaccented_title = remove_accents(title)
         safe_title = re.sub(r'[^a-zA-Z0-9_-]', '_', unaccented_title)
         safe_title_prefix = safe_title[:30] # Lấy 30 kí tự đầu tiên
         
-        # Thư mục: feed/tên_bài_viết/
-        bucket_folder = f"{mediaType}/{safe_title}"
+        # Thư mục: feeds/tên_bài_viết/
+        bucket_folder = f"{media_type_plural}/{safe_title_prefix}"
         
         # Tên file: tên_bài_viết_01
         custom_name = f"{safe_title_prefix}_{uploadIndex:02d}"
+    else:
+        # Nếu không có title, lưu vào thư mục gốc của posts/feeds
+        bucket_folder = f"{media_type_plural}/untitled"
 
     # Save file directly to server disk/R2
     saved = await save_uploaded_file(
@@ -81,6 +87,15 @@ async def upload_media(
         custom_name=custom_name, 
         bucket_folder=bucket_folder
     )
+    
+    if skip_db:
+        return {
+            "success": True,
+            "id": None,
+            "url": saved["url"],
+            "filename": saved["filename"]
+        }
+
     kind = "video" if file.content_type and "video" in file.content_type else "image"
 
     media_record = MediaItem(

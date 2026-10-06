@@ -62,24 +62,66 @@ export default function NctMotionWrapper() {
           object-fit: contain;
           display: block;
         }
+        .orientation-warning {
+          display: none;
+        }
+        @media (max-width: 600px) and (orientation: portrait) {
+          .orientation-warning {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background: #03050b;
+            color: #dfe8ff;
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            font-family: system-ui, sans-serif;
+          }
+          .nct-stage, #nct-hint {
+            display: none !important;
+          }
+        }
       `}</style>
+      
+      <div className="orientation-warning">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginBottom: 16 }}>
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+          <polyline points="16 6 12 2 8 6"></polyline>
+          <line x1="12" y1="2" x2="12" y2="15"></line>
+        </svg>
+        <h2 style={{ margin: "0 0 8px 0", fontSize: "1.2rem" }}>Vui lòng xoay ngang thiết bị</h2>
+        <p style={{ margin: 0, opacity: 0.7, fontSize: "0.9rem" }}>
+          Trải nghiệm Logo Breakdown được thiết kế tối ưu nhất khi xem ở chế độ màn hình ngang.
+        </p>
+      </div>
+
       <div
         style={{
           position: "fixed",
           left: "50%",
           bottom: "28px",
           transform: "translateX(-50%)",
-          font: "600 13px/1 system-ui",
-          letterSpacing: ".3em",
+          font: "600 13px/1.5 system-ui",
+          letterSpacing: ".1em",
           textTransform: "uppercase",
           opacity: 0.7,
           pointerEvents: "none",
           zIndex: 5,
-          color: "#dfe8ff"
+          color: "#dfe8ff",
+          textAlign: "center",
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "8px"
         }}
         id="nct-hint"
       >
-        Cuộn để khám phá ↓
+        <div>Cuộn hoặc nhấn giữ phím XUỐNG<br />để khám phá</div>
+        <span className="material-symbols-rounded" style={{ fontSize: "24px" }}>arrow_downward</span>
       </div>
       <div ref={containerRef} />
     </div>

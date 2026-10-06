@@ -129,6 +129,7 @@ export default function AdminEditPost({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("title", draft?.title || "untitled");
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.ok && data.url) {
@@ -305,9 +306,10 @@ export default function AdminEditPost({
             />
             <button
               type="button"
-              disabled={uploadingCover}
+              disabled={uploadingCover || !draft.title.trim()}
+              title={!draft.title.trim() ? "Vui lòng nhập tiêu đề bài viết trước khi tải ảnh" : ""}
               onClick={() => coverInputRef.current?.click()}
-              className="mt-2 shrink-0 rounded-xl bg-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-300 disabled:opacity-50 transition-colors"
+              className="mt-2 shrink-0 rounded-xl bg-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {uploadingCover ? "Đang tải..." : "Tải ảnh lên"}
             </button>
@@ -337,6 +339,7 @@ export default function AdminEditPost({
         <RichTextEditor
           content={draft.content}
           onChange={(html) => setDraft({ ...draft, content: html })}
+          postTitle={draft.title}
         />
       </div>
       <p className="mt-2 text-right text-xs text-slate-400">Đã lưu tự động độ dài: {draft.content.length} ký tự</p>

@@ -66,6 +66,7 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "media", custom_
     else:
         safe_name = f"{timestamp}_{safe_orig_name}_{short_uuid}{ext}"
     
+    key = safe_name
     s3 = get_s3_client()
     if s3 and settings.R2_BUCKET_MEDIA:
         import asyncio
@@ -97,7 +98,7 @@ async def save_uploaded_file(file: UploadFile, subfolder: str = "media", custom_
         web_url = f"{settings.BASE_URL}/uploads/{subfolder}/{safe_name}"
 
     return {
-        "filename": safe_name,
+        "filename": key,
         "original_name": original_filename,
         "path": file_path,
         "url": web_url,

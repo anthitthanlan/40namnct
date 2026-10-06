@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = await saveUploadFile(buffer, ext, { mediaType: "post" });
+    const title = form.get("title")?.toString() || "untitled";
+    const filename = await saveUploadFile(buffer, ext, { 
+      mediaType: "post",
+      title: title,
+      skipDb: true
+    });
     const url = mediaFileUrl(filename);
     return NextResponse.json({ ok: true, url });
   } catch (err) {

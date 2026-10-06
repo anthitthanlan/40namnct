@@ -41,9 +41,11 @@ import { useEffect } from "react";
 export default function RichTextEditor({
   content,
   onChange,
+  postTitle,
 }: {
   content: string;
   onChange: (content: string) => void;
+  postTitle?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -134,6 +136,7 @@ export default function RichTextEditor({
     try {
       const formData = new FormData();
       formData.append("file", file);
+      if (postTitle) formData.append("title", postTitle);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (data.ok && data.url) {
@@ -177,17 +180,21 @@ export default function RichTextEditor({
     onClick,
     isActive = false,
     title,
+    disabled = false,
   }: {
     icon: any;
     onClick: () => void;
     isActive?: boolean;
     title?: string;
+    disabled?: boolean;
   }) => (
     <button
       type="button"
       onClick={onClick}
       title={title}
+      disabled={disabled}
       className={`p-1.5 rounded-lg transition-colors flex items-center justify-center ${
+        disabled ? "opacity-50 cursor-not-allowed text-slate-400" :
         isActive ? "bg-[#1d4ed8] text-white" : "text-slate-600 hover:bg-slate-100"
       }`}
     >
@@ -277,7 +284,12 @@ export default function RichTextEditor({
         <div className="w-[1px] bg-slate-200 mx-1 my-1" />
 
         <TB icon={LinkIcon} title="Chèn Link" onClick={openLinkModal} isActive={editor.isActive("link")} />
-        <TB icon={ImageIcon} title="Chèn Ảnh" onClick={() => { setImageModal(true); setUploadError(""); setImageUrl(""); }} />
+        <TB 
+          icon={ImageIcon} 
+          title={!postTitle?.trim() ? "Vui lòng nhập Tiêu đề bài viết trước khi chèn ảnh" : "Chèn Ảnh"} 
+          disabled={!postTitle?.trim()}
+          onClick={() => { setImageModal(true); setUploadError(""); setImageUrl(""); }} 
+        />
         <TB icon={YoutubeIcon} title="Chèn Video YouTube" onClick={() => { setYtModal(true); setYtUrl(""); }} />
 
         {/* Colors */}

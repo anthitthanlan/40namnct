@@ -197,7 +197,7 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
         <span className="material-symbols-rounded text-blue-600">upload</span> {isAdmin ? "Tải lên Khoảnh khắc mới" : "Gửi hình ảnh / tư liệu ngay"}
       </h3>
       <p className="mt-2 text-sm text-slate-500">
-        {isAdmin ? "Đăng trực tiếp ảnh/video vào Tường ký ức. Tệp sẽ hiển thị ngay mà không cần duyệt." : "Tải lên ảnh cũ, học bạ, sổ liên lạc, phù hiệu… hoặc video ngắn. Nhập năm khoác khúc - sau duyệt tự động sắp trên Timeline 40 năm."}
+        {isAdmin ? "Đăng trực tiếp ảnh/video vào Tường ký ức. Tệp sẽ hiển thị ngay mà không cần duyệt." : ""}
       </p>
 
       {/* File picker */}

@@ -23,6 +23,7 @@ export default function DynamicNavbar() {
   const [active, setActive] = useState("");
   // default true để SSR/hydration không flash desktop nav trên mobile
   const [isMobileNav, setIsMobileNav] = useState(true);
+  const [isSafari, setIsSafari] = useState(true);
 
   // Probe div: luôn render đầy đủ nội dung desktop, đặt ngoài viewport để đo natural width
   const probeRef = useRef<HTMLDivElement>(null);
@@ -75,6 +76,12 @@ export default function DynamicNavbar() {
     };
   }, [pathname]);
 
+  useEffect(() => {
+    // Detect Safari (macOS & iOS) to disable heavy backdrop-blur
+    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    setIsSafari(isSafariBrowser);
+  }, []);
+
   const isHome = pathname === "/";
 
   const resolveHref = (href: string): string =>
@@ -123,8 +130,8 @@ export default function DynamicNavbar() {
         {/* Pill */}
         <div
           style={{ transition: "background 0.45s cubic-bezier(0.4,0,0.2,1)" }}
-          className={`pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/60 p-1.5 shadow-lg shadow-slate-950/15 backdrop-blur-2xl ${
-            scrolled ? "bg-white/90 shadow-slate-950/20" : "bg-white/75"
+          className={`pointer-events-auto flex items-center gap-1.5 rounded-full border border-white/60 p-1.5 shadow-lg shadow-slate-950/15 ${isSafari ? '' : 'backdrop-blur-2xl'} ${
+            scrolled ? (isSafari ? "bg-white/98 shadow-slate-950/20" : "bg-white/90 shadow-slate-950/20") : (isSafari ? "bg-white/98" : "bg-white/75")
           }`}
         >
           {/* Logo */}

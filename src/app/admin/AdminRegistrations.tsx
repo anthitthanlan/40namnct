@@ -82,7 +82,19 @@ export default function AdminRegistrations({
       onAuthError?.();
       return;
     }
-    const data = await res.json();
+    const text = await res.text();
+    if (!text) {
+      console.error("Empty response from /api/admin/registrations");
+      return;
+    }
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Failed to parse JSON:", text);
+      return;
+    }
+
     if (data.ok) {
       setMembers(data.members as MemberRow[]);
       setInvitations(data.invitations as InvitationRow[]);

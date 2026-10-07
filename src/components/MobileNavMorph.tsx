@@ -18,6 +18,7 @@ const links = [
 export default function MobileNavMorph() {
   const [isOpen, setIsOpen] = useState(false);
   const [contentHeight, setContentHeight] = useState(0);
+  const [isSafari, setIsSafari] = useState(true); // Default to true (safe mode) until hydration
   const pathname = usePathname();
   const navRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -80,6 +81,12 @@ export default function MobileNavMorph() {
     }
   }, []);
 
+  useEffect(() => {
+    // Detect Safari (macOS & iOS) to disable heavy backdrop-blur
+    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    setIsSafari(isSafariBrowser);
+  }, []);
+
   const topVariants = { closed: { rotate: 0, y: 0 }, open: { rotate: 45, y: 6 } };
   const centerVariants = { closed: { opacity: 1 }, open: { opacity: 0 } };
   const bottomVariants = { closed: { rotate: 0, y: 0 }, open: { rotate: -45, y: -6 } };
@@ -119,7 +126,7 @@ export default function MobileNavMorph() {
               </g>
             </mask>
 
-            {/* 3. Filter Đổ bóng độc lập: Tạo bóng nhưng khoét rỗng ruột để không che Div kính */}
+            {/* 3. Filter Đổ bóng độc lập (chỉ dùng cho Chrome/Android) */}
             <filter id="goo-shadow-only" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
               <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="goo" />
@@ -128,31 +135,36 @@ export default function MobileNavMorph() {
             </filter>
           </defs>
 
-          {/* Lớp Render Đổ bóng của hình Gooey */}
-          <g filter="url(#goo-shadow-only)" fill="#ffffff">
-            <motion.rect x={20} y={20} width={48} height={48} rx={24} />
-            <motion.rect
-              initial={false}
-              animate={{
-                x: 20,
-                y: isOpen ? 20 + 64 : 20,
-                width: isOpen ? 280 : 48,
-                height: isOpen ? finalMenuHeight : 48,
-                rx: 24
-              }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </g>
+          {/* Bóng đổ SVG, chỉ dùng cho Chrome/Android để không làm lỗi backdrop-blur */}
+          {!isSafari && (
+            <g filter="url(#goo-shadow-only)" fill="#ffffff">
+              <motion.rect x={20} y={20} width={48} height={48} rx={24} />
+              <motion.rect
+                initial={false}
+                animate={{
+                  x: 20,
+                  y: isOpen ? 20 + 64 : 20,
+                  width: isOpen ? 280 : 48,
+                  height: isOpen ? finalMenuHeight : 48,
+                  rx: 24
+                }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </g>
+          )}
         </svg>
 
-        {/* Lớp HTML tạo kính mờ (Frosted Glass), bị cắt theo hình Gooey */}
-        <div 
-          className="absolute inset-0 bg-white/70 backdrop-blur-xl"
-          style={{
-            WebkitMask: "url(#goo-mask)",
-            mask: "url(#goo-mask)",
-          }}
-        ></div>
+        {/* Bọc bằng div chứa drop-shadow (chỉ dùng cho Safari vì drop-shadow CSS làm hỏng backdrop-blur trên Chrome) */}
+        <div className={`absolute inset-0 ${isSafari ? 'drop-shadow-[0_8px_20px_rgb(0,0,0,0.12)]' : ''}`}>
+          {/* Lớp HTML nền. Safari sẽ dùng nền trắng đục, còn lại dùng kính mờ */}
+          <div 
+            className={`absolute inset-0 ${isSafari ? 'bg-white/98' : 'bg-white/70 backdrop-blur-xl'}`}
+            style={{
+              WebkitMask: "url(#goo-mask)",
+              mask: "url(#goo-mask)",
+            }}
+          ></div>
+        </div>
       </div>
 
       {/* Nút Hamburger thật (chỉ chứa Icon, nền trong suốt) */}

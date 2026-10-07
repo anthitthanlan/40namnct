@@ -21,6 +21,7 @@ export default function SchoolAnimatedBg() {
   const [loaded, setLoaded] = useState<boolean[]>(() =>
     FALLBACK.map(() => false),
   );
+  const [isSafari, setIsSafari] = useState(true);
 
   // Tự động quét ảnh từ thư mục hero_images qua API
   useEffect(() => {
@@ -74,6 +75,12 @@ export default function SchoolAnimatedBg() {
     };
   }, [images.length]);
 
+  useEffect(() => {
+    // Detect Safari (macOS & iOS) to disable heavy backdrop-blur over animated images
+    const isSafariBrowser = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    setIsSafari(isSafariBrowser);
+  }, []);
+
   return (
     <div
       aria-hidden="true"
@@ -115,8 +122,8 @@ export default function SchoolAnimatedBg() {
         );
       })}
 
-      {/* Lớp phủ làm mờ và kính tối (smoky blur backdrop) */}
-      <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[6px]" />
+      {/* Lớp phủ làm mờ và kính tối. Safari dùng màu đặc không mờ để tránh lag khi hình ảnh bên dưới chuyển động */}
+      <div className={`absolute inset-0 ${isSafari ? 'bg-slate-950/85' : 'bg-slate-950/65 backdrop-blur-[6px]'}`} />
 
       {/* Gradient ánh sáng viền & chiều sâu điện ảnh */}
       <div className="absolute inset-0 bg-gradient-to-t from-black via-slate-950/50 to-slate-950/80" />

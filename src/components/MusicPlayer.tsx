@@ -14,7 +14,7 @@ function formatTime(sec: number): string {
 
 export default function MusicPlayer() {
   const pathname = usePathname();
-  if (pathname.startsWith("/admin")) return null;
+  const isHidden = pathname.startsWith("/admin");
   const isOverlapPage = pathname === "/thu-moi" || pathname === "/xac-nhan-dong-gop";
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const userManuallyPaused = useRef(false);
@@ -115,12 +115,19 @@ export default function MusicPlayer() {
     }
   }, []);
 
-  // Tự động phát khi navigate về trang chủ (nếu người dùng chưa từng chủ động tắt)
+  // Xử lý tự động phát / tạm dừng dựa trên route
   useEffect(() => {
-    if (pathname === "/" && !userManuallyPaused.current) {
+    if (isHidden) {
+      // Khi bị ẩn (vd: vào /admin), tự động ngắt nhạc
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
+    } else if (pathname === "/" && !userManuallyPaused.current) {
+      // Tự động phát khi navigate về trang chủ (nếu chưa từng chủ động tắt)
       audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
     }
-  }, [pathname]);
+  }, [pathname, isHidden]);
 
   // Xử lý Tua thời gian (Seek)
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,6 +201,8 @@ export default function MusicPlayer() {
 
   const showExpanded = isExpanded || isHovered;
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  if (isHidden) return null;
 
   return (
     <div

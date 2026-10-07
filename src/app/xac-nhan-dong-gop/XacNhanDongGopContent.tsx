@@ -111,14 +111,13 @@ function UploadZone({
   onFileSelected: (file: File) => void;
   disabled?: boolean;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
 
   const handleFile = useCallback(
     (file: File) => {
       if (disabled) return;
-      if (!["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic"].includes(file.type)) {
-        alert("Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.");
+      if (file.type && !file.type.startsWith("image/")) {
+        alert("Chỉ chấp nhận file ảnh (JPEG, PNG, WebP, HEIC...).");
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
@@ -131,8 +130,7 @@ function UploadZone({
   );
 
   return (
-    <div
-      onClick={() => !disabled && inputRef.current?.click()}
+    <label
       onDragOver={(e) => {
         e.preventDefault();
         setDragging(true);
@@ -153,11 +151,10 @@ function UploadZone({
       }`}
     >
       <input
-        ref={inputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp,image/heic"
+        accept="image/*"
         capture="environment"
-        className="hidden"
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
@@ -165,14 +162,14 @@ function UploadZone({
         }}
         disabled={disabled}
       />
-      <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600">
+      <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 pointer-events-none">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
           <polyline points="17 8 12 3 7 8"></polyline>
           <line x1="12" y1="3" x2="12" y2="15"></line>
         </svg>
       </div>
-      <div className="text-center">
+      <div className="text-center pointer-events-none">
         <p className="font-semibold text-gray-800 text-sm">
           Tải ảnh biên lai chuyển khoản
         </p>
@@ -180,9 +177,9 @@ function UploadZone({
           Kéo thả, bấm để chọn, hoặc{" "}
           <span className="text-blue-600 font-semibold">chụp từ camera</span>
         </p>
-        <p className="text-[11px] text-gray-400 mt-1">JPEG · PNG · WebP · tối đa 10MB</p>
+        <p className="text-[11px] text-gray-400 mt-1">Hỗ trợ mọi định dạng ảnh · tối đa 10MB</p>
       </div>
-    </div>
+    </label>
   );
 }
 

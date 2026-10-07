@@ -59,6 +59,11 @@ function InvitationContent() {
         if (!res.ok) {
           setError(res.message);
         } else {
+          const status = res.invitation?.status;
+          if (["pending", "pending_payment", "rejected"].includes(status)) {
+            window.location.replace(`/xac-nhan-dong-gop?id=${id}`);
+            return;
+          }
           setData(res);
         }
       })

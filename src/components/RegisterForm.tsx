@@ -112,6 +112,7 @@ export default function RegisterForm() {
   // Status
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [existingMemberPrompt, setExistingMemberPrompt] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [code, setCode] = useState("");
   const [copied, setCopied] = useState("");
@@ -373,9 +374,10 @@ export default function RegisterForm() {
     setBuyCombo(true);
   };
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
+  async function submit(e?: FormEvent | React.MouseEvent, forceNewInvitation = false) {
+    if (e) e.preventDefault();
     setError("");
+    setExistingMemberPrompt(false);
 
     if (!isInfoLocked) {
       handleContinue(e);
@@ -435,6 +437,7 @@ export default function RegisterForm() {
             ? { size: `${gender}-${size}`, comboCount: 1, quantity: 1 }
             : { quantity: comboCount, comboCount, sizes }
           : { size: null, comboCount: 0, quantity: 1 }),
+        forceNewInvitation,
       };
 
       const res = await fetch("/api/auth/register", {
@@ -455,7 +458,11 @@ export default function RegisterForm() {
       }
 
       if (!res.ok || !data.ok) {
-        setError(data.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
+        if (data.existingMember) {
+          setExistingMemberPrompt(true);
+        } else {
+          setError(data.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
+        }
         return;
       }
       if (amount > 0) {
@@ -494,27 +501,62 @@ export default function RegisterForm() {
         </motion.div>
       ))}
 
-      <button
-        type="submit"
-        disabled={busy}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-4 rounded-xl transition-all shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
-      >
-        {busy ? (
-          <>
-            <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            Đang xử lý...
-          </>
-        ) : (
-          <>
-            {amount > 0
-              ? `Xác nhận Đăng ký & Đóng góp ${(amount).toLocaleString("vi-VN")}đ`
-              : "Xác nhận Đăng ký"}
-          </>
-        )}
-      </button>
+      {existingMemberPrompt ? (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-3"
+        >
+          <div className="mb-2 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm flex items-start gap-3 font-medium shadow-sm">
+            <div className="w-6 h-6 shrink-0 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mt-0.5">
+              <span className="material-symbols-rounded text-sm">warning</span>
+            </div>
+            <div>
+              <p>Số điện thoại <strong>{phone}</strong> đã được dùng để đăng ký trước đó.</p>
+              <p className="mt-1">Bạn muốn xem lại các giao dịch/thư mời cũ hay tạo một phiếu đăng ký mới?</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => { window.location.href = `/tra-cuu`; }}
+            className="w-full bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-3.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-rounded text-[18px]">search</span>
+            Tiếp tục hoàn tất giao dịch / Xem thư mời
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={(e) => submit(e, true)}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 rounded-xl transition-all shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {busy ? "Đang xử lý..." : "Tạo đăng ký đóng góp mới"}
+          </button>
+        </motion.div>
+      ) : (
+        <button
+          type="button"
+          onClick={(e) => submit(e, false)}
+          disabled={busy}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-4 rounded-xl transition-all shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
+        >
+          {busy ? (
+            <>
+              <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Đang xử lý...
+            </>
+          ) : (
+            <>
+              {amount > 0
+                ? `Xác nhận Đăng ký & Đóng góp ${(amount).toLocaleString("vi-VN")}đ`
+                : "Xác nhận Đăng ký"}
+            </>
+          )}
+        </button>
+      )}
     </>
   );
 
@@ -570,6 +612,9 @@ export default function RegisterForm() {
                   </p>
                   <p className="mt-1.5 text-blue-800/80 text-sm">
                     Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện.
+                  </p>
+                  <p className="mt-2 text-red-600 font-semibold text-sm">
+                    ⚠️ Lưu ý quan trọng: Nếu quý khách đang truy cập từ Zalo, Facebook hoặc Messenger, vui lòng mở liên kết bằng trình duyệt mặc định của hệ thống (Safari, Chrome...) để quá trình đăng ký không bị lỗi.
                   </p>
                 </div>
               </div>

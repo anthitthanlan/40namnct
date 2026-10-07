@@ -119,28 +119,49 @@ export async function POST(req: NextRequest) {
   let invitationCode = "";
   let invitationId = "";
   let isFallback = false;
+  const forceNewInvitation = !!body.forceNewInvitation;
 
   try {
-    // 1. Tạo Member trên Backend Server (FastAPI)
-    const memberRes = await fetch(`${backendUrl}/api/members`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone, email }),
-    });
+    let memberId = "";
+    const { findMemberByPhone } = await import("@/lib/members");
 
-    if (!memberRes.ok) {
-      const errData = (await memberRes.json().catch(() => ({}))) as { detail?: string };
-      throw new Error(errData?.detail || "Không thể tạo thông tin thành viên trên server.");
+    if (forceNewInvitation) {
+      const existing = await findMemberByPhone(phone);
+      if (existing) {
+        memberId = existing.id;
+      }
     }
 
-    const memberData = (await memberRes.json()) as { id: string };
+    if (!memberId) {
+      // 1. Tạo Member trên Backend Server (FastAPI)
+      const memberRes = await fetch(`${backendUrl}/api/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, email }),
+      });
+
+      if (!memberRes.ok) {
+        const errData = (await memberRes.json().catch(() => ({}))) as { detail?: string };
+        const msg = errData?.detail?.toLowerCase() || "";
+        if (msg.includes("đã tồn tại") || msg.includes("already exist") || msg.includes("số điện thoại đã")) {
+          return NextResponse.json(
+            { ok: false, existingMember: true, message: "Số điện thoại đã được đăng ký." },
+            { status: 409 },
+          );
+        }
+        throw new Error(errData?.detail || "Không thể tạo thông tin thành viên trên server.");
+      }
+
+      const memberData = (await memberRes.json()) as { id: string };
+      memberId = memberData.id;
+    }
 
     // 2. Tạo Invitation trên Backend Server (FastAPI)
     const invRes = await fetch(`${backendUrl}/api/invitations`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        memberId: memberData.id,
+        memberId: memberId,
         attendeeName: name,
         nienKhoa,
         type,
@@ -166,15 +187,36 @@ export async function POST(req: NextRequest) {
     isFallback = true;
 
     // Fallback local file nếu backend không khả dụng
-    const memberResult = await createMember(name, phone, email);
-    if (!memberResult.ok) {
-      return NextResponse.json(
-        { ok: false, message: memberResult.message, isFallback },
-        { status: 409 },
-      );
+    let fallbackMemberId = "";
+    if (forceNewInvitation) {
+      const { findMemberByPhone } = await import("@/lib/members");
+      const existing = await findMemberByPhone(phone);
+      if (existing) {
+        fallbackMemberId = existing.id;
+      }
     }
 
-    const invitation = await createInvitation(memberResult.member.id, {
+    if (!fallbackMemberId) {
+      const { createMember } = await import("@/lib/members");
+      const memberResult = await createMember(name, phone, email);
+      if (!memberResult.ok) {
+        const msg = memberResult.message.toLowerCase();
+        if (msg.includes("tồn tại") || msg.includes("đã được đăng ký") || msg.includes("already exist")) {
+          return NextResponse.json(
+            { ok: false, existingMember: true, message: "Số điện thoại đã được đăng ký.", isFallback },
+            { status: 409 },
+          );
+        }
+        return NextResponse.json(
+          { ok: false, message: memberResult.message, isFallback },
+          { status: 409 },
+        );
+      }
+      fallbackMemberId = memberResult.member.id;
+    }
+
+    const { createInvitation } = await import("@/lib/members");
+    const invitation = await createInvitation(fallbackMemberId, {
       type,
       nienKhoa,
       attendeeName: name,

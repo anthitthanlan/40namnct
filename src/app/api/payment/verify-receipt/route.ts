@@ -17,10 +17,31 @@ export async function POST(req: NextRequest) {
     });
     
     const backendData = await backendRes.json();
+    const invitationId = formData.get("invitationId") as string;
+    
+    // Xử lý các case rớt dòng hoặc ngân hàng cắt dấu '-'
+    if (backendData.ok && backendData.confidence !== "high" && backendData.content && invitationId) {
+      try {
+        const { findInvitationById, updateInvitationDetails } = await import("@/lib/members");
+        const invitation = await findInvitationById(invitationId);
+        if (invitation) {
+          const expectedCode = invitation.code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+          const actualContent = backendData.content.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+          
+          if (actualContent.includes(expectedCode)) {
+             backendData.confidence = "high";
+             backendData.transactionStatus = "success";
+             // Ghi đè cập nhật lại status thành confirmed trên backend
+             await updateInvitationDetails(invitationId, { status: "confirmed", ocrResult: backendData });
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi so khớp OCR nới lỏng:", err);
+      }
+    }
     
     if (backendData.ok && backendData.confidence === "high") {
       // Send email asynchronously without blocking the response
-      const invitationId = formData.get("invitationId") as string;
       if (invitationId) {
         sendInvitationEmail(invitationId).catch(err => 
           console.error("Async email send failed:", err)

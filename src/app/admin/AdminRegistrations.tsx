@@ -9,6 +9,7 @@ import {
   invitationStatusInfo,
   type InvitationView,
 } from "@/lib/invitation-view";
+import type { ActionLog } from "@/lib/action-logs";
 
 type MemberRow = {
   id: string;
@@ -57,6 +58,8 @@ export default function AdminRegistrations({
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [mainTab, setMainTab] = useState<"approve" | "sizes" | "transactions">("approve");
   const [editingInvitation, setEditingInvitation] = useState<InvitationRow | null>(null);
+  const [logs, setLogs] = useState<ActionLog[]>([]);
+  const [viewingLogsFor, setViewingLogsFor] = useState<InvitationRow | null>(null);
 
   const flash = useCallback((ok: boolean, text: string) => {
     setBanner({ ok, text });
@@ -75,6 +78,7 @@ export default function AdminRegistrations({
     if (data.ok) {
       setMembers(data.members as MemberRow[]);
       setInvitations(data.invitations as InvitationRow[]);
+      if (data.logs) setLogs(data.logs);
     }
   }, [onAuthError]);
 
@@ -148,7 +152,7 @@ export default function AdminRegistrations({
   }
 
   async function sendEmail(t: InvitationRow) {
-    if (!window.confirm(`Xác nhận gửi lại thư mời về email của ${t.memberName}?`)) return;
+    if (!window.confirm(`Xác nhận gửi thư mời về email của ${t.memberName}?`)) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/registrations/${t.id}`, {
@@ -163,7 +167,8 @@ export default function AdminRegistrations({
         flash(false, data.message || "Gửi email thất bại.");
         return;
       }
-      flash(true, `Đã gửi lại thư mời ${t.code} qua email.`);
+      flash(true, `Đã gửi thư mời ${t.code} qua email.`);
+      load();
     } finally {
       setBusy(false);
     }
@@ -907,9 +912,17 @@ export default function AdminRegistrations({
                           onClick={() => sendEmail(t)}
                           className="rounded-xl bg-purple-50 px-3 py-1.5 text-[11px] font-bold text-purple-600 hover:bg-purple-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
                         >
-                          <span className="material-symbols-rounded text-[14px]">mail</span> Gửi lại Mail
+                          <span className="material-symbols-rounded text-[14px]">mail</span> Gửi Mail
                         </button>
                       )}
+
+                      <button
+                        type="button"
+                        onClick={() => setViewingLogsFor(t)}
+                        className="rounded-xl bg-orange-50 px-3 py-1.5 text-[11px] font-bold text-orange-600 hover:bg-orange-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                      >
+                        <span className="material-symbols-rounded text-[14px]">history</span> Lịch sử
+                      </button>
 
                       <button
                         type="button"
@@ -1107,6 +1120,45 @@ export default function AdminRegistrations({
               >
                 Hiển thị {filteredInvitations.length} kết quả
               </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {viewingLogsFor && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 p-5">
+              <h3 className="text-lg font-bold text-slate-900">Lịch sử: {viewingLogsFor.code}</h3>
+              <button
+                type="button"
+                onClick={() => setViewingLogsFor(null)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <span className="material-symbols-rounded block text-xl">close</span>
+              </button>
+            </div>
+            <div className="max-h-[65vh] overflow-y-auto p-5 space-y-4 text-left">
+              {(() => {
+                const myLogs = logs.filter(l => l.entityId === viewingLogsFor.id);
+                if (myLogs.length === 0) {
+                  return <p className="text-sm text-slate-500 italic">Chưa có lịch sử nào cho thư mời này.</p>;
+                }
+                return (
+                  <div className="space-y-3">
+                    {myLogs.map((log) => (
+                      <div key={log.id} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="font-bold text-sm text-slate-800">{log.adminName} <span className="text-xs font-normal text-slate-500">({log.adminUsername})</span></div>
+                          <div className="text-[11px] font-semibold text-slate-500">{new Date(log.createdAt).toLocaleString("vi-VN")}</div>
+                        </div>
+                        <p className="text-xs text-slate-700 leading-relaxed">{log.details}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>,

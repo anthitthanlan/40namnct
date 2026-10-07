@@ -289,12 +289,12 @@ export default function TraCuuClient() {
                       </div>
 
                       <div className="flex justify-center pt-4 mt-2">
-                        {invitation.status === "pending_payment" ? (
+                        {["pending_payment", "pending", "rejected"].includes(invitation.status) ? (
                           <Link
-                            href={`/payment-legacy?id=${invitation.id}`}
+                            href={`/xac-nhan-dong-gop?id=${invitation.id}`}
                             className="w-full text-center rounded-xl bg-[#1d4ed8] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700"
                           >
-                            Thanh toán ngay
+                            {invitation.status === "rejected" ? "Xem chi tiết / Thanh toán lại" : "Thanh toán ngay"}
                           </Link>
                         ) : (
                           <Link

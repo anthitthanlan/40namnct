@@ -71,7 +71,7 @@ export async function POST(
       admin.fullName || admin.username,
       admin.username,
       admin.role,
-      "Gửi lại email thư mời thủ công"
+      "Gửi email thư mời thủ công"
     );
     return NextResponse.json({ ok: true });
   } else {

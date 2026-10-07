@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import RegisterForm from "@/components/RegisterForm";
 import Reveal from "@/components/Reveal";
+import InAppBrowserWarning from "@/components/InAppBrowserWarning";
 
 export const metadata: Metadata = {
   title: "Đăng ký áo kỷ niệm · Lễ kỷ niệm 40 năm THPT Nguyễn Công Trứ",
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
 export default function DangKyPage() {
   return (
     <main className="min-h-screen bg-gray-50 pt-28 pb-20 px-3 md:px-6">
+      <InAppBrowserWarning />
       <div className="w-full max-w-5xl mx-auto">
         <Reveal>
           <div className="text-center mb-10">

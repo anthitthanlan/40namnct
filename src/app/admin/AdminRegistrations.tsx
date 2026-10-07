@@ -32,11 +32,19 @@ type InvitationRow = InvitationView & {
 type Banner = { ok: boolean; text: string } | null;
 
 function vi(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }) +
+    " " +
+    d.toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  );
 }
 
 export default function AdminRegistrations({
@@ -52,7 +60,7 @@ export default function AdminRegistrations({
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pending_approval" | "confirmed" | "pending_payment" | "rejected" | "cancelled" | "checked_in" | "shirt_received"
-  >("pending_approval");
+  >("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "individual" | "group">("all");
   const [mobileSubTab, setMobileSubTab] = useState<"overview" | "list">("overview");
   const [showFilterModal, setShowFilterModal] = useState(false);

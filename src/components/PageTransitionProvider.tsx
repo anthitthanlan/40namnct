@@ -49,7 +49,7 @@ export default function PageTransitionProvider({ children }: { children: React.R
 
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       <motion.div key={pathname} className="w-full">
         <FrozenRouter>
           <DelayedMount isInitial={isInitialRender.current}>{children}</DelayedMount>

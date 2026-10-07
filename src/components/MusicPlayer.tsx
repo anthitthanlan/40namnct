@@ -14,8 +14,10 @@ function formatTime(sec: number): string {
 
 export default function MusicPlayer() {
   const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return null;
   const isOverlapPage = pathname === "/thu-moi" || pathname === "/xac-nhan-dong-gop";
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const userManuallyPaused = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -58,6 +60,11 @@ export default function MusicPlayer() {
 
     // Cố gắng phát nhạc khi có tương tác đầu tiên của người dùng
     const tryAutoplay = () => {
+      // Chỉ tự động phát nếu đang ở trang chủ
+      if (window.location.pathname !== "/") {
+        cleanupGesture();
+        return;
+      }
       audio
         .play()
         .then(() => {
@@ -65,7 +72,7 @@ export default function MusicPlayer() {
           cleanupGesture();
         })
         .catch(() => {
-          // Trình duyệt chặn autoplay, chờ click của người dùng
+          // Trình duyệt chặn autoplay, chờ click tiếp theo
         });
     };
 
@@ -77,9 +84,10 @@ export default function MusicPlayer() {
       window.removeEventListener("touchstart", onFirstGesture);
     }
 
-    window.addEventListener("pointerdown", onFirstGesture, { once: true });
-    window.addEventListener("keydown", onFirstGesture, { once: true });
-    window.addEventListener("touchstart", onFirstGesture, { once: true });
+    // Không dùng { once: true } để có thể thử lại nếu bị trình duyệt chặn
+    window.addEventListener("pointerdown", onFirstGesture);
+    window.addEventListener("keydown", onFirstGesture);
+    window.addEventListener("touchstart", onFirstGesture);
 
     return () => {
       cleanupGesture();
@@ -99,11 +107,20 @@ export default function MusicPlayer() {
     if (!audio) return;
 
     if (audio.paused) {
+      userManuallyPaused.current = false;
       audio.play().catch(() => { });
     } else {
+      userManuallyPaused.current = true;
       audio.pause();
     }
   }, []);
+
+  // Tự động phát khi navigate về trang chủ (nếu người dùng chưa từng chủ động tắt)
+  useEffect(() => {
+    if (pathname === "/" && !userManuallyPaused.current) {
+      audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  }, [pathname]);
 
   // Xử lý Tua thời gian (Seek)
   const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {

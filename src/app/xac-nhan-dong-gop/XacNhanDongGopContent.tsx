@@ -153,7 +153,6 @@ function UploadZone({
       <input
         type="file"
         accept="image/*"
-        capture="environment"
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         onChange={(e) => {
           const file = e.target.files?.[0];

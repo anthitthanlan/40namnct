@@ -35,54 +35,21 @@ type MemberUser = {
   source: "member" | "manual";
 };
 
-const EMAIL_TEMPLATES = [
-  {
-    id: "invitation-reminder",
-    title: "Thư mời tham dự Lễ Kỷ Niệm 40 Năm",
-    subject: "Thư mời tham dự Lễ Kỷ Niệm 40 Năm Thành Lập Trường THPT Nguyễn Công Trứ",
-    content: `<h2>Kính gửi {name},</h2>
-<p>Ban Tổ Chức Lễ Kỷ Niệm 40 Năm Thành Lập Trường THPT Nguyễn Công Trứ (1986 — 2026) trân trọng gửi lời chào và lời chúc sức khỏe nồng nhiệt nhất đến Quý Thầy Cô, Quý Cựu học sinh và Quý Khách.</p>
-<p>Trải qua bốn thập kỷ xây dựng và trưởng thành, ngôi trường thân yêu đã chắp cánh ước mơ cho bao thế hệ học trò. Lễ kỷ niệm 40 năm là dịp đặc biệt để chúng ta cùng trở về, hội ngộ và ôn lại những kỷ niệm tươi đẹp thời cắp sách đến trường.</p>
-<blockquote>
-  <p><strong>Thời gian:</strong> Ngày 15 tháng 11 năm 2026<br/>
-  <strong>Địa điểm:</strong> Trường THPT Nguyễn Công Trứ</p>
-</blockquote>
-<p>Ban Tổ Chức rất vinh hạnh được đón tiếp {name} tại ngày hội lớn này. Vui lòng kiểm tra mã thư mời hoặc quét mã QR khi check-in tại cổng trường.</p>
-<p>Trân trọng cảm ơn và hẹn gặp lại!</p>`,
-  },
-  {
-    id: "ticket-confirmed",
-    title: "Xác nhận đăng ký thư mời thành công",
-    subject: "Xác nhận đăng ký tham dự Lễ Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ thành công",
-    content: `<h2>Chào {name},</h2>
-<p>Ban Tổ Chức xin thông báo thông tin đăng ký tham dự Lễ Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ của bạn đã được <strong>xác nhận thành công</strong>.</p>
-<p>Bạn có thể tra cứu thông tin thư mời và mã check-in điện tử bất kỳ lúc nào trên website chính thức bằng số điện thoại đã đăng ký.</p>
-<p>Nếu có bất kỳ thắc mắc hoặc cần hỗ trợ thêm về thông tin sự kiện hay kích cỡ áo đồng niệm, bạn vui lòng liên hệ Ban Tổ Chức qua hotline hoặc email hỗ trợ.</p>
-<p>Chúc bạn một ngày tốt lành và hẹn gặp lại bạn tại ngày hội trường!</p>`,
-  },
-  {
-    id: "gratitude",
-    title: "Thư cảm ơn & Tri ân đóng góp",
-    subject: "Thư cảm ơn từ Ban Tổ Chức Lễ Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ",
-    content: `<h2>Kính gửi {name},</h2>
-<p>Ban Tổ Chức Lễ Kỷ Niệm 40 Năm Thành Lập Trường THPT Nguyễn Công Trứ xin gửi lời cảm ơn chân thành và sâu sắc nhất đến {name} vì sự quan tâm, ủng hộ và đóng góp quý báu dành cho ngày hội kỷ niệm của trường.</p>
-<p>Mỗi sự đồng hành của Quý Thầy Cô và các thế hệ cựu học sinh chính là nguồn động viên to lớn giúp sự kiện diễn ra trọn vẹn và ý nghĩa.</p>
-<p>Kính chúc {name} cùng gia đình luôn dồi dào sức khỏe, hạnh phúc và thành công trên mọi nẻo đường!</p>`,
-  },
-  {
-    id: "blank",
-    title: "Mẫu trống (Tự soạn thảo)",
-    subject: "",
-    content: `<p>Kính gửi {name},</p><p>Nhập nội dung thông báo tại đây...</p>`,
-  },
-];
+type EmailTemplate = {
+  id: string;
+  title: string;
+  subject: string;
+  content: string;
+  created_at?: string;
+};
+
 
 export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }) {
   const [users, setUsers] = useState<MemberUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "has_email" | "confirmed">("has_email");
+  const [filterType, setFilterType] = useState<"has_email" | "auto_confirmed" | "manual_confirmed" | "pending" | "rejected">("has_email");
 
   // Email Composer State
   const [subject, setSubject] = useState("");
@@ -98,6 +65,10 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
 
   // Confirmation Modal
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // DB Templates
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   // Load registered members from API
   const loadRecipients = useCallback(async () => {
@@ -116,16 +87,26 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
         // Map from members (only those who have at least 1 invitation)
         data.members.forEach((m: any) => {
           const email = (m.email || "").trim().toLowerCase();
-          // ONLY push if member has invitations!
+          // Push all who have invitations
           const memberInvitations = data.invitations?.filter((inv: any) => inv.memberId === m.id) || [];
           if (email && !seenEmails.has(email) && memberInvitations.length > 0) {
             seenEmails.add(email);
+            
+            const inv = memberInvitations[0];
+            let mappedStatus = "pending";
+            if (inv.status === "rejected") mappedStatus = "rejected";
+            else if (inv.status === "confirmed") {
+              mappedStatus = inv.ocrResult?.confidence === "high" ? "auto_confirmed" : "manual_confirmed";
+            } else {
+              mappedStatus = "pending";
+            }
+
             mappedUsers.push({
               id: m.id || email,
               name: m.name || "Khách mời",
               email: email,
               phone: m.phone || "",
-              status: m.confirmedAmount > 0 ? "confirmed" : "pending",
+              status: mappedStatus,
               ticketCount: m.invitationCount || memberInvitations.length,
               amount: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(memberInvitations[0]?.amount || 0),
               donate_code: memberInvitations[0]?.code || "",
@@ -141,12 +122,21 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
             const email = (inv.memberEmail || "").trim().toLowerCase();
             if (email && !seenEmails.has(email)) {
               seenEmails.add(email);
+              
+              let mappedStatus = "pending";
+              if (inv.status === "rejected") mappedStatus = "rejected";
+              else if (inv.status === "confirmed") {
+                mappedStatus = inv.ocrResult?.confidence === "high" ? "auto_confirmed" : "manual_confirmed";
+              } else {
+                mappedStatus = "pending";
+              }
+
               mappedUsers.push({
                 id: inv.id || email,
                 name: inv.attendeeName || inv.memberName || "Khách mời",
                 email: email,
                 phone: inv.memberPhone || "",
-                status: inv.status || "confirmed",
+                status: mappedStatus,
                 ticketCount: inv.quantity || 1,
                 amount: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(inv.amount || 0),
                 donate_code: inv.code || "",
@@ -175,18 +165,32 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
     }
   }, [onAuthError]);
 
+  const loadTemplates = useCallback(async () => {
+    setLoadingTemplates(true);
+    try {
+      const res = await fetch("/api/admin/email/templates");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) setTemplates(data.templates);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadRecipients();
-    // Default template
-    setSubject(EMAIL_TEMPLATES[0].subject);
-    setContent(EMAIL_TEMPLATES[0].content);
-  }, [loadRecipients]);
+    loadTemplates();
+  }, [loadRecipients, loadTemplates]);
 
   // Filtered users list
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
-      if (filterType === "has_email" && (!u.email || !u.email.includes("@"))) return false;
-      if (filterType === "confirmed" && u.status !== "confirmed") return false;
+      if (!u.email || !u.email.includes("@")) return false; // always require email
+      if (filterType === "has_email") return true;
+      if (filterType !== u.status) return false;
       if (!searchQuery.trim()) return true;
 
       const q = searchQuery.toLowerCase().trim();
@@ -271,17 +275,54 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
     setSelectedEmails(next);
   };
 
-  // Load a preset template
-  const applyTemplate = (tpl: (typeof EMAIL_TEMPLATES)[0]) => {
-    if (
-      content.trim() &&
-      !window.confirm("Áp dụng mẫu mới sẽ thay thế nội dung đang soạn. Bạn có chắc không?")
-    ) {
+  const applyTemplate = (tpl: EmailTemplate) => {
+    if (content.trim() && !window.confirm(`Áp dụng mẫu "${tpl.title}" sẽ thay thế nội dung đang soạn. Bạn có chắc không?`)) {
       return;
     }
     setSubject(tpl.subject);
     setContent(tpl.content);
     toast.success(`Đã nạp mẫu: ${tpl.title}`);
+  };
+
+  const saveAsNewTemplate = async () => {
+    if (!subject.trim() || !content.trim()) return toast.error("Vui lòng nhập đủ Tiêu đề và Nội dung email.");
+    const title = window.prompt("Nhập tên hiển thị cho mẫu email này:");
+    if (!title) return;
+
+    const tid = toast.loading("Đang lưu mẫu...");
+    try {
+      const res = await fetch("/api/admin/email/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, subject, content })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        toast.success("Đã lưu mẫu email thành công!", { id: tid });
+        loadTemplates();
+      } else {
+        toast.error(data.message || "Lỗi lưu mẫu email.", { id: tid });
+      }
+    } catch (e) {
+      toast.error("Lỗi kết nối.", { id: tid });
+    }
+  };
+
+  const deleteTemplate = async (id: string, title: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa mẫu "${title}"?`)) return;
+    const tid = toast.loading("Đang xóa mẫu...");
+    try {
+      const res = await fetch(`/api/admin/email/templates?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Đã xóa mẫu email.", { id: tid });
+        loadTemplates();
+      } else {
+        toast.error("Lỗi xóa mẫu.", { id: tid });
+      }
+    } catch (e) {
+      toast.error("Lỗi kết nối.", { id: tid });
+    }
   };
 
   // Final list of selected recipient objects
@@ -506,40 +547,27 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                   />
                 </div>
 
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setFilterType("has_email")}
-                    className={`rounded-lg px-2.5 py-1 font-bold whitespace-nowrap transition-all ${
-                      filterType === "has_email"
-                        ? "bg-[#1d4ed8] text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    Có email ({users.filter((u) => u.email).length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterType("confirmed")}
-                    className={`rounded-lg px-2.5 py-1 font-bold whitespace-nowrap transition-all ${
-                      filterType === "confirmed"
-                        ? "bg-[#1d4ed8] text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    Đã xác nhận ({users.filter((u) => u.status === "confirmed").length})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFilterType("all")}
-                    className={`rounded-lg px-2.5 py-1 font-bold whitespace-nowrap transition-all ${
-                      filterType === "all"
-                        ? "bg-[#1d4ed8] text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    Tất cả ({users.length})
-                  </button>
+                <div className="flex flex-wrap items-center gap-1.5 pb-1 text-xs">
+                  {[
+                    { id: "has_email", label: "Tất cả (có email)" },
+                    { id: "auto_confirmed", label: "Đã duyệt tự động" },
+                    { id: "manual_confirmed", label: "Đã duyệt thủ công" },
+                    { id: "pending", label: "Chờ duyệt" },
+                    { id: "rejected", label: "Bị từ chối" },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setFilterType(tab.id as any)}
+                      className={`rounded-lg px-2.5 py-1 font-bold whitespace-nowrap transition-all ${
+                        filterType === tab.id
+                          ? "bg-[#1d4ed8] text-white"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }`}
+                    >
+                      {tab.label} ({tab.id === "has_email" ? users.filter(u => u.email?.includes("@")).length : users.filter((u) => u.email?.includes("@") && u.status === tab.id).length})
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -646,12 +674,15 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                         ) : (
                           <span
                             className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                              u.status === "confirmed"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-amber-100 text-amber-700"
+                              u.status === "auto_confirmed" ? "bg-emerald-100 text-emerald-700" :
+                              u.status === "manual_confirmed" ? "bg-blue-100 text-blue-700" :
+                              u.status === "rejected" ? "bg-rose-100 text-rose-700" :
+                              "bg-amber-100 text-amber-700"
                             }`}
                           >
-                            {u.status === "confirmed" ? "Đã duyệt" : "Chờ duyệt"}
+                            {u.status === "auto_confirmed" ? "Duyệt tự động" :
+                             u.status === "manual_confirmed" ? "Duyệt thủ công" :
+                             u.status === "rejected" ? "Bị từ chối" : "Chờ duyệt"}
                           </span>
                         )}
                       </div>
@@ -712,23 +743,47 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
               </div>
             </div>
 
-            {/* Template presets picker */}
+            {/* DB Templates UI */}
             <div>
-              <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">
-                Mẫu email gợi ý sẵn
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {EMAIL_TEMPLATES.map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    onClick={() => applyTemplate(tpl)}
-                    className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 text-left text-xs font-bold text-slate-700 transition-all flex flex-col justify-between"
-                  >
-                    <span className="line-clamp-2">{tpl.title}</span>
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400">
+                  Mẫu email của tôi
+                </label>
+                <button
+                  type="button"
+                  onClick={saveAsNewTemplate}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1 bg-blue-50/50 hover:bg-blue-100 px-2 py-1 rounded-lg"
+                >
+                  <Plus className="h-3 w-3" />
+                  Lưu mẫu từ nội dung đang soạn
+                </button>
               </div>
+              
+              {loadingTemplates ? (
+                <p className="text-xs text-slate-400">Đang tải danh sách mẫu...</p>
+              ) : templates.length === 0 ? (
+                <p className="text-xs text-slate-400 bg-slate-50 p-3 rounded-xl border border-slate-100">Chưa có mẫu nào. Hãy soạn một thư và nhấn "Lưu mẫu từ nội dung đang soạn".</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {templates.map((tpl) => (
+                    <div
+                      key={tpl.id}
+                      onClick={() => applyTemplate(tpl)}
+                      className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 text-left text-xs font-bold text-slate-700 transition-all flex flex-col justify-between relative group cursor-pointer"
+                    >
+                      <span className="line-clamp-2 pr-6">{tpl.title}</span>
+                      <button 
+                        type="button"
+                        onClick={(e) => deleteTemplate(tpl.id, tpl.title, e)} 
+                        className="absolute top-2 right-2 p-1 text-slate-300 hover:text-rose-500 rounded hover:bg-rose-100 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Xóa mẫu này"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Sender details (From info) */}

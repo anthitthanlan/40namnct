@@ -71,6 +71,8 @@ def get_admins(db: Session = Depends(get_db), super_admin = Depends(require_supe
         ) for a in admins
     ]
 
+from datetime import datetime, timezone
+
 @router.post("/accounts", response_model=AdminResponse)
 def create_admin(
     admin_in: AdminCreate,
@@ -89,7 +91,7 @@ def create_admin(
         logs=[{
             "action": "account_created",
             "detail": f"Tạo bởi {super_admin.get('username')}",
-            "timestamp": func.now()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }]
     )
     db.add(new_admin)

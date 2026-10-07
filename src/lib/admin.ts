@@ -47,11 +47,12 @@ export async function createAdminAccount(
     });
     if (!res.ok) {
       let message = "Không thể tạo tài khoản";
+      const text = await res.text();
       try {
-        const err = await res.json();
+        const err = JSON.parse(text);
         message = err.detail || message;
       } catch (e) {
-        message = `Server lỗi (${res.status}): ${await res.text()}`;
+        message = `Server lỗi (${res.status}): ${text}`;
       }
       return { ok: false, message };
     }

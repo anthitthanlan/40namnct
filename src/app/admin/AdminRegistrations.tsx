@@ -667,6 +667,11 @@ export default function AdminRegistrations({
                         <span className="font-bold text-slate-900">{t.memberName}</span> (
                         {t.memberPhone})
                       </p>
+                      {t.memberEmail && (
+                        <p className="mt-0.5">
+                          <strong className="text-slate-500">Email:</strong> {t.memberEmail}
+                        </p>
+                      )}
                     </div>
 
                     <div>

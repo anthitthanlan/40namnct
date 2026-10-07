@@ -152,11 +152,14 @@ def parse_ocr_json(raw: str) -> Dict[str, Any]:
 
 def verify_match(ocr: Dict[str, Any], expected_amount: int, expected_code: str) -> Dict[str, Any]:
     extracted_amount = ocr.get("amount")
-    extracted_content = (ocr.get("content") or "").upper()
-    expected_code_upper = expected_code.upper()
+    raw_content = (ocr.get("content") or "").upper()
+    
+    # Chuẩn hóa: xóa khoảng trắng, dấu '-', và thay thế ký tự hay nhầm lẫn (O->0, I/L->1)
+    normalized_content = re.sub(r'[^A-Z0-9]', '', raw_content).replace('O', '0').replace('I', '1').replace('L', '1')
+    normalized_expected = re.sub(r'[^A-Z0-9]', '', expected_code.upper()).replace('O', '0').replace('I', '1').replace('L', '1')
 
     amount_match = (extracted_amount == expected_amount) if extracted_amount else False
-    content_match = (expected_code_upper in extracted_content) if extracted_content else False
+    content_match = (normalized_expected in normalized_content) if normalized_content else False
 
     if amount_match and content_match:
         confidence = "high"

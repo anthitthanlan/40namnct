@@ -70,3 +70,40 @@ async def send_email(
     )
     
     return {"success": True, "message": "Email is queued for sending"}
+
+from app.database import get_db
+from sqlalchemy.orm import Session
+from app.models.email_template import EmailTemplate
+from app.schemas.email_template import EmailTemplateCreate, EmailTemplateUpdate, EmailTemplateResponse
+
+@router.get("/templates", response_model=List[EmailTemplateResponse])
+def get_templates(db: Session = Depends(get_db)):
+    return db.query(EmailTemplate).order_by(EmailTemplate.created_at.desc()).all()
+
+@router.post("/templates", response_model=EmailTemplateResponse)
+def create_template(tpl: EmailTemplateCreate, db: Session = Depends(get_db), admin = Depends(get_current_admin)):
+    new_tpl = EmailTemplate(**tpl.dict())
+    db.add(new_tpl)
+    db.commit()
+    db.refresh(new_tpl)
+    return new_tpl
+
+@router.put("/templates/{id}", response_model=EmailTemplateResponse)
+def update_template(id: str, tpl: EmailTemplateUpdate, db: Session = Depends(get_db), admin = Depends(get_current_admin)):
+    db_tpl = db.query(EmailTemplate).filter(EmailTemplate.id == id).first()
+    if not db_tpl:
+        raise HTTPException(status_code=404, detail="Mẫu không tồn tại")
+    for key, value in tpl.dict().items():
+        setattr(db_tpl, key, value)
+    db.commit()
+    db.refresh(db_tpl)
+    return db_tpl
+
+@router.delete("/templates/{id}")
+def delete_template(id: str, db: Session = Depends(get_db), admin = Depends(get_current_admin)):
+    db_tpl = db.query(EmailTemplate).filter(EmailTemplate.id == id).first()
+    if not db_tpl:
+        raise HTTPException(status_code=404, detail="Mẫu không tồn tại")
+    db.delete(db_tpl)
+    db.commit()
+    return {"success": True, "message": "Đã xóa mẫu email"}

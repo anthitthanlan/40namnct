@@ -18,6 +18,7 @@ from app.routers import (
     categories,
     email,
 )
+from app.models.email_template import EmailTemplate
 
 # 1. Initialize Database Tables
 Base.metadata.create_all(bind=engine)

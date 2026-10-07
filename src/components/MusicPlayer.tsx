@@ -180,11 +180,21 @@ export default function MusicPlayer() {
 
   return (
     <div
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={`fixed right-5 sm:bottom-6 sm:right-6 z-50 select-none flex items-end justify-end transition-all duration-300 ${isOverlapPage ? "bottom-24" : "bottom-5"}`}
+      className={`fixed inset-x-5 sm:inset-x-auto sm:right-6 z-50 pointer-events-none select-none flex flex-row sm:flex-col items-end justify-between sm:justify-end gap-3 sm:gap-4 transition-all duration-300 ${isOverlapPage ? "bottom-24" : "bottom-5"} sm:bottom-6`}
     >
+      <a
+        href="https://m.me/clb.Tin.nct"
+        target="_blank"
+        rel="noreferrer"
+        className="pointer-events-auto w-[52px] h-[52px] rounded-full bg-white/95 backdrop-blur-xl border border-slate-200/60 text-[#0084FF] shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shrink-0"
+        title="Liên hệ Fanpage"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.915 1.48 5.512 3.796 7.234v3.508c0 .542.593.856 1.05.56l3.435-2.227A10.74 10.74 0 0 0 12 20.516c5.523 0 10-4.145 10-9.258S17.523 2 12 2zm1.188 12.386l-2.617-2.793-5.11 2.793 5.625-5.973 2.65 2.793 5.074-2.793-5.622 5.973z"/></svg>
+      </a>
+
       <motion.div
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         animate={{
           width: showExpanded ? 320 : 230,
           height: showExpanded ? 204 : 52,
@@ -192,7 +202,7 @@ export default function MusicPlayer() {
         }}
         transition={{ type: "spring", stiffness: 360, damping: 26 }}
         onClick={() => { if (!showExpanded) setIsExpanded(true); }}
-        className="mx-auto overflow-hidden bg-white/95 backdrop-blur-xl border border-slate-200/60 text-slate-900 shadow-xl transition-colors cursor-pointer relative origin-bottom-right"
+        className="pointer-events-auto overflow-hidden bg-white/95 backdrop-blur-xl border border-slate-200/60 text-slate-900 shadow-xl transition-colors cursor-pointer relative origin-bottom-right"
       >
         <AnimatePresence initial={false}>
           {!showExpanded ? (

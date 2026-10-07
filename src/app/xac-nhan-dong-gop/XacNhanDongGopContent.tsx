@@ -532,16 +532,27 @@ export default function XacNhanDongGopContent() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setIsMobileModalOpen(false);
-                setIsExiting(true);
-                router.push(`/thu-moi?id=${invitationId === "DEV" ? "sample" : invitationId}`);
-              }}
-              className="w-full mt-4 py-3.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors"
-            >
-              Xem thư mời
-            </button>
+            <div className="flex flex-col gap-2 w-full mt-4">
+              <button
+                onClick={() => {
+                  setIsMobileModalOpen(false);
+                  setIsExiting(true);
+                  router.push(`/thu-moi?id=${invitationId === "DEV" ? "sample" : invitationId}`);
+                }}
+                className="w-full py-3.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors"
+              >
+                Xem thư mời
+              </button>
+              <a
+                href="https://m.me/clb.Tin.nct"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3.5 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.915 1.48 5.512 3.796 7.234v3.508c0 .542.593.856 1.05.56l3.435-2.227A10.74 10.74 0 0 0 12 20.516c5.523 0 10-4.145 10-9.258S17.523 2 12 2zm1.188 12.386l-2.617-2.793-5.11 2.793 5.625-5.973 2.65 2.793 5.074-2.793-5.622 5.973z"/></svg>
+                Liên hệ hỗ trợ
+              </a>
+            </div>
           </motion.div>
         )}
 
@@ -553,13 +564,24 @@ export default function XacNhanDongGopContent() {
             <p className="text-[15px] font-semibold text-gray-800">
               {uploadState.message}
             </p>
-            <button
-              type="button"
-              onClick={() => setUploadState({ phase: "idle" })}
-              className="w-full py-3.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors"
-            >
-              Thử lại
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setUploadState({ phase: "idle" })}
+                className="w-full py-3.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-black transition-colors"
+              >
+                Thử lại
+              </button>
+              <a
+                href="https://m.me/clb.Tin.nct"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3.5 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.915 1.48 5.512 3.796 7.234v3.508c0 .542.593.856 1.05.56l3.435-2.227A10.74 10.74 0 0 0 12 20.516c5.523 0 10-4.145 10-9.258S17.523 2 12 2zm1.188 12.386l-2.617-2.793-5.11 2.793 5.625-5.973 2.65 2.793 5.074-2.793-5.622 5.973z"/></svg>
+                Liên hệ Fanpage
+              </a>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -655,8 +677,19 @@ export default function XacNhanDongGopContent() {
                 </div>
 
               </div>
-
-              <div className="mt-8"></div>
+              
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <p className="text-center text-sm text-gray-500 mb-4">Bạn gặp khó khăn trong quá trình thanh toán?</p>
+                <a
+                  href="https://m.me/clb.Tin.nct"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-3.5 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.915 1.48 5.512 3.796 7.234v3.508c0 .542.593.856 1.05.56l3.435-2.227A10.74 10.74 0 0 0 12 20.516c5.523 0 10-4.145 10-9.258S17.523 2 12 2zm1.188 12.386l-2.617-2.793-5.11 2.793 5.625-5.973 2.65 2.793 5.074-2.793-5.622 5.973z"/></svg>
+                  Liên hệ Fanpage hỗ trợ
+                </a>
+              </div>
             </div>
           </motion.div>
 

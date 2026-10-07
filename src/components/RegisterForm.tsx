@@ -485,21 +485,34 @@ export default function RegisterForm() {
 
   const SubmitButtonSection = () => (
     <>
-      {error && error.split("\n").map((msg, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm flex items-start gap-3 font-medium shadow-sm"
-        >
-          <div className="w-6 h-6 shrink-0 bg-red-100 text-red-500 rounded-full flex items-center justify-center mt-0.5">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <span>{msg}</span>
-        </motion.div>
-      ))}
+      {error && (
+        <div className="mb-4 flex flex-col gap-2">
+          {error.split("\n").map((msg, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm flex items-start gap-3 font-medium shadow-sm"
+            >
+              <div className="w-6 h-6 shrink-0 bg-red-100 text-red-500 rounded-full flex items-center justify-center mt-0.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <span>{msg}</span>
+            </motion.div>
+          ))}
+          <a
+            href="https://m.me/clb.Tin.nct"
+            target="_blank"
+            rel="noreferrer"
+            className="w-full py-2.5 rounded-lg bg-red-50 text-red-700 border border-red-100 font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2 text-[13px]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.915 1.48 5.512 3.796 7.234v3.508c0 .542.593.856 1.05.56l3.435-2.227A10.74 10.74 0 0 0 12 20.516c5.523 0 10-4.145 10-9.258S17.523 2 12 2zm1.188 12.386l-2.617-2.793-5.11 2.793 5.625-5.973 2.65 2.793 5.074-2.793-5.622 5.973z"/></svg>
+            Cần hỗ trợ? Liên hệ Fanpage
+          </a>
+        </div>
+      )}
 
       {existingMemberPrompt ? (
         <motion.div

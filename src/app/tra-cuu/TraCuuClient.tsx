@@ -145,8 +145,20 @@ export default function TraCuuClient() {
           </div>
 
           {error && (
-            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-600">
-              ⚠️ {error}
+            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-600 flex flex-col gap-3">
+              <div className="flex items-start gap-2">
+                <span>⚠️</span>
+                <span>{error}</span>
+              </div>
+              <a
+                href="https://m.me/clb.Tin.nct"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2.5 rounded-lg bg-rose-100 text-rose-700 font-bold hover:bg-rose-200 transition-colors flex items-center justify-center gap-2 text-[13px]"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.145 2 11.258c0 2.915 1.48 5.512 3.796 7.234v3.508c0 .542.593.856 1.05.56l3.435-2.227A10.74 10.74 0 0 0 12 20.516c5.523 0 10-4.145 10-9.258S17.523 2 12 2zm1.188 12.386l-2.617-2.793-5.11 2.793 5.625-5.973 2.65 2.793 5.074-2.793-5.622 5.973z"/></svg>
+                Cần hỗ trợ? Liên hệ Fanpage
+              </a>
             </div>
           )}
 

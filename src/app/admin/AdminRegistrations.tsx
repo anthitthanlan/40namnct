@@ -68,6 +68,7 @@ export default function AdminRegistrations({
   const [editingInvitation, setEditingInvitation] = useState<InvitationRow | null>(null);
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [viewingLogsFor, setViewingLogsFor] = useState<InvitationRow | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const flash = useCallback((ok: boolean, text: string) => {
     setBanner({ ok, text });
@@ -725,12 +726,11 @@ export default function AdminRegistrations({
                           ...(t.receiptAttempts?.map(a => a.url) || []),
                           t.receiptUrl
                         ].filter(Boolean))).map((imgUrl, i) => (
-                          <a
+                          <button
                             key={i}
-                            href={imgUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="shrink-0 group relative block h-24 w-16 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-32 sm:w-24 shadow-sm"
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); setLightboxImage(imgUrl); }}
+                            className="shrink-0 group relative block h-24 w-16 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-32 sm:w-24 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             title="Bấm để xem ảnh lớn"
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -741,9 +741,9 @@ export default function AdminRegistrations({
                               loading="lazy"
                             />
                             <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10 flex items-center justify-center">
-                              <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md"><span className="material-symbols-rounded inline-block align-middle text-[1em]">search</span></span>
+                              <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md"><span className="material-symbols-rounded inline-block align-middle text-[1em] text-white">search</span></span>
                             </div>
-                          </a>
+                          </button>
                         ))}
                       </div>
 
@@ -1298,6 +1298,35 @@ export default function AdminRegistrations({
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* LIGHTBOX MODAL */}
+      {lightboxImage && createPortal(
+        <div 
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button 
+            type="button"
+            className="absolute top-4 right-4 text-white hover:text-slate-300 transition-colors p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md"
+            onClick={(e) => { e.stopPropagation(); setLightboxImage(null); }}
+            title="Đóng"
+          >
+            <span className="material-symbols-rounded block text-3xl">close</span>
+          </button>
+          <div 
+            className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-lg shadow-2xl shadow-black/50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src={lightboxImage} 
+              alt="Biên lai phóng to" 
+              className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+            />
           </div>
         </div>,
         document.body

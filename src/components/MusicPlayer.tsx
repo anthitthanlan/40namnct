@@ -60,8 +60,8 @@ export default function MusicPlayer() {
 
     // Cố gắng phát nhạc khi có tương tác đầu tiên của người dùng
     const tryAutoplay = () => {
-      // Chỉ tự động phát nếu đang ở trang chủ
-      if (window.location.pathname !== "/") {
+      // Chỉ tự động phát nếu đang ở trang chủ hoặc trang thư mời
+      if (window.location.pathname !== "/" && window.location.pathname !== "/thu-moi") {
         cleanupGesture();
         return;
       }
@@ -123,8 +123,8 @@ export default function MusicPlayer() {
         audioRef.current.pause();
         setIsPlaying(false);
       }
-    } else if (pathname === "/" && !userManuallyPaused.current) {
-      // Tự động phát khi navigate về trang chủ (nếu chưa từng chủ động tắt)
+    } else if ((pathname === "/" || pathname === "/thu-moi") && !userManuallyPaused.current) {
+      // Tự động phát khi navigate về trang chủ hoặc trang thư mời (nếu chưa từng chủ động tắt)
       audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {});
     }
   }, [pathname, isHidden]);

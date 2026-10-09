@@ -59,8 +59,9 @@ export default function AdminRegistrations({
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "pending_approval" | "confirmed" | "pending_payment" | "rejected" | "cancelled" | "checked_in" | "shirt_received"
+    "all" | "pending_approval" | "confirmed" | "pending_payment" | "rejected" | "checked_in" | "shirt_received"
   >("all");
+  const [emailFilter, setEmailFilter] = useState<"all" | "sent" | "not_sent">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "individual" | "group">("all");
   const [multiTicketPhoneFilter, setMultiTicketPhoneFilter] = useState(false);
   const [mobileSubTab, setMobileSubTab] = useState<"overview" | "list">("overview");
@@ -222,6 +223,7 @@ export default function AdminRegistrations({
   function handleStatClick(status: typeof statusFilter) {
     setStatusFilter(status);
     setTypeFilter("all");
+    setEmailFilter("all");
     setMobileSubTab("list");
   }
 
@@ -298,7 +300,7 @@ export default function AdminRegistrations({
 
   useEffect(() => {
     setPage(1);
-  }, [q, statusFilter, typeFilter, multiTicketPhoneFilter]);
+  }, [q, statusFilter, typeFilter, multiTicketPhoneFilter, emailFilter]);
 
   const filteredInvitations = useMemo(() => {
     const phoneCounts: Record<string, number> = {};
@@ -335,14 +337,17 @@ export default function AdminRegistrations({
       if (statusFilter === "rejected" && t.status !== "rejected") {
         return false;
       }
-      if (statusFilter === "cancelled" && t.status !== "cancelled") {
-        return false;
-      }
       if (statusFilter === "checked_in" && !t.checkedIn) {
         return false;
       }
       if (statusFilter === "shirt_received" && !t.shirtReceived) {
         return false;
+      }
+
+      if (statusFilter === "confirmed" && emailFilter !== "all") {
+        const isSent = logs.some((l) => l.entityId === t.id && l.details.includes("Gửi email"));
+        if (emailFilter === "sent" && !isSent) return false;
+        if (emailFilter === "not_sent" && isSent) return false;
       }
 
       if (multiTicketPhoneFilter && t.memberPhone) {
@@ -378,7 +383,7 @@ export default function AdminRegistrations({
     }
 
     return filtered;
-  }, [invitations, statusFilter, typeFilter, q, multiTicketPhoneFilter]);
+  }, [invitations, statusFilter, typeFilter, q, multiTicketPhoneFilter, emailFilter, logs]);
 
   if (members === null || invitations === null) {
     return (
@@ -656,9 +661,9 @@ export default function AdminRegistrations({
                         statusFilter === "pending_payment" ? "Chờ thanh toán" :
                           statusFilter === "checked_in" ? "Đã check-in" :
                             statusFilter === "shirt_received" ? "Đã nhận áo" :
-                              statusFilter === "rejected" ? "Đã từ chối" :
-                                statusFilter === "cancelled" ? "Đã hủy" : statusFilter
+                              statusFilter === "rejected" ? "Đã từ chối" : statusFilter
                 }
+                {statusFilter === "confirmed" && emailFilter !== "all" && ` - ${emailFilter === "sent" ? "Đã gửi mail" : "Chưa gửi mail"}`}
                 {typeFilter !== "all" && ` - ${typeFilter === "individual" ? "Cá nhân" : "Tập thể"}`}
                 {multiTicketPhoneFilter && ` - SĐT có ≥ 2 vé`}
                 <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[10px] text-blue-700">
@@ -1194,13 +1199,40 @@ export default function AdminRegistrations({
                     { id: "checked_in", label: "Đã check-in" },
                     { id: "shirt_received", label: "Đã nhận áo" },
                     { id: "rejected", label: "Đã từ chối" },
-                    { id: "cancelled", label: "Đã hủy" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
-                      onClick={() => setStatusFilter(tab.id as typeof statusFilter)}
+                      onClick={() => {
+                        setStatusFilter(tab.id as typeof statusFilter);
+                        if (tab.id !== "confirmed") setEmailFilter("all");
+                      }}
                       className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${statusFilter === tab.id
                           ? "bg-slate-900 text-white shadow-sm"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nhóm Email (Chỉ khi chọn Đã duyệt) */}
+              <div className={`transition-opacity duration-300 ${statusFilter !== "confirmed" ? "opacity-50 pointer-events-none" : ""}`}>
+                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Trạng thái Email {statusFilter !== "confirmed" && "(Chỉ áp dụng khi chọn Đã duyệt)"}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: "all", label: "Tất cả" },
+                    { id: "sent", label: "Đã gửi mail" },
+                    { id: "not_sent", label: "Chưa gửi mail" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setEmailFilter(tab.id as typeof emailFilter)}
+                      className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${emailFilter === tab.id
+                          ? "bg-indigo-600 text-white shadow-sm"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                     >

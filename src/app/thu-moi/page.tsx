@@ -78,7 +78,7 @@ function InvitationContent() {
       const phone = member?.phone || "";
       const code = invitation?.code || "";
       const text = `${name} - ${phone} - ${code}`;
-      
+
       try {
         QRCode.toDataURL(text, { width: 300, margin: 2, color: { dark: '#000000', light: '#ffffff' } })
           .then(url => setInvitationQrUrl(url))
@@ -183,18 +183,18 @@ function InvitationContent() {
           <div className="w-full lg:w-[380px] flex flex-col items-center shrink-0" style={{ height: scale < 1 ? `calc(600px * ${scale})` : 'auto' }}>
             <Reveal delay={150} className="w-full flex justify-center">
               {/* Wrapper scale: tự thu nhỏ trên màn hình hẹp (<400px), giữ nguyên không gian, không làm bể bố cục */}
-              <div 
+              <div
                 className="origin-top flex justify-center"
                 style={{ transform: `scale(${scale})` }}
               >
                 {/* INVITATION CARD - Cố định 380px, cấm OS tự zoom chữ */}
-                <div 
+                <div
                   ref={invitationRef}
                   className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200 relative w-[380px] shrink-0 mx-auto p-6"
                   style={{ WebkitTextSizeAdjust: "none", textSizeAdjust: "none" }}
                 >
                   {/* Background Layer with Mask */}
-                  <div 
+                  <div
                     className="absolute inset-0 z-0 pointer-events-none"
                     style={{
                       backgroundImage: "url('/invitation_image/bg.webp')",
@@ -255,7 +255,7 @@ function InvitationContent() {
                           <span className="prata-regular break-all">{member.email}</span>
                         </p>
                       )}
-                      
+
                       <div className="pt-3 mt-1 border-t border-gray-100 space-y-1.5">
                         <div className="flex items-start gap-2">
                           <span className="material-symbols-rounded text-gray-400 text-[18px] mt-0.5">schedule</span>
@@ -281,7 +281,7 @@ function InvitationContent() {
                       </p>
                     </div>
                   </div>
-                  
+
                   {/* Corner decorations */}
                   <div className="absolute top-0 left-0 w-14 h-14 border-t-4 border-l-4 border-blue-900/10 rounded-tl-3xl z-10"></div>
                   <div className="absolute bottom-0 right-0 w-14 h-14 border-b-4 border-r-4 border-blue-900/10 rounded-br-3xl z-10"></div>
@@ -307,7 +307,7 @@ function InvitationContent() {
                 </svg>
                 Chi tiết đăng ký
               </h3>
-              
+
               <div className="space-y-4 sm:space-y-5 text-sm sm:text-base">
                 <div className="flex justify-between items-center pb-4 border-b border-gray-200 gap-4">
                   <span className="text-gray-500 font-medium shrink-0">Loại đăng ký</span>
@@ -356,7 +356,7 @@ function InvitationContent() {
                     <span>{downloading ? "Đang tải..." : "Tải thư mời về máy"}</span>
                   </div>
                 </button>
-                
+
                 <Link href="/" className="group/link relative text-blue-900 font-medium pb-1 transition-colors hover:text-blue-700 shrink-0 text-[15px] whitespace-nowrap">
                   Về trang chủ
                   <span className="absolute -bottom-1 left-0 w-full h-[2px] bg-blue-600 rounded-full transition-all duration-300 ease-out opacity-0 scale-x-0 group-hover/link:opacity-100 group-hover/link:scale-x-100 group-active/link:opacity-100 group-active/link:scale-x-100 group-focus/link:opacity-100 group-focus/link:scale-x-100"></span>

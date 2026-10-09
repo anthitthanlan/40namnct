@@ -17,7 +17,7 @@ function FrozenRouter({ children }: { children: React.ReactNode }) {
 // Trì hoãn việc render giao diện mới để đồng bộ với lúc màn trắng vuốt lên (chỉ áp dụng khi chuyển trang, không áp dụng lần đầu load web)
 function DelayedMount({ children, isInitial }: { children: React.ReactNode, isInitial: boolean }) {
   const [show, setShow] = useState(isInitial);
-  
+
   useEffect(() => {
     if (isInitial) return;
     // 500ms khớp với delay của màn trắng lúc mở trang mới
@@ -49,7 +49,7 @@ export default function PageTransitionProvider({ children }: { children: React.R
 
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait">
       <motion.div key={pathname} className="w-full">
         <FrozenRouter>
           <DelayedMount isInitial={isInitialRender.current}>{children}</DelayedMount>
@@ -63,7 +63,7 @@ export default function PageTransitionProvider({ children }: { children: React.R
           exit={{ opacity: 0, transition: { duration: 0 } }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.5 }} // Chờ 0.5s cho logo mờ đi rồi mới trượt màn trắng
         >
-          <motion.div 
+          <motion.div
             className="flex items-center gap-6"
             initial={{ opacity: 1 }}
             animate={{ opacity: 0 }}
@@ -83,7 +83,7 @@ export default function PageTransitionProvider({ children }: { children: React.R
           exit={{ y: 0 }} // Khi rời trang, trượt lên che màn hình
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          <motion.div 
+          <motion.div
             className="flex items-center gap-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 0 }}

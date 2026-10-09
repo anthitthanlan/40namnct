@@ -993,7 +993,9 @@ export default function AdminRegistrations({
                           onClick={() => {
                             const domain = typeof window !== "undefined" ? window.location.origin : "https://40namnctru.nctitc.io.vn";
                             const link = `${domain}/thu-moi?id=${t.id}`;
-                            const msg = `Kính gửi cựu học sinh ${t.attendeeName || t.memberName},\n\nBan Tổ chức trân trọng gửi bạn Thư mời điện tử tham dự sự kiện Hội ngộ 40 năm.\n\nVui lòng truy cập đường link bên dưới để nhận Thư mời và Mã QR check-in:\n${link}\n\nHẹn gặp lại bạn tại sự kiện!`;
+                            const name = t.attendeeName || t.memberName || "";
+                            const donateCode = t.code || "";
+                            const msg = `Kính gửi cựu học sinh ${name},\n\nBan Tổ chức trân trọng gửi đến bạn Thư mời điện tử tham dự sự kiện Hội ngộ 40 năm thành lập trường THPT Nguyễn Công Trứ.\n\nVui lòng truy cập đường link bên dưới để xem Thư mời và nhận Mã QR check-in:\n🔗 [Bấm vào đây để xem và tải Thư mời](${link})\n\nMã đóng góp của bạn: ${donateCode}\n\nVui lòng chụp lại màn hình mã QR hoặc lưu link Thư mời để xuất trình tại cổng check-in sự kiện.\n\nHẹn gặp lại bạn tại sự kiện!\n\nTrân trọng,\nBan Tổ chức`;
                             navigator.clipboard.writeText(msg).then(() => {
                               alert("Đã copy template thư mời!");
                             });

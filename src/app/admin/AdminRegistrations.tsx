@@ -985,9 +985,11 @@ export default function AdminRegistrations({
                                   const domain = typeof window !== "undefined" ? window.location.origin : "https://40namnctru.nctitc.io.vn";
                                   const link = `${domain}/thu-moi?id=${t.id}`;
                                   const name = t.attendeeName || t.memberName || "";
-                                  const amount = new Intl.NumberFormat('vi-VN').format(t.amount || 0);
+                                  const amountStr = new Intl.NumberFormat('vi-VN').format(t.amount || 0);
+                                  const typeStr = t.type === "group" ? "Tập thể" : "Cá nhân";
                                   
-                                  const msg = `Kính gửi Cựu học sinh ${name},\n\nNhằm ôn lại truyền thống 40 năm xây dựng và phát triển, tri ân các thế hệ Thầy Cô và tạo dịp hội ngộ, kết nối các thế hệ, Trường THPT Nguyễn Công Trứ trân trọng kính mời bạn về tham dự Ngày hội truyền thống 40 năm của Nhà trường.\n\nBan Tổ chức xin chân thành cảm ơn bạn đã đóng góp ${amount}đ để góp phần tạo nên một ngày hội thật ý nghĩa.\n* Lưu ý: Khoản đóng góp tham dự là 500.000đ/người. Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện (nếu có dư sẽ được đưa vào Quỹ Khuyến học của Trường).\n\nRất mong được đón tiếp bạn trở lại dưới mái trường xưa vào ngày 08/11/2026!\n\nVé điện tử của bạn được cung cấp tại liên kết dưới đây. Vui lòng mở ra, lưu lại hình ảnh vé và xuất trình mã QR khi check-in:\n🔗 ${link}`;
+                                  const msg = `Kính gửi Cựu học sinh ${name},\n\nNhằm ôn lại truyền thống 40 năm xây dựng và phát triển, tri ân các thế hệ Thầy Cô và tạo dịp hội ngộ, kết nối các thế hệ, Trường THPT Nguyễn Công Trứ trân trọng kính mời bạn về tham dự Ngày hội truyền thống 40 năm của Nhà trường.\n\nBan Tổ chức xin chân thành cảm ơn bạn đã đóng góp ${amountStr}đ để góp phần tạo nên một ngày hội thật ý nghĩa.\n* Lưu ý: Khoản đóng góp tham dự là 500.000đ/người. Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện (nếu có dư sẽ được đưa vào Quỹ Khuyến học của Trường).\n\nRất mong được đón tiếp bạn trở lại dưới mái trường xưa vào ngày 08/11/2026!\n\nVé điện tử của bạn được cung cấp tại liên kết dưới đây. Vui lòng mở ra, lưu lại hình ảnh vé và xuất trình mã QR khi check-in.\n\nHoặc mở liên kết:\n🔗 ${link}\n\n✓ Chi tiết đăng ký\nLoại đăng ký: ${typeStr}\nThành tiền: ${amountStr}đ`;
+                                  
                                   navigator.clipboard.writeText(msg).then(() => {
                                     alert("Đã copy template thư mời!");
                                   });

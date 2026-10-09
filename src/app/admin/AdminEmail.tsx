@@ -58,6 +58,7 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
   const [fromEmail, setFromEmail] = useState("bantochuc@40namnctru.nctitc.io.vn");
   const [previewMode, setPreviewMode] = useState(false);
   const [sending, setSending] = useState(false);
+  const [useOfficialTemplate, setUseOfficialTemplate] = useState(false);
 
   // Manual Email Input
   const [manualEmail, setManualEmail] = useState("");
@@ -360,6 +361,7 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
           content: content || "<p>Nội dung kiểm tra gửi email Resend.</p>",
           fromName,
           fromEmail,
+          useOfficialTemplate,
         }),
       });
       const data = await res.json();
@@ -379,11 +381,11 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
       toast.error("Vui lòng chọn ít nhất một người nhận có email.");
       return;
     }
-    if (!subject.trim()) {
+    if (!useOfficialTemplate && !subject.trim()) {
       toast.error("Vui lòng nhập tiêu đề email.");
       return;
     }
-    if (!content.trim()) {
+    if (!useOfficialTemplate && !content.trim()) {
       toast.error("Vui lòng nhập nội dung email.");
       return;
     }
@@ -402,6 +404,7 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
           content,
           fromName,
           fromEmail,
+          useOfficialTemplate,
         }),
       });
 
@@ -767,28 +770,27 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div
                     onClick={() => {
-                      if (content.trim() && !window.confirm('Áp dụng mẫu "Thư mời chính thức" sẽ thay thế nội dung đang soạn. Bạn có chắc không?')) return;
-                      setSubject("Thư mời tham dự Hội ngộ 40 năm NCT");
-                      setContent(`
-<p>Kính gửi cựu học sinh <strong>{name}</strong>,</p>
-<p>Ban Tổ chức trân trọng gửi đến bạn Thư mời điện tử tham dự sự kiện Hội ngộ 40 năm thành lập trường THPT Nguyễn Công Trứ.</p>
-<p>Vui lòng truy cập đường link bên dưới để xem Thư mời và nhận Mã QR check-in:</p>
-<p><a href="https://40namnctru.nctitc.io.vn/thu-moi?id={invi_id}"><strong>🔗 Bấm vào đây để xem và tải Thư mời</strong></a></p>
-<p>Mã đóng góp của bạn: <strong>{donate_code}</strong></p>
-<p>Vui lòng chụp lại màn hình mã QR hoặc lưu link Thư mời để xuất trình tại cổng check-in sự kiện.</p>
-<p>Hẹn gặp lại bạn tại sự kiện!</p>
-<p>Trân trọng,<br>Ban Tổ chức</p>
-                      `);
-                      toast.success("Đã nạp mẫu: Thư mời chính thức");
+                      if (!useOfficialTemplate) {
+                        if (content.trim() && !window.confirm('Áp dụng mẫu "Thư mời chính thức" sẽ xóa nội dung đang soạn. Bạn có chắc không?')) return;
+                        setUseOfficialTemplate(true);
+                        setSubject("Thư mời tham dự Hội ngộ 40 năm NCT");
+                        setContent("");
+                        toast.success("Đã khóa và chọn mẫu: Thư mời chính thức");
+                      } else {
+                        setUseOfficialTemplate(false);
+                        toast.success("Đã hủy bỏ mẫu thư mời chính thức. Bạn có thể soạn email tự do.");
+                      }
                     }}
-                    className="p-2.5 rounded-xl border-2 border-indigo-400 bg-indigo-50 hover:bg-indigo-100 text-left text-xs font-bold text-indigo-800 transition-all flex flex-col justify-center relative cursor-pointer shadow-sm"
+                    className={`p-2.5 rounded-xl border-2 ${useOfficialTemplate ? 'border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500 ring-offset-1' : 'border-indigo-400 bg-indigo-50 hover:bg-indigo-100 text-indigo-800'} text-left text-xs font-bold transition-all flex flex-col justify-center relative cursor-pointer shadow-sm`}
                   >
-                    💌 Thư Mời (Chính thức)
+                    {useOfficialTemplate ? "✓ Đang dùng Thư Mời Chính thức (Nhấn để huỷ)" : "💌 Thư Mời (Chính thức)"}
                   </div>
                   {templates.map((tpl) => (
                     <div
-                      key={tpl.id}
-                      onClick={() => applyTemplate(tpl)}
+                      onClick={() => {
+                        if (useOfficialTemplate) setUseOfficialTemplate(false);
+                        applyTemplate(tpl);
+                      }}
                       className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-200 text-left text-xs font-bold text-slate-700 transition-all flex flex-col justify-between relative group cursor-pointer"
                     >
                       <span className="line-clamp-2 pr-6">{tpl.title}</span>
@@ -873,9 +875,28 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                 <label className="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">
                   Nội dung email <span className="text-rose-500">*</span>
                 </label>
-                <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-                  <RichTextEditor content={content} onChange={setContent} />
-                </div>
+                {useOfficialTemplate ? (
+                  <div className="rounded-2xl border-2 border-dashed border-emerald-200 bg-emerald-50 p-8 text-center shadow-inner">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-4">
+                      <CheckSquare className="h-8 w-8" />
+                    </div>
+                    <h3 className="text-lg font-bold text-emerald-900 mb-2">Đã khoá nội dung soạn thảo</h3>
+                    <p className="text-sm text-emerald-700 max-w-md mx-auto mb-4">
+                      Bạn đã chọn mẫu <strong>Thư mời chính thức</strong>. Khi gửi, hệ thống sẽ tự động tạo thư mời có layout siêu xịn xò (gồm cả mã QR check-in) cho từng người nhận.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setUseOfficialTemplate(false)}
+                      className="px-4 py-2 rounded-lg bg-white border border-emerald-200 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-colors"
+                    >
+                      Hủy bỏ để soạn thư tự do
+                    </button>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                    <RichTextEditor content={content} onChange={setContent} />
+                  </div>
+                )}
               </div>
             ) : (
               <div>

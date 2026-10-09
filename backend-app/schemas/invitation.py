@@ -31,6 +31,7 @@ class InvitationUpdate(BaseModel):
     note: Optional[str] = None
     checkedIn: Optional[bool] = Field(None, alias="checkedIn")
     shirtReceived: Optional[bool] = Field(None, alias="shirtReceived")
+    memberEmail: Optional[str] = Field(None, alias="memberEmail")
 
     class Config:
         populate_by_name = True

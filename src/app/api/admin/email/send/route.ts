@@ -20,6 +20,7 @@ type SendEmailPayload = {
   content: string;
   fromName?: string;
   fromEmail?: string;
+  useOfficialTemplate?: boolean;
 };
 
 function formatEmailHtml(content: string, recipient: Recipient): string {
@@ -139,16 +140,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { recipients, subject, content, fromName, fromEmail } = body;
+  const { recipients, subject, content, fromName, fromEmail, useOfficialTemplate } = body;
 
-  if (!subject || !subject.trim()) {
+  if (!useOfficialTemplate && (!subject || !subject.trim())) {
     return NextResponse.json(
       { ok: false, message: "Vui lòng nhập tiêu đề email." },
       { status: 400 }
     );
   }
 
-  if (!content || !content.trim()) {
+  if (!useOfficialTemplate && (!content || !content.trim())) {
     return NextResponse.json(
       { ok: false, message: "Vui lòng nhập nội dung email." },
       { status: 400 }
@@ -166,6 +167,43 @@ export async function POST(req: NextRequest) {
       { ok: false, message: "Không tìm thấy người nhận nào có địa chỉ email hợp lệ." },
       { status: 400 }
     );
+  }
+
+  if (useOfficialTemplate) {
+    const { sendInvitationEmail } = await import("@/lib/email");
+    let sentCount = 0;
+    let failedCount = 0;
+    for (const recipient of validRecipients) {
+      if (recipient.invi_id) {
+        const success = await sendInvitationEmail(recipient.invi_id);
+        if (success) sentCount++;
+        else failedCount++;
+      } else {
+        failedCount++;
+      }
+    }
+    
+    await logAction(
+      "send_email",
+      "registrations",
+      "email-campaign",
+      admin.fullName || admin.username,
+      admin.username,
+      admin.role,
+      `Gửi email "Thư mời chính thức" (Thành công: ${sentCount}, Thất bại: ${failedCount})`
+    );
+
+    return NextResponse.json({
+      ok: sentCount > 0,
+      total: validRecipients.length,
+      sentCount,
+      failedCount,
+      errors: [],
+      message:
+        sentCount > 0
+          ? `Đã gửi thành công ${sentCount} email thư mời${failedCount > 0 ? ` (${failedCount} email gặp lỗi)` : ""}!`
+          : `Gửi email thất bại.`,
+    });
   }
 
   const resendApiKey = process.env.RESEND_API_KEY;

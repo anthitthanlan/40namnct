@@ -100,7 +100,7 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
   const [visited, setVisited] = useState<Set<string>>(new Set([tab]));
   useEffect(() => {
     setVisited((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab)));
-    
+
     // Unmount inactive tabs after animation completes to prevent giant scrollbars
     const timer = setTimeout(() => {
       setVisited(new Set([tab]));
@@ -412,8 +412,8 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                   <span className="relative block h-6 w-6 overflow-hidden">
                     <span
                       className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${showPassword
-                          ? "opacity-100 rotate-0 scale-100"
-                          : "opacity-0 -rotate-90 scale-50"
+                        ? "opacity-100 rotate-0 scale-100"
+                        : "opacity-0 -rotate-90 scale-50"
                         }`}
                     >
                       <span className="material-symbols-rounded">
@@ -422,8 +422,8 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                     </span>
                     <span
                       className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${!showPassword
-                          ? "opacity-100 rotate-0 scale-100"
-                          : "opacity-0 rotate-90 scale-50"
+                        ? "opacity-100 rotate-0 scale-100"
+                        : "opacity-0 rotate-90 scale-50"
                         }`}
                     >
                       <span className="material-symbols-rounded">
@@ -534,10 +534,10 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                 {adminInfo?.fullName || "Admin"}
                 <span
                   className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${adminInfo?.role === "super_admin"
-                      ? "bg-red-100 text-red-700"
-                      : adminInfo?.role === "system_manager"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-emerald-100 text-emerald-700"
+                    ? "bg-red-100 text-red-700"
+                    : adminInfo?.role === "system_manager"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-emerald-100 text-emerald-700"
                     }`}
                 >
                   {adminInfo?.role === "super_admin"
@@ -590,15 +590,15 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                           type="button"
                           onClick={() => handleTabChange(key as Tab)}
                           className={`group/link relative py-1.5 text-left text-[15px] font-extrabold transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] flex items-center ${isCurrent
-                              ? "text-[#1d4ed8]"
-                              : "text-slate-600 hover:text-slate-900"
+                            ? "text-[#1d4ed8]"
+                            : "text-slate-600 hover:text-slate-900"
                             }`}
                         >
                           <span>{label}</span>
                           <span
                             className={`absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] origin-left ${isCurrent
-                                ? "opacity-100 scale-x-100"
-                                : "opacity-0 scale-x-0 group-hover/link:opacity-60 group-hover/link:scale-x-75"
+                              ? "opacity-100 scale-x-100"
+                              : "opacity-0 scale-x-0 group-hover/link:opacity-60 group-hover/link:scale-x-75"
                               }`}
                           />
                         </button>
@@ -629,8 +629,8 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
           {banner && (
             <div
               className={`mb-8 rounded-3xl px-6 py-4 text-sm font-bold ${banner.ok
-                  ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                  : "bg-rose-100 text-rose-800 border border-rose-200"
+                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                : "bg-rose-100 text-rose-800 border border-rose-200"
                 }`}
             >
               {banner.text}
@@ -706,17 +706,16 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                                 setPostTab(tabItem.id as any);
                                 setIsPostMenuOpen(false);
                               }}
-                              className={`flex-1 flex items-center px-4 py-3 text-left text-sm font-bold rounded-xl transition-colors ${
-                                postTab === tabItem.id
+                              className={`flex-1 flex items-center px-4 py-3 text-left text-sm font-bold rounded-xl transition-colors ${postTab === tabItem.id
                                   ? "bg-slate-100 text-[#1d4ed8]"
                                   : "text-slate-700 hover:bg-slate-50"
-                              }`}
+                                }`}
                             >
                               {tabItem.label}
                             </button>
                           ))}
                         </div>
-                        
+
                         <button
                           type="button"
                           className="t-morph-plus text-sm font-bold text-slate-800 flex items-center justify-between"
@@ -738,11 +737,10 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                           key={tabItem.id}
                           type="button"
                           onClick={() => setPostTab(tabItem.id as any)}
-                          className={`rounded-xl px-4 py-2.5 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
-                            postTab === tabItem.id
+                          className={`rounded-xl px-4 py-2.5 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${postTab === tabItem.id
                               ? "bg-[#1d4ed8] text-white shadow-xs"
                               : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                          }`}
+                            }`}
                         >
                           {tabItem.label}
                         </button>
@@ -754,193 +752,193 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                     ) : (
                       <>
                         <div className="flex flex-col sm:flex-row gap-4 mb-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-                      <input
-                        type="search"
-                        placeholder="Tìm theo tiêu đề, tác giả, người duyệt..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                      />
-                      <select
-                        value={filterSource}
-                        onChange={(e) => setFilterSource(e.target.value as any)}
-                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="all">Tất cả bài đăng</option>
-                        <option value="admin">Bài của Admin</option>
-                        <option value="community">Bài của Cộng đồng</option>
-                      </select>
-                      <select
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value as any)}
-                        className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="desc">Mới nhất trước</option>
-                        <option value="asc">Cũ nhất trước</option>
-                      </select>
-                    </div>
-                    {tabPosts.map((post) => {
-                      const status = statusInfo(post.status);
-                      return (
-                        <div key={post.id} className="rounded-3xl bg-white p-5 shadow-sm border border-slate-100">
-                          <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span
-                                  className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${status.cls}`}
-                                >
-                                  {status.label}
-                                </span>
-                                <span
-                                  className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${post.source === "admin"
-                                      ? "bg-[#1d4ed8]/10 text-[#1d4ed8]"
-                                      : "bg-emerald-100 text-emerald-700"
-                                    }`}
-                                >
-                                  {post.source === "admin"
-                                    ? "Ban Biên tập"
-                                    : "Cộng đồng"}
-                                </span>
-                                {post.pinned && (
-                                  <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-700">
-                                    Ghim
-                                  </span>
-                                )}
-                              </div>
-                              <h3 className="mt-2.5 truncate text-lg font-extrabold text-slate-900">
-                                {post.title}
-                              </h3>
-                              <p className="mt-0.5 truncate text-sm text-slate-500">
-                                {post.author} · {post.authorRole} · {vi(post.createdAt)}
-                              </p>
-                              {post.status === "pending" && (
-                                <p className="mt-2.5 line-clamp-2 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800">
-                                  {post.excerpt}
-                                </p>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              {post.status === "pending" && (
-                                <>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      act(
-                                        post,
-                                        { status: "published" },
-                                        "Đã duyệt và đăng bài viết.",
-                                      )
-                                    }
-                                    className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
-                                  >
-                                    Duyệt đăng
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      act(
-                                        post,
-                                        { status: "rejected" },
-                                        "Đã từ chối bài viết.",
-                                      )
-                                    }
-                                    className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
-                                  >
-                                    Từ chối
-                                  </button>
-                                </>
-                              )}
-                              {post.status === "published" && (
-                                <>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      act(
-                                        post,
-                                        { pinned: !post.pinned },
-                                        post.pinned
-                                          ? "Đã bỏ ghim bài viết."
-                                          : "Đã ghim bài viết lên đầu.",
-                                      )
-                                    }
-                                    className="rounded-xl bg-amber-100 px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 disabled:opacity-50"
-                                  >
-                                    {post.pinned ? "Bỏ ghim" : "Ghim"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      act(
-                                        post,
-                                        { status: "draft" },
-                                        "Đã hạ bài về bản nháp.",
-                                      )
-                                    }
-                                    className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
-                                  >
-                                    Hạ bài
-                                  </button>
-                                </>
-                              )}
-                              {(post.status === "draft" ||
-                                post.status === "rejected") && (
-                                  <button
-                                    type="button"
-                                    disabled={busy}
-                                    onClick={() =>
-                                      act(
-                                        post,
-                                        { status: "published" },
-                                        "Đã đăng bài viết.",
-                                      )
-                                    }
-                                    className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
-                                  >
-                                    Đăng bài
-                                  </button>
-                                )}
-                              {post.status === "published" && (
-                                <Link
-                                  href={`/cau-chuyen/${post.slug}`}
-                                  className="rounded-xl bg-[#1d4ed8]/10 px-3.5 py-2 text-xs font-bold text-[#1d4ed8] hover:bg-[#1d4ed8]/20"
-                                >
-                                  Xem
-                                </Link>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => openEdit(post)}
-                                className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
-                              >
-                                Sửa
-                              </button>
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => remove(post)}
-                                className="rounded-xl bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 disabled:opacity-50"
-                              >
-                                Xoá
-                              </button>
-                            </div>
-                          </div>
+                          <input
+                            type="search"
+                            placeholder="Tìm theo tiêu đề, tác giả, người duyệt..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                          />
+                          <select
+                            value={filterSource}
+                            onChange={(e) => setFilterSource(e.target.value as any)}
+                            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                          >
+                            <option value="all">Tất cả bài đăng</option>
+                            <option value="admin">Bài của Admin</option>
+                            <option value="community">Bài của Cộng đồng</option>
+                          </select>
+                          <select
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value as any)}
+                            className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                          >
+                            <option value="desc">Mới nhất trước</option>
+                            <option value="asc">Cũ nhất trước</option>
+                          </select>
                         </div>
-                      );
-                    })}
-                    {tabPosts.length === 0 && (
-                      <div className="rounded-3xl bg-white p-10 text-center text-sm text-slate-400">
-                        {postTab === "pending"
-                          ? "🎉 Không có bài nào chờ duyệt - mọi thứ đã được xử lý!"
-                          : "Chưa có bài viết nào trong mục này."}
-                      </div>
+                        {tabPosts.map((post) => {
+                          const status = statusInfo(post.status);
+                          return (
+                            <div key={post.id} className="rounded-3xl bg-white p-5 shadow-sm border border-slate-100">
+                              <div className="flex flex-wrap items-start justify-between gap-4">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span
+                                      className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${status.cls}`}
+                                    >
+                                      {status.label}
+                                    </span>
+                                    <span
+                                      className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${post.source === "admin"
+                                        ? "bg-[#1d4ed8]/10 text-[#1d4ed8]"
+                                        : "bg-emerald-100 text-emerald-700"
+                                        }`}
+                                    >
+                                      {post.source === "admin"
+                                        ? "Ban Biên tập"
+                                        : "Cộng đồng"}
+                                    </span>
+                                    {post.pinned && (
+                                      <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-700">
+                                        Ghim
+                                      </span>
+                                    )}
+                                  </div>
+                                  <h3 className="mt-2.5 truncate text-lg font-extrabold text-slate-900">
+                                    {post.title}
+                                  </h3>
+                                  <p className="mt-0.5 truncate text-sm text-slate-500">
+                                    {post.author} · {post.authorRole} · {vi(post.createdAt)}
+                                  </p>
+                                  {post.status === "pending" && (
+                                    <p className="mt-2.5 line-clamp-2 rounded-xl bg-amber-50 px-4 py-2 text-sm text-amber-800">
+                                      {post.excerpt}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                  {post.status === "pending" && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() =>
+                                          act(
+                                            post,
+                                            { status: "published" },
+                                            "Đã duyệt và đăng bài viết.",
+                                          )
+                                        }
+                                        className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
+                                      >
+                                        Duyệt đăng
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() =>
+                                          act(
+                                            post,
+                                            { status: "rejected" },
+                                            "Đã từ chối bài viết.",
+                                          )
+                                        }
+                                        className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                                      >
+                                        Từ chối
+                                      </button>
+                                    </>
+                                  )}
+                                  {post.status === "published" && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() =>
+                                          act(
+                                            post,
+                                            { pinned: !post.pinned },
+                                            post.pinned
+                                              ? "Đã bỏ ghim bài viết."
+                                              : "Đã ghim bài viết lên đầu.",
+                                          )
+                                        }
+                                        className="rounded-xl bg-amber-100 px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 disabled:opacity-50"
+                                      >
+                                        {post.pinned ? "Bỏ ghim" : "Ghim"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() =>
+                                          act(
+                                            post,
+                                            { status: "draft" },
+                                            "Đã hạ bài về bản nháp.",
+                                          )
+                                        }
+                                        className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                                      >
+                                        Hạ bài
+                                      </button>
+                                    </>
+                                  )}
+                                  {(post.status === "draft" ||
+                                    post.status === "rejected") && (
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() =>
+                                          act(
+                                            post,
+                                            { status: "published" },
+                                            "Đã đăng bài viết.",
+                                          )
+                                        }
+                                        className="rounded-xl bg-[#16a34a] px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50"
+                                      >
+                                        Đăng bài
+                                      </button>
+                                    )}
+                                  {post.status === "published" && (
+                                    <Link
+                                      href={`/cau-chuyen/${post.slug}`}
+                                      className="rounded-xl bg-[#1d4ed8]/10 px-3.5 py-2 text-xs font-bold text-[#1d4ed8] hover:bg-[#1d4ed8]/20"
+                                    >
+                                      Xem
+                                    </Link>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => openEdit(post)}
+                                    className="rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50"
+                                  >
+                                    Sửa
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => remove(post)}
+                                    className="rounded-xl bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 disabled:opacity-50"
+                                  >
+                                    Xoá
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {tabPosts.length === 0 && (
+                          <div className="rounded-3xl bg-white p-10 text-center text-sm text-slate-400">
+                            {postTab === "pending"
+                              ? "🎉 Không có bài nào chờ duyệt - mọi thứ đã được xử lý!"
+                              : "Chưa có bài viết nào trong mục này."}
+                          </div>
+                        )}
+                      </>
                     )}
-                    </>
-                  )}
                   </div>
                 );
               } else if (k === "edit") {

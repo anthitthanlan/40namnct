@@ -263,6 +263,7 @@ export default function AdminRegistrations({
           nienKhoa: editingInvitation.nienKhoa,
           size: editingInvitation.size,
           note: editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "",
+          memberEmail: editingInvitation.memberEmail,
         }),
       });
       if (res.status === 401) {
@@ -309,7 +310,7 @@ export default function AdminRegistrations({
       }
     }
 
-    return (invitations ?? []).filter((t) => {
+    const filtered = (invitations ?? []).filter((t) => {
       if (typeFilter === "individual" && t.type !== "individual") {
         return false;
       }
@@ -362,6 +363,21 @@ export default function AdminRegistrations({
         t.note,
       ].some((s) => (s ?? "").toUpperCase().includes(q));
     });
+
+    if (multiTicketPhoneFilter) {
+      filtered.sort((a, b) => {
+        const phoneA = a.memberPhone || "";
+        const phoneB = b.memberPhone || "";
+        if (phoneA < phoneB) return -1;
+        if (phoneA > phoneB) return 1;
+        // Nếu cùng SĐT, sort theo thời gian tạo để vé cũ nằm trên
+        const timeA = new Date(a.createdAt || 0).getTime();
+        const timeB = new Date(b.createdAt || 0).getTime();
+        return timeA - timeB;
+      });
+    }
+
+    return filtered;
   }, [invitations, statusFilter, typeFilter, q, multiTicketPhoneFilter]);
 
   if (members === null || invitations === null) {
@@ -1303,6 +1319,16 @@ export default function AdminRegistrations({
                     value={editingInvitation.nienKhoa || ""}
                     onChange={(e) => setEditingInvitation({ ...editingInvitation, nienKhoa: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={editingInvitation.memberEmail || ""}
+                    onChange={(e) => setEditingInvitation({ ...editingInvitation, memberEmail: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                    placeholder="example@gmail.com"
                   />
                 </div>
                 {editingInvitation.type === "individual" && (() => {

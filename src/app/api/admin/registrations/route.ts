@@ -6,6 +6,7 @@ import {
   listInvitations,
   setInvitationStatus,
   setShirtReceived,
+  updateInvitationDetails,
   type InvitationStatus,
 } from "@/lib/members";
 import { logAction, listActionLogs } from "@/lib/action-logs";
@@ -127,7 +128,16 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  const invitation = await setInvitationStatus(id, status, token);
+  let invitation;
+  if (typeof (body as any).rejectReason === "string") {
+    invitation = await updateInvitationDetails(id, { 
+      status, 
+      note: (body as any).rejectReason 
+    }, token);
+  } else {
+    invitation = await setInvitationStatus(id, status, token);
+  }
+  
   if (!invitation) {
     return NextResponse.json(
       { ok: false, message: "Không tìm thấy thư mời." },

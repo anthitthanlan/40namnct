@@ -765,6 +765,26 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
                 <p className="text-xs text-slate-400 bg-slate-50 p-3 rounded-xl border border-slate-100">Chưa có mẫu nào. Hãy soạn một thư và nhấn "Lưu mẫu từ nội dung đang soạn".</p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div
+                    onClick={() => {
+                      if (content.trim() && !window.confirm('Áp dụng mẫu "Thư mời chính thức" sẽ thay thế nội dung đang soạn. Bạn có chắc không?')) return;
+                      setSubject("Thư mời tham dự Hội ngộ 40 năm NCT");
+                      setContent(`
+<p>Kính gửi cựu học sinh <strong>{name}</strong>,</p>
+<p>Ban Tổ chức trân trọng gửi đến bạn Thư mời điện tử tham dự sự kiện Hội ngộ 40 năm thành lập trường THPT Nguyễn Công Trứ.</p>
+<p>Vui lòng truy cập đường link bên dưới để xem Thư mời và nhận Mã QR check-in:</p>
+<p><a href="https://40namnctru.nctitc.io.vn/thu-moi?id={invi_id}"><strong>🔗 Bấm vào đây để xem và tải Thư mời</strong></a></p>
+<p>Mã đóng góp của bạn: <strong>{donate_code}</strong></p>
+<p>Vui lòng chụp lại màn hình mã QR hoặc lưu link Thư mời để xuất trình tại cổng check-in sự kiện.</p>
+<p>Hẹn gặp lại bạn tại sự kiện!</p>
+<p>Trân trọng,<br>Ban Tổ chức</p>
+                      `);
+                      toast.success("Đã nạp mẫu: Thư mời chính thức");
+                    }}
+                    className="p-2.5 rounded-xl border-2 border-indigo-400 bg-indigo-50 hover:bg-indigo-100 text-left text-xs font-bold text-indigo-800 transition-all flex flex-col justify-center relative cursor-pointer shadow-sm"
+                  >
+                    💌 Thư Mời (Chính thức)
+                  </div>
                   {templates.map((tpl) => (
                     <div
                       key={tpl.id}

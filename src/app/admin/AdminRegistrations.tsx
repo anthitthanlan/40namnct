@@ -62,6 +62,7 @@ export default function AdminRegistrations({
     "all" | "pending_approval" | "confirmed" | "pending_payment" | "rejected" | "cancelled" | "checked_in" | "shirt_received"
   >("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "individual" | "group">("all");
+  const [multiTicketPhoneFilter, setMultiTicketPhoneFilter] = useState(false);
   const [mobileSubTab, setMobileSubTab] = useState<"overview" | "list">("overview");
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [mainTab, setMainTab] = useState<"approve" | "sizes" | "transactions">("approve");
@@ -112,12 +113,35 @@ export default function AdminRegistrations({
     status: InvitationView["status"],
     okText: string,
   ) {
+    let finalNote = t.note || "";
+    if (status === "rejected") {
+      const reason = window.prompt("Nhập lý do từ chối (sẽ hiển thị cho người dùng):");
+      if (reason === null) return;
+      if (!reason.trim()) {
+        if (!window.confirm("Bạn chưa nhập lý do. Vẫn tiếp tục từ chối?")) return;
+      }
+      
+      // Remove old reject reason if exists
+      finalNote = finalNote.split(" | [Lý do từ chối:")[0].trim();
+      
+      if (reason.trim()) {
+        finalNote += (finalNote ? " | " : "") + `[Lý do từ chối: ${reason.trim()}]`;
+      }
+    } else if (status === "confirmed") {
+      finalNote = finalNote.split(" | [Lý do từ chối:")[0].trim();
+    }
+    
     setBusy(true);
     try {
+      const payload: any = { id: t.id, status };
+      if (status === "rejected" || status === "confirmed") {
+        payload.rejectReason = finalNote;
+      }
+      
       const res = await fetch("/api/admin/registrations", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: t.id, status }),
+        body: JSON.stringify(payload),
       });
       if (res.status === 401) {
         onAuthError?.();
@@ -131,7 +155,7 @@ export default function AdminRegistrations({
       setInvitations((prev) =>
         prev
           ? prev.map((x) =>
-              x.id === t.id ? { ...x, status: data.invitation.status } : x,
+              x.id === t.id ? { ...x, status: data.invitation.status, note: finalNote } : x,
             )
           : prev,
       );
@@ -273,9 +297,18 @@ export default function AdminRegistrations({
 
   useEffect(() => {
     setPage(1);
-  }, [q, statusFilter, typeFilter]);
+  }, [q, statusFilter, typeFilter, multiTicketPhoneFilter]);
 
   const filteredInvitations = useMemo(() => {
+    const phoneCounts: Record<string, number> = {};
+    if (multiTicketPhoneFilter && invitations) {
+      for (const t of invitations) {
+        if (t.memberPhone) {
+          phoneCounts[t.memberPhone] = (phoneCounts[t.memberPhone] || 0) + 1;
+        }
+      }
+    }
+
     return (invitations ?? []).filter((t) => {
       if (typeFilter === "individual" && t.type !== "individual") {
         return false;
@@ -311,6 +344,12 @@ export default function AdminRegistrations({
         return false;
       }
 
+      if (multiTicketPhoneFilter && t.memberPhone) {
+        if ((phoneCounts[t.memberPhone] || 0) < 2) {
+          return false;
+        }
+      }
+
       // Lọc theo từ khóa tìm kiếm
       if (!q) return true;
       return [
@@ -323,7 +362,7 @@ export default function AdminRegistrations({
         t.note,
       ].some((s) => (s ?? "").toUpperCase().includes(q));
     });
-  }, [invitations, statusFilter, typeFilter, q]);
+  }, [invitations, statusFilter, typeFilter, q, multiTicketPhoneFilter]);
 
   if (members === null || invitations === null) {
     return (
@@ -611,6 +650,7 @@ export default function AdminRegistrations({
               statusFilter === "cancelled" ? "Đã hủy" : statusFilter
             }
             {typeFilter !== "all" && ` - ${typeFilter === "individual" ? "Cá nhân" : "Tập thể"}`}
+            {multiTicketPhoneFilter && ` - SĐT có ≥ 2 vé`}
             <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[10px] text-blue-700">
               {filteredInvitations.length}
             </span>
@@ -654,6 +694,11 @@ export default function AdminRegistrations({
                       <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
                         {isGroup ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">group</span> Tập thể ({t.quantity} suất)</> : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">person</span> Cá nhân</>}
                       </span>
+                      {logs.some((l) => l.entityId === t.id && l.details.includes("Gửi email")) && (
+                        <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-extrabold text-indigo-700">
+                          <span className="material-symbols-rounded inline-block align-middle text-[1em]">mail</span> Đã gửi mail
+                        </span>
+                      )}
                       {t.checkedIn && (
                         <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-extrabold text-purple-700">
                           <span className="material-symbols-rounded inline-block align-middle text-[1em]">gps_fixed</span> Đã vào cổng
@@ -941,6 +986,24 @@ export default function AdminRegistrations({
                         </button>
                       )}
 
+                      {isConfirmed && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => {
+                            const domain = typeof window !== "undefined" ? window.location.origin : "https://40namnctru.nctitc.io.vn";
+                            const link = `${domain}/thu-moi?id=${t.id}`;
+                            const msg = `Kính gửi cựu học sinh ${t.attendeeName || t.memberName},\n\nBan Tổ chức trân trọng gửi bạn Thư mời điện tử tham dự sự kiện Hội ngộ 40 năm.\n\nVui lòng truy cập đường link bên dưới để nhận Thư mời và Mã QR check-in:\n${link}\n\nHẹn gặp lại bạn tại sự kiện!`;
+                            navigator.clipboard.writeText(msg).then(() => {
+                              alert("Đã copy template thư mời!");
+                            });
+                          }}
+                          className="rounded-xl bg-sky-50 px-3 py-1.5 text-[11px] font-bold text-sky-600 hover:bg-sky-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-[14px]">content_copy</span> Copy Thư mời
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => setViewingLogsFor(t)}
@@ -1134,6 +1197,28 @@ export default function AdminRegistrations({
                       {tab.label}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Nhóm 3: Khác */}
+              <div>
+                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Bộ lọc khác
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setMultiTicketPhoneFilter(!multiTicketPhoneFilter)}
+                    className={`rounded-xl px-4 py-2 text-sm font-bold transition-all flex items-center gap-2 ${
+                      multiTicketPhoneFilter
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <span className="material-symbols-rounded text-[18px]">
+                      {multiTicketPhoneFilter ? "check_box" : "check_box_outline_blank"}
+                    </span>
+                    SĐT có từ 2 vé đăng ký trở lên
+                  </button>
                 </div>
               </div>
             </div>

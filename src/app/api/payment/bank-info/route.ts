@@ -57,6 +57,7 @@ export async function GET(req: Request) {
         status: string;
         attendeeName?: string;
         nienKhoa?: string;
+        note?: string;
       };
       const bank = getPayBankConfig();
       return NextResponse.json({
@@ -68,6 +69,7 @@ export async function GET(req: Request) {
         id: inv.id,
         status: inv.status,
         attendeeName: inv.attendeeName,
+        note: inv.note,
         isFallback: false,
       });
     }
@@ -103,6 +105,7 @@ export async function GET(req: Request) {
     id: invitation.id,
     status: invitation.status,
     attendeeName: invitation.attendeeName,
+    note: invitation.note,
     isFallback: true,
   });
 }

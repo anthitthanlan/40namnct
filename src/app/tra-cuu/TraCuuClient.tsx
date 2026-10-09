@@ -35,7 +35,6 @@ export default function TraCuuClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<LookupResult | null>(null);
-  const [expandedInvitation, setExpandedInvitation] = useState<string | null>(null);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -83,7 +82,6 @@ export default function TraCuuClient() {
   function resetSearch() {
     setResult(null);
     setError("");
-    setExpandedInvitation(null);
   }
 
   return (
@@ -190,8 +188,8 @@ export default function TraCuuClient() {
               <h2 className="text-2xl font-black text-slate-900">
                 Xin chào, {result.member.name}!
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Thông tin tra cứu hợp lệ.
+              <p className="mt-2 text-sm text-slate-600 font-medium bg-blue-50/50 inline-block px-4 py-1.5 rounded-full border border-blue-100">
+                Có <span className="font-extrabold text-blue-700">{result.invitations.length}</span> thư mời trùng khớp với thông tin.
               </p>
             </div>
 
@@ -212,20 +210,13 @@ export default function TraCuuClient() {
           ) : (
             result.invitations.map((invitation) => {
               const status = invitationStatusInfo(invitation.status);
-              const isExpanded = expandedInvitation === invitation.id;
               return (
                 <div
                   key={invitation.id}
                   className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden"
                 >
                   {/* Header vé */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExpandedInvitation(isExpanded ? null : invitation.id)
-                    }
-                    className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-slate-50"
-                  >
+                  <div className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-slate-50">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
@@ -250,28 +241,32 @@ export default function TraCuuClient() {
                         )}
                       </p>
                     </div>
-                    <span
-                      className={`material-symbols-rounded text-slate-400 transition-transform ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                    >
-                      expand_more
-                    </span>
-                  </button>
+                  </div>
 
                   {/* Chi tiết mở rộng */}
-                  {isExpanded && (
-                    <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-4">
-                      {status.desc && (
-                        <p className="text-xs text-slate-500">{status.desc}</p>
-                      )}
-                      {invitation.note && (
-                        <p className="text-xs text-slate-600 mb-4">
-                          <strong>Ghi chú:</strong> {invitation.note}
-                        </p>
-                      )}
+                  {(() => {
+                    const rejectMatch = invitation.note?.match(/\[Lý do từ chối: (.*?)\]/);
+                    const rejectReason = rejectMatch ? rejectMatch[1] : null;
+                    const cleanNote = invitation.note?.replace(/ \| \[Lý do từ chối: (.*?)\]/, "")?.replace(/\[Lý do từ chối: (.*?)\]/, "")?.trim();
 
-                      <div className="space-y-3 pt-2 border-t border-slate-200">
+                    return (
+                      <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-4">
+                        {status.desc && (
+                          <p className="text-xs text-slate-500">{status.desc}</p>
+                        )}
+                        {invitation.status === "rejected" && rejectReason && (
+                          <div className="rounded-lg bg-red-50 p-3 border border-red-100">
+                            <p className="text-[13px] text-red-700 font-bold mb-1">Thư mời bị từ chối</p>
+                            <p className="text-xs text-red-600">{rejectReason}</p>
+                          </div>
+                        )}
+                        {cleanNote && (
+                          <p className="text-xs text-slate-600 mb-4">
+                            <strong>Ghi chú:</strong> {cleanNote}
+                          </p>
+                        )}
+
+                        <div className="space-y-3 pt-2 border-t border-slate-200">
                         <div className="flex items-center justify-between">
                           <span className="text-[13px] font-medium text-slate-600">Trạng thái thanh toán</span>
                           {invitation.status === "confirmed" ? (
@@ -301,12 +296,19 @@ export default function TraCuuClient() {
                       </div>
 
                       <div className="flex justify-center pt-4 mt-2">
-                        {["pending_payment", "pending", "rejected"].includes(invitation.status) ? (
+                        {["pending_payment", "pending"].includes(invitation.status) ? (
                           <Link
                             href={`/xac-nhan-dong-gop?id=${invitation.id}`}
                             className="w-full text-center rounded-xl bg-[#1d4ed8] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700"
                           >
-                            {invitation.status === "rejected" ? "Xem chi tiết / Thanh toán lại" : "Thanh toán ngay"}
+                            Xác thực giao dịch
+                          </Link>
+                        ) : invitation.status === "rejected" ? (
+                          <Link
+                            href={`/xac-nhan-dong-gop?id=${invitation.id}`}
+                            className="w-full text-center rounded-xl bg-rose-100 px-4 py-3 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-200"
+                          >
+                            Xem lý do từ chối
                           </Link>
                         ) : (
                           <Link
@@ -318,7 +320,8 @@ export default function TraCuuClient() {
                         )}
                       </div>
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
               );
             })

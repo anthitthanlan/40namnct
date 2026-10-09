@@ -227,7 +227,12 @@ export default function XacNhanDongGopContent() {
         } else {
           setBankInfo(data);
           if (invitationId !== "DEV") {
-            if (data.status === "confirmed") {
+            if (data.status === "rejected") {
+              const match = data.note?.match(/\[Lý do từ chối: (.*?)\]/);
+              const reason = match ? match[1] : "Chưa thanh toán đủ số tiền hoặc sai nội dung chuyển khoản.";
+              setLoadError(`Thư mời này đã bị từ chối xác nhận đóng góp.\n\nLý do: ${reason}\n\nVui lòng liên hệ Ban Tổ chức qua Fanpage để được hỗ trợ xử lý.`);
+              return;
+            } else if (data.status === "confirmed") {
               setUploadState({
                 phase: "success",
                 confidence: "high",
@@ -353,7 +358,7 @@ export default function XacNhanDongGopContent() {
   if (loadError) {
     return (
       <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-6 px-6">
-        <p className="text-center text-gray-700 font-medium max-w-sm">{loadError}</p>
+        <p className="text-center text-gray-700 font-medium max-w-sm whitespace-pre-wrap">{loadError}</p>
         <a
           href="/dang-ky"
           className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"

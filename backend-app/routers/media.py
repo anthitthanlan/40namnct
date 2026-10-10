@@ -51,6 +51,7 @@ async def upload_media(
     title: str = Form(""), # Tên post hoặc feed
     uploadIndex: int = Form(1),
     skip_db: bool = Form(False),
+    status: str = Form("pending"),
     db: Session = Depends(get_db)
 ):
     import re
@@ -109,7 +110,7 @@ async def upload_media(
         author_role=authorRole,
         caption=caption,
         media_type=mediaType,
-        status="approved"
+        status=status
     )
     db.add(media_record)
     db.commit()

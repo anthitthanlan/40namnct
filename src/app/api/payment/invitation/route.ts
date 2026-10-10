@@ -111,7 +111,8 @@ export async function GET(req: NextRequest) {
   }
 
   // Generate addInfo: [Họ Tên Không Dấu] [Niên Khóa] [SĐT]
-  const nameUnaccented = removeAccents(member.name).toUpperCase().trim();
+  const primaryName = invitation.attendeeName || member.name;
+  const nameUnaccented = removeAccents(primaryName).toUpperCase().trim();
   const nienKhoaFormatted = (invitation.nienKhoa || "").replace(/\D/g, "").trim(); // Remove space and dash
   const addInfo = `${nameUnaccented} ${nienKhoaFormatted} ${member.phone}`.trim();
 
@@ -126,9 +127,10 @@ export async function GET(req: NextRequest) {
         sizes: invitation.sizes,
         snacks: invitation.snacks,
         checkedIn: invitation.checkedIn,
+        attendeeName: primaryName,
       },
     member: {
-      name: member.name,
+      name: primaryName,
       nienKhoa: invitation.nienKhoa,
       phone: member.phone,
     },

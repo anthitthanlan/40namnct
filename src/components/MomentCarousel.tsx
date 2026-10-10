@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type WallMemory } from "./TimelineWall";
+import MomentCard from "./MomentCard";
 
 export default function MomentCarousel({ moments }: { moments: WallMemory[] }) {
   if (!moments || moments.length === 0) return null;
@@ -26,36 +27,17 @@ export default function MomentCarousel({ moments }: { moments: WallMemory[] }) {
           return (
             <div
               key={m.id}
-              className="relative aspect-[4/5] w-[280px] shrink-0 snap-center overflow-hidden rounded-3xl bg-slate-900 shadow-sm sm:w-[320px]"
+              className="w-[280px] shrink-0 snap-center sm:w-[320px]"
             >
-              {cover ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={cover}
-                  alt={m.title}
-                  loading="lazy"
-                  className="absolute inset-0 h-full w-full object-cover opacity-80"
-                />
-              ) : m.kind === "video" ? (
-                <video
-                  src={m.images[0]}
-                  preload="metadata"
-                  className="absolute inset-0 h-full w-full object-cover opacity-80"
-                />
-              ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
-              
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <span className="mb-3 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-bold tracking-widest text-white backdrop-blur-md">
-                  {m.year}
-                </span>
-                <h3 className="line-clamp-2 text-lg font-extrabold leading-snug text-white">
-                  {m.title}
-                </h3>
-                <p className="mt-2 text-sm font-medium text-slate-300">
-                  {m.author} {m.isCommunity ? `· ${m.role}` : ""}
-                </p>
-              </div>
+              <MomentCard
+                coverUrl={cover || m.images[0]}
+                title={m.title}
+                author={m.author}
+                role={m.isCommunity ? m.role : ""}
+                year={m.year}
+                kind={cover ? "image" : "video"}
+                href={`/khoanh-khac?moment=${m.id}#moment-${m.id}`}
+              />
             </div>
           );
         })}

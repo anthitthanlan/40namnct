@@ -9,8 +9,6 @@ import siteConfig from "../../data/site-config.json";
 
 export default function SiteFooter() {
   const pathname = usePathname();
-  // Trang Timeline full-screen tự động cuộn — không cần footer
-  if (pathname.startsWith("/khoanh-khac")) return null;
   // Khu quản trị là màn hình riêng — không hiển thị footer công khai
   if (pathname.startsWith("/admin")) return null;
 

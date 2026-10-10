@@ -28,9 +28,11 @@ export async function GET(req: NextRequest) {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((t) => {
       const m = byId.get(t.memberId);
+      const unifiedName = t.attendeeName || m?.name || "(đã xoá)";
       return {
         ...t,
-        memberName: m?.name ?? "(đã xoá)",
+        attendeeName: unifiedName,
+        memberName: unifiedName,
         memberPhone: m?.phone ?? "",
         memberEmail: m?.email ?? "",
       };

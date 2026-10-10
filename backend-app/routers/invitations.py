@@ -181,12 +181,14 @@ def update_invitation(
 
     if "attendeeName" in changes and changes["attendeeName"] is not None:
         inv.attendee_name = changes["attendeeName"]
+        member = db.query(Member).filter(Member.id == inv.member_id).first()
+        if member:
+            member.name = changes["attendeeName"]
         
     if "nienKhoa" in changes and changes["nienKhoa"] is not None:
         inv.nien_khoa = changes["nienKhoa"]
         
     if "memberEmail" in changes and changes["memberEmail"] is not None:
-        from app.models.member import Member
         member = db.query(Member).filter(Member.id == inv.member_id).first()
         if member:
             member.email = changes["memberEmail"]

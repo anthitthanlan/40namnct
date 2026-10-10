@@ -71,6 +71,7 @@ export default function AdminRegistrations({
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [viewingLogsFor, setViewingLogsFor] = useState<InvitationRow | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   const flash = useCallback((ok: boolean, text: string) => {
     setBanner({ ok, text });
@@ -227,6 +228,37 @@ export default function AdminRegistrations({
     setMobileSubTab("list");
   }
 
+  async function handleExportExcel() {
+    setExportingExcel(true);
+    try {
+      const res = await fetch("/api/admin/registrations/export-excel");
+      if (res.status === 401) {
+        onAuthError?.();
+        return;
+      }
+      if (!res.ok) {
+        flash(false, "Không thể xuất file Excel. Vui lòng thử lại sau.");
+        return;
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+      a.download = `Danh_sach_tham_du_NCT40_${dateStr}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      flash(true, "Đã tải xuống danh sách Excel thành công!");
+    } catch (err) {
+      flash(false, "Có lỗi xảy ra khi tải file Excel.");
+    } finally {
+      setExportingExcel(false);
+    }
+  }
+
   async function handleDeleteInvitation(t: InvitationRow) {
     if (!window.confirm(`Xoá thư mời "${t.code}" của ${t.memberName}? Thao tác không thể hoàn tác.`)) {
       return;
@@ -279,7 +311,15 @@ export default function AdminRegistrations({
       }
       const finalNote = editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "";
       setInvitations((prev) =>
-        prev ? prev.map((t) => (t.id === editingInvitation.id ? { ...t, attendeeName: editingInvitation.attendeeName, nienKhoa: editingInvitation.nienKhoa, size: editingInvitation.size, note: finalNote } : t)) : prev
+        prev ? prev.map((t) => (t.id === editingInvitation.id ? { 
+          ...t, 
+          attendeeName: editingInvitation.attendeeName, 
+          memberName: editingInvitation.attendeeName,
+          nienKhoa: editingInvitation.nienKhoa, 
+          size: editingInvitation.size, 
+          note: finalNote,
+          memberEmail: editingInvitation.memberEmail,
+        } : t)) : prev
       );
       flash(true, "Đã cập nhật thông tin thành công.");
       setEditingInvitation(null);
@@ -636,14 +676,29 @@ export default function AdminRegistrations({
                 </p>
               </div>
 
-              {/* Ô tìm kiếm */}
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Tìm theo mã thư mời, Session ID, tên, SĐT…"
-                className="w-full sm:w-72 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-medium focus:border-blue-500 focus:bg-white focus:outline-none"
-              />
+              <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                <button
+                  type="button"
+                  disabled={exportingExcel}
+                  onClick={handleExportExcel}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-95 disabled:opacity-50"
+                  title="Xuất file Excel cho tất cả các đơn đăng ký đã được duyệt"
+                >
+                  <span className={`material-symbols-rounded text-[18px] ${exportingExcel ? "animate-spin" : ""}`}>
+                    {exportingExcel ? "progress_activity" : "table_view"}
+                  </span>
+                  <span>{exportingExcel ? "Đang xuất..." : "Xuất Excel (Đã duyệt)"}</span>
+                </button>
+
+                {/* Ô tìm kiếm */}
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Tìm theo mã thư mời, Session ID, tên, SĐT…"
+                  className="flex-1 sm:w-72 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-medium focus:border-blue-500 focus:bg-white focus:outline-none"
+                />
+              </div>
             </div>
 
             {/* Lọc danh sách (Button mở Modal) */}
@@ -736,22 +791,24 @@ export default function AdminRegistrations({
                           <div>
                             <p>
                               <strong className="text-slate-500">Người đăng ký:</strong>{" "}
-                              <span className="font-bold text-slate-900">{t.memberName}</span> (
-                              {t.memberPhone})
+                              <span className="font-bold text-slate-900">{t.attendeeName || t.memberName}</span>{" "}
+                              <span className="whitespace-nowrap">({t.memberPhone})</span>
                             </p>
+                            {t.nienKhoa && (
+                              <p className="mt-0.5">
+                                <strong className="text-slate-500">Niên khóa:</strong> {t.nienKhoa}
+                              </p>
+                            )}
                             {t.memberEmail && (
                               <p className="mt-0.5">
-                                <strong className="text-slate-500">Email:</strong> {t.memberEmail}
+                                <strong className="text-slate-500">Email:</strong>{" "}
+                                <span className="break-all">{t.memberEmail}</span>
                               </p>
                             )}
                           </div>
 
                           <div>
                             <p>
-                              <strong className="text-slate-500">Người dự / Niên khóa:</strong>{" "}
-                              {t.attendeeName || t.memberName} {t.nienKhoa ? `· ${t.nienKhoa}` : ""}
-                            </p>
-                            <p className="mt-0.5">
                               <strong className="text-slate-500">Đăng ký Áo &amp; F&B:</strong>{" "}
                               <span className="font-bold text-slate-900">{t.snacks} suất</span>{" "}
                               <span className="text-[11px]">({sizesLabel(t.type, t.size, t.sizes) || "-"})</span>
@@ -1336,11 +1393,15 @@ export default function AdminRegistrations({
                   <input type="text" disabled value={editingInvitation.code} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono" />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Tên người dự</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Họ và tên</label>
                   <input
                     type="text"
-                    value={editingInvitation.attendeeName || ""}
-                    onChange={(e) => setEditingInvitation({ ...editingInvitation, attendeeName: e.target.value })}
+                    value={editingInvitation.attendeeName || editingInvitation.memberName || ""}
+                    onChange={(e) => setEditingInvitation({ 
+                      ...editingInvitation, 
+                      attendeeName: e.target.value,
+                      memberName: e.target.value
+                    })}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
                   />
                 </div>

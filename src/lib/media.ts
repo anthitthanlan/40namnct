@@ -65,6 +65,7 @@ export async function saveUploadFile(
     authorRole?: string;
     caption?: string;
     skipDb?: boolean;
+    status?: string;
   }
 ): Promise<string> {
   const formData = new FormData();
@@ -84,6 +85,7 @@ export async function saveUploadFile(
     if (options.authorRole) formData.append("authorRole", options.authorRole);
     if (options.caption) formData.append("caption", options.caption);
     if (options.skipDb) formData.append("skip_db", "true");
+    if (options.status) formData.append("status", options.status);
   } else {
     // Default metadata from old logic
     formData.append("year", "2026");

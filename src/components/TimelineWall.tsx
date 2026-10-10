@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Post } from "@/lib/posts";
+import MomentCard from "./MomentCard";
 
 export type WallMemory = {
   id: string;
@@ -20,15 +22,8 @@ export type WallMemory = {
 };
 
 type FeedItem =
-  | { type: "memory"; data: WallMemory }
+  | { type: "memory"; data: WallMemory; imageIndex: number }
   | { type: "post"; data: Post };
-
-type LightboxState = {
-  images: string[];
-  index: number;
-  info: { title: string; caption: string; author: string; role: string; slug?: string } | null;
-  showInfo: boolean;
-};
 
 type CarouselSlide = {
   src: string;
@@ -55,22 +50,38 @@ function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
   });
 }
 
-export default function TimelineWall({ memories, posts = [] }: Props) {
-  const yearBarRef = useRef<HTMLDivElement>(null);
-  const [seed] = useState(() => Math.random());
+const ITEMS_PER_PAGE = 15;
 
+export default function TimelineWall({ memories, posts = [] }: Props) {
+  const [seed] = useState(() => Math.random());
+  
   /* ─── Build year → items map ─── */
   const itemsByYear = useMemo(() => {
-    const map = new Map<number, FeedItem[]>();
+    const map = new Map<number | "all", FeedItem[]>();
+    map.set("all", []);
     YEARS.forEach((y) => map.set(y, []));
 
     memories.forEach((m) => {
-      if (map.has(m.year)) map.get(m.year)!.push({ type: "memory", data: m });
+      // Split into multiple FeedItems if it has multiple images
+      if (m.kind === "video") {
+        const item: FeedItem = { type: "memory", data: m, imageIndex: 0 };
+        map.get("all")!.push(item);
+        if (map.has(m.year)) map.get(m.year)!.push(item);
+      } else {
+        m.images.forEach((_, i) => {
+          const item: FeedItem = { type: "memory", data: m, imageIndex: i };
+          map.get("all")!.push(item);
+          if (map.has(m.year)) map.get(m.year)!.push(item);
+        });
+      }
     });
+
     posts.forEach((p) => {
       if (!p.cover) return;
       const y = new Date(p.createdAt).getFullYear();
-      if (map.has(y)) map.get(y)!.push({ type: "post", data: p });
+      const item: FeedItem = { type: "post", data: p };
+      map.get("all")!.push(item);
+      if (map.has(y)) map.get(y)!.push(item);
     });
 
     map.forEach((items, y) => {
@@ -78,11 +89,6 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
     });
     return map;
   }, [memories, posts, seed]);
-
-  const yearsWithContent = useMemo(
-    () => YEARS.filter((y) => (itemsByYear.get(y)?.length ?? 0) > 0),
-    [itemsByYear],
-  );
 
   /* ─── Carousel slides: random selection from all items ─── */
   const carouselSlides = useMemo((): CarouselSlide[] => {
@@ -98,114 +104,118 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
     return shuffleWithSeed(slides, seed).slice(0, 8);
   }, [memories, posts, seed]);
 
-  /* ─── Active year ─── */
-  const [activeYear, setActiveYear] = useState<number>(2026);
-  useEffect(() => {
-    if (yearsWithContent.length > 0) {
-      setActiveYear(yearsWithContent[Math.floor(Math.random() * yearsWithContent.length)]);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  /* ─── Filter State ─── */
+  const [activeYear, setActiveYear] = useState<number | "all">("all");
+  const [showFilterModal, setShowFilterModal] = useState(false);
 
-  /* ─── Auto-scroll year bar to keep active year centred ─── */
+  /* ─── Lazy Loading State ─── */
+  const currentItems = itemsByYear.get(activeYear) ?? [];
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+
   useEffect(() => {
-    const bar = yearBarRef.current;
-    if (!bar) return;
-    const btn = bar.querySelector<HTMLElement>(`[data-year="${activeYear}"]`);
-    if (!btn) return;
-    const barRect = bar.getBoundingClientRect();
-    const btnRect = btn.getBoundingClientRect();
-    bar.scrollTo({
-      left: bar.scrollLeft + (btnRect.left - barRect.left) - barRect.width / 2 + btnRect.width / 2,
-      behavior: "smooth",
-    });
+    setVisibleCount(ITEMS_PER_PAGE);
   }, [activeYear]);
 
-  /* ─── Year Bar Wheel Scroll ─── */
-  useEffect(() => {
-    const bar = yearBarRef.current;
-    if (!bar) return;
-    const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        bar.scrollLeft += e.deltaY;
-      }
-    };
-    bar.addEventListener("wheel", handleWheel, { passive: false });
-    return () => bar.removeEventListener("wheel", handleWheel);
-  }, []);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visibleCount < currentItems.length) {
+          setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+        }
+      },
+      { threshold: 0.1, rootMargin: "200px" }
+    );
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [visibleCount, currentItems.length]);
+
+  const visibleItems = currentItems.slice(0, visibleCount);
 
   /* ─── Lightbox ─── */
-  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const [lightboxItem, setLightboxItem] = useState<{ src: string; item: FeedItem } | null>(null);
+
+  /* ─── Target Moment & Highlight from URL ─── */
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!lightbox) return;
-    const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightbox(null);
-      if (e.key === "ArrowLeft")
-        setLightbox((lb) => lb ? { ...lb, index: lb.index > 0 ? lb.index - 1 : lb.images.length - 1 } : null);
-      if (e.key === "ArrowRight")
-        setLightbox((lb) => lb ? { ...lb, index: lb.index < lb.images.length - 1 ? lb.index + 1 : 0 } : null);
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const targetMomentId =
+      params.get("moment") ||
+      (window.location.hash.startsWith("#moment-")
+        ? window.location.hash.replace("#moment-", "")
+        : "");
+
+    if (!targetMomentId) return;
+
+    // Check where this item is in the current items list
+    const allItems = itemsByYear.get(activeYear) ?? [];
+    const targetIndex = allItems.findIndex((it) => {
+      if (it.type === "memory") return String(it.data.id) === targetMomentId;
+      if (it.type === "post") return String(it.data.id) === targetMomentId;
+      return false;
+    });
+
+    if (targetIndex !== -1 && targetIndex >= visibleCount) {
+      setVisibleCount(targetIndex + 5);
+    }
+
+    setHighlightId(targetMomentId);
+
+    // Scroll to target element with retry to accommodate delayed page mount / transition
+    const scrollToTarget = () => {
+      const el = document.getElementById(`moment-${targetMomentId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        return true;
+      }
+      return false;
     };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [lightbox]);
 
-  const openMemory = (m: WallMemory) => {
-    if (m.kind === "video") return;
-    setLightbox({ images: m.images, index: 0, info: { title: m.title, caption: m.caption, author: m.author, role: m.role }, showInfo: true });
-  };
-  const openPost = (p: Post) => {
-    if (!p.cover) return;
-    setLightbox({ images: [p.cover], index: 0, info: { title: p.title, caption: p.excerpt ?? "", author: p.author, role: "Câu chuyện", slug: p.slug }, showInfo: true });
-  };
+    const timers = [100, 300, 600, 900, 1200].map((delay) =>
+      setTimeout(scrollToTarget, delay)
+    );
 
-  const currentItems = itemsByYear.get(activeYear) ?? [];
+    // Fade out highlight ring after 4 seconds
+    const clearHighlightTimer = setTimeout(() => {
+      setHighlightId(null);
+    }, 4000);
 
-  /* ─── Remove bentoSpan ─── */
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(clearHighlightTimer);
+    };
+  }, [itemsByYear, activeYear, visibleCount]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
-
       {/* ═══════════ HERO CAROUSEL ═══════════ */}
       <HeroCarousel slides={carouselSlides} />
 
-      {/* ═══════════ YEAR BAR ═══════════
-          top-[84px] = below the floating navbar */}
-      <div id="timeline-year-bar" className="sticky top-[84px] z-40 mx-auto mb-8 w-max max-w-[calc(100vw-2rem)] rounded-full border border-white/60 bg-white/80 p-1.5 shadow-lg shadow-slate-950/10 backdrop-blur-xl transition-all">
-        <div ref={yearBarRef} className="flex items-center gap-1 overflow-x-auto px-1 hide-scrollbar">
-          {YEARS.map((y) => {
-            const has = (itemsByYear.get(y)?.length ?? 0) > 0;
-            const active = activeYear === y;
-            return (
-              <button
-                key={y}
-                data-year={y}
-                onClick={() => has && setActiveYear(y)}
-                disabled={!has}
-                className={`shrink-0 rounded-full px-3.5 py-1 text-sm font-bold transition-all duration-200 ${
-                  active
-                    ? "bg-[#1d4ed8] text-white shadow-md scale-105"
-                    : has
-                    ? "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-                    : "cursor-default select-none text-slate-300"
-                }`}
-              >
-                {y}
-              </button>
-            );
-          })}
-        </div>
+      {/* ═══════════ FILTER BUTTON ═══════════ */}
+      <div id="timeline-feed-start" className="sticky top-[84px] z-40 mx-auto mb-8 w-max rounded-full border border-white/60 bg-white/90 px-4 py-2 shadow-lg shadow-slate-950/10 backdrop-blur-xl transition-all">
+        <button
+          onClick={() => setShowFilterModal(true)}
+          className="flex items-center gap-2 text-sm font-extrabold text-slate-700 hover:text-[#1d4ed8]"
+        >
+          <span className="material-symbols-rounded text-lg">filter_list</span>
+          {activeYear === "all" ? "Tất cả các năm" : `Năm ${activeYear}`}
+        </button>
       </div>
 
       {/* ═══════════ FEED ═══════════ */}
-      <div className="mx-auto max-w-5xl px-4 pb-24 pt-6 md:px-8">
+      <div className="mx-auto max-w-7xl px-4 pb-24 md:px-8">
         <div className="mb-5 flex items-baseline gap-3">
-          <h2 className="text-4xl font-extrabold tracking-tight text-slate-900">{activeYear}</h2>
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            {activeYear === "all" ? "Tất cả khoảnh khắc" : activeYear}
+          </h2>
           {currentItems.length > 0 && (
             <span className="text-sm font-medium text-slate-400">
-              {currentItems.length} khoảnh khắc
+              {currentItems.length} mục
             </span>
           )}
         </div>
@@ -213,7 +223,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
         {currentItems.length === 0 ? (
           <div className="flex flex-col items-center rounded-3xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm">
             <span className="material-symbols-rounded mb-4 text-6xl text-slate-200">photo_album</span>
-            <p className="mb-1 text-lg font-bold text-slate-500">Năm {activeYear} còn trống</p>
+            <p className="mb-1 text-lg font-bold text-slate-500">Khu vực này còn trống</p>
             <p className="mb-8 text-sm text-slate-400">Bạn có kỷ niệm nào muốn chia sẻ không?</p>
             <Link
               href="/gui-bai"
@@ -225,137 +235,246 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
           </div>
         ) : (
           <>
-            {/* Mobile — single col */}
-            <div className="flex flex-col gap-4 md:hidden">
-              {currentItems.map((item) =>
-                item.type === "memory" ? (
-                  <MemoryCard key={item.data.id} memory={item.data} onClick={() => openMemory(item.data)} />
-                ) : (
-                  <PostFeedCard key={item.data.id} post={item.data} onClick={() => openPost(item.data)} />
-                ),
-              )}
+            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+              {visibleItems.map((item, idx) => {
+                if (item.type === "memory") {
+                  const m = item.data;
+                  const src = m.images[item.imageIndex];
+                  const isVideo = m.kind === "video";
+                  const isTarget = highlightId === String(m.id);
+                  return (
+                    <div
+                      key={`${m.id}-${item.imageIndex}`}
+                      id={item.imageIndex === 0 ? `moment-${m.id}` : undefined}
+                      className={`break-inside-avoid scroll-mt-32 rounded-3xl transition-all duration-500 ${
+                        isTarget
+                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.03] shadow-2xl relative z-10"
+                          : ""
+                      }`}
+                    >
+                      <MomentCard
+                        coverUrl={src}
+                        title={m.title}
+                        author={m.author}
+                        role={m.isCommunity ? m.role : ""}
+                        year={m.year}
+                        kind={isVideo ? "video" : "image"}
+                        onClick={() => {
+                          if (!isVideo) setLightboxItem({ src, item });
+                        }}
+                      />
+                    </div>
+                  );
+                } else {
+                  const p = item.data;
+                  const isTarget = highlightId === String(p.id);
+                  return (
+                    <div
+                      key={`post-${p.id}`}
+                      id={`moment-${p.id}`}
+                      className={`break-inside-avoid scroll-mt-32 rounded-3xl transition-all duration-500 ${
+                        isTarget
+                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.03] shadow-2xl relative z-10"
+                          : ""
+                      }`}
+                    >
+                      <MomentCard
+                        coverUrl={p.cover!}
+                        title={p.title}
+                        author={p.author}
+                        role="Câu chuyện"
+                        year={new Date(p.createdAt).getFullYear()}
+                        kind="image"
+                        onClick={() => {
+                          setLightboxItem({ src: p.cover!, item });
+                        }}
+                      />
+                    </div>
+                  );
+                }
+              })}
             </div>
-
-            {/* Desktop — Masonry CSS Columns */}
-            <div className="hidden md:block columns-2 lg:columns-3 gap-5 space-y-5">
-              {currentItems.map((item) =>
-                item.type === "memory" ? (
-                  <MemoryCard key={item.data.id} memory={item.data} onClick={() => openMemory(item.data)} />
-                ) : (
-                  <PostFeedCard key={item.data.id} post={item.data} onClick={() => openPost(item.data)} />
-                ),
-              )}
-            </div>
+            {/* Lazy Load Observer */}
+            {visibleCount < currentItems.length && (
+              <div ref={loadMoreRef} className="h-20 w-full flex items-center justify-center mt-4">
+                <span className="text-slate-400 font-medium">Đang tải thêm...</span>
+              </div>
+            )}
           </>
         )}
       </div>
 
       {/* ═══════════ LIGHTBOX ═══════════ */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-[100] flex flex-col bg-black/96 backdrop-blur-xl"
-          onClick={() => setLightbox(null)}
-        >
-          <button
-            className="absolute right-4 top-4 z-[110] flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
-          >
-            <span className="material-symbols-rounded text-xl">close</span>
-          </button>
+      <AnimatePresence>
+        {lightboxItem && (
+          <Lightbox
+            item={lightboxItem.item}
+            src={lightboxItem.src}
+            onClose={() => setLightboxItem(null)}
+          />
+        )}
+      </AnimatePresence>
 
-          {/* Mobile view: vertical scroll of all images */}
-          <div
-            className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden md:hidden hide-scrollbar"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightbox((lb) => lb ? { ...lb, showInfo: !lb.showInfo } : null);
+      {/* ═══════════ FILTER MODAL ═══════════ */}
+      <AnimatePresence>
+        {showFilterModal && (
+          <FilterModal
+            currentYear={activeYear}
+            onSelect={(y) => {
+              setActiveYear(y);
+              setShowFilterModal(false);
             }}
-          >
-            {lightbox.images.map((src, i) => (
-              <div key={i} className="w-full flex-shrink-0 bg-black mb-1 last:mb-0 relative">
-                <img src={src} alt="" loading="lazy" decoding="async" className="w-full h-auto object-contain" draggable={false} />
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop view: single image with navigation */}
-          <div
-            className="relative hidden md:flex flex-1 items-center justify-center overflow-hidden cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightbox((lb) => lb ? { ...lb, showInfo: !lb.showInfo } : null);
-            }}
-          >
-            {lightbox.images.length > 1 && (
-              <button
-                className="absolute left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightbox((lb) => lb ? { ...lb, index: lb.index > 0 ? lb.index - 1 : lb.images.length - 1 } : null);
-                }}
-              >
-                <span className="material-symbols-rounded text-2xl">chevron_left</span>
-              </button>
-            )}
-            
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={lightbox.images[lightbox.index]} alt="" className="max-h-full max-w-full object-contain" draggable={false} />
-            
-            {lightbox.images.length > 1 && (
-              <button
-                className="absolute right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightbox((lb) => lb ? { ...lb, index: lb.index < lb.images.length - 1 ? lb.index + 1 : 0 } : null);
-                }}
-              >
-                <span className="material-symbols-rounded text-2xl">chevron_right</span>
-              </button>
-            )}
-            
-            {lightbox.images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-bold tracking-widest text-white/70">
-                {lightbox.index + 1} / {lightbox.images.length}
-              </div>
-            )}
-          </div>
-
-          {lightbox.info && (
-            <div className="z-[110] border-t border-white/10 bg-black/70 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
-              <div className="flex w-full items-center justify-between px-5 py-3.5 text-left">
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="material-symbols-rounded shrink-0 text-slate-400">person</span>
-                  <span className="truncate text-sm font-semibold text-white">{lightbox.info.author}</span>
-                  {lightbox.info.role && (
-                    <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                      {lightbox.info.role}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {lightbox.showInfo && (
-                <div className="border-t border-white/10 px-5 pb-6 pt-3 text-sm text-slate-300 space-y-1">
-                  {lightbox.info.title && <p className="font-extrabold text-white">{lightbox.info.title}</p>}
-                  {lightbox.info.caption && lightbox.info.caption !== lightbox.info.title && (
-                    <p className="leading-relaxed">{lightbox.info.caption}</p>
-                  )}
-                  {lightbox.info.slug && (
-                    <Link
-                      href={`/cau-chuyen/${lightbox.info.slug}`}
-                      className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#1d4ed8] px-4 py-2 text-xs font-extrabold text-white hover:bg-blue-600 transition-colors"
-                      onClick={() => setLightbox(null)}
-                    >
-                      Đọc bài đầy đủ
-                      <span className="material-symbols-rounded text-[1em]">arrow_forward</span>
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+            onClose={() => setShowFilterModal(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+/* ══════════════════════════════════════════
+   FILTER MODAL WITH WHEEL PICKER
+══════════════════════════════════════════ */
+function FilterModal({ currentYear, onSelect, onClose }: { currentYear: number | "all", onSelect: (y: number | "all") => void, onClose: () => void }) {
+  const [inputValue, setInputValue] = useState(currentYear === "all" ? "" : currentYear.toString());
+  const listRef = useRef<HTMLDivElement>(null);
+  
+  const ITEM_HEIGHT = 48; // h-12 = 48px
+  const items = useMemo(() => ["all" as const, ...YEARS], []);
+
+  const initialIndex = useMemo(() => {
+    return currentYear === "all" ? 0 : YEARS.indexOf(currentYear) + 1;
+  }, [currentYear]);
+
+  const [scrollTop, setScrollTop] = useState(initialIndex >= 0 ? initialIndex * ITEM_HEIGHT : 0);
+
+  useEffect(() => {
+    if (listRef.current && initialIndex >= 0) {
+      listRef.current.scrollTop = initialIndex * ITEM_HEIGHT;
+      setScrollTop(initialIndex * ITEM_HEIGHT);
+    }
+  }, [initialIndex]);
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.toLowerCase() === "all" || inputValue === "") {
+      onSelect("all");
+    } else {
+      const parsed = parseInt(inputValue, 10);
+      if (!isNaN(parsed) && YEARS.includes(parsed)) {
+        onSelect(parsed);
+      } else {
+        alert("Năm không hợp lệ hoặc không có trong danh sách.");
+      }
+    }
+  };
+
+  const handleItemClick = (item: number | "all", index: number) => {
+    if (listRef.current) {
+      listRef.current.scrollTo({ top: index * ITEM_HEIGHT, behavior: "smooth" });
+    }
+    onSelect(item);
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl"
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200"
+          onClick={onClose}
+        >
+          <span className="material-symbols-rounded text-lg">close</span>
+        </button>
+
+        <h3 className="mb-4 text-center text-lg font-extrabold text-slate-900">
+          Chọn năm kỷ niệm
+        </h3>
+
+        <form onSubmit={handleManualSubmit} className="mb-6 flex gap-2">
+          <input
+            type="text"
+            placeholder="Nhập năm (VD: 1999)"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="flex-1 rounded-xl border border-slate-300 px-4 py-2 text-sm focus:border-[#1d4ed8] focus:outline-none focus:ring-1 focus:ring-[#1d4ed8]"
+          />
+          <button
+            type="submit"
+            className="rounded-xl bg-[#1d4ed8] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+          >
+            Tìm
+          </button>
+        </form>
+
+        {/* Wheel Selector container */}
+        <div className="relative h-64 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/50">
+          {/* Top Edge Gradient Overlay (nhẹ nhàng ở sát mép trên) */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-11 bg-gradient-to-b from-white/95 via-white/70 to-transparent" />
+
+          {/* Bottom Edge Gradient Overlay (nhẹ nhàng ở sát mép dưới) */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-11 bg-gradient-to-t from-white/95 via-white/70 to-transparent" />
+
+          {/* Wheel Selector scroll list */}
+          <div
+            ref={listRef}
+            className="h-full overflow-y-auto snap-y snap-mandatory hide-scrollbar relative select-none"
+            onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+            style={{
+              maskImage: "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
+            }}
+          >
+            {/* Pad top to center the first item (256/2 - 48/2 = 104px) */}
+            <div className="h-[104px]" />
+
+            {items.map((item, idx) => {
+              const distance = Math.abs((scrollTop / ITEM_HEIGHT) - idx);
+              const isCenter = distance < 0.5;
+              // Giảm cường độ giảm opacity: số kế bên (distance=1) đạt ~0.72 vẫn rất rõ nét
+              const opacity = Math.max(0.2, 1 - Math.min(distance * 0.28, 0.8));
+              const scale = Math.max(0.88, 1.08 - Math.min(distance * 0.07, 0.2));
+
+              return (
+                <button
+                  key={item}
+                  onClick={() => handleItemClick(item, idx)}
+                  style={{
+                    opacity,
+                    transform: `scale(${scale})`,
+                  }}
+                  className={`snap-center flex h-12 w-full items-center justify-center text-lg transition-all duration-150 ${
+                    isCenter
+                      ? "font-extrabold text-[#1d4ed8]"
+                      : "font-bold text-slate-700 hover:text-slate-900"
+                  }`}
+                >
+                  {item === "all" ? "Tất cả" : item}
+                </button>
+              );
+            })}
+
+            {/* Pad bottom to center the last item */}
+            <div className="h-[104px]" />
+          </div>
+        </div>
+        
+        <p className="mt-4 text-center text-xs text-slate-400">
+          * Cuộn hoặc click vào số để chọn
+        </p>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -378,10 +497,7 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
   const next = () => setCurrent((i) => (i < slides.length - 1 ? i + 1 : 0));
 
   return (
-    <div
-      className="relative h-screen overflow-hidden bg-slate-900"
-    >
-      {/* Stacked images with cross-fade */}
+    <div className="relative h-screen overflow-hidden bg-slate-900">
       {slides.map((s, i) => (
         <div
           key={i}
@@ -390,13 +506,11 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={s.src} alt={s.title} decoding="async" {...(i === 0 ? { fetchPriority: "high" } : { loading: "lazy" })} className="h-full w-full object-cover" />
-          {/* Gradient overlays */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent hidden lg:block" />
         </div>
       ))}
 
-      {/* Text overlay */}
       <div className="absolute inset-x-0 bottom-0 px-6 pb-28 md:px-16 md:pb-36 lg:px-24">
         <span className="btn-lightship-soft inline-flex rounded-full bg-white px-4 py-1.5 text-xs font-bold tracking-widest text-[#1d4ed8]">
           {slide.year}
@@ -410,7 +524,6 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         </p>
       </div>
 
-      {/* Arrows (desktop only) */}
       <button
         onClick={prev}
         className="absolute left-5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full bg-black/30 p-3 text-white backdrop-blur-sm hover:bg-black/50 md:flex"
@@ -424,7 +537,6 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         <span className="material-symbols-rounded text-3xl">chevron_right</span>
       </button>
 
-      {/* Progress dots */}
       <div className="absolute bottom-14 left-6 flex items-center gap-2 md:bottom-16 md:left-16 lg:left-24">
         {slides.map((_, i) => (
           <button
@@ -443,12 +555,11 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         </span>
       </div>
 
-      {/* Scroll-down pulse indicator */}
       <button
         onClick={() => {
-          const yearBar = document.getElementById("timeline-year-bar");
-          if (yearBar) {
-            const y = yearBar.getBoundingClientRect().top + window.scrollY - 90;
+          const feedStart = document.getElementById("timeline-feed-start");
+          if (feedStart) {
+            const y = feedStart.getBoundingClientRect().top + window.scrollY - 90;
             window.scrollTo({ top: y, behavior: "smooth" });
           } else {
             window.scrollBy({ top: window.innerHeight - 80, behavior: "smooth" });
@@ -466,96 +577,205 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         </div>
       </button>
     </div>
-
-
   );
 }
 
 /* ══════════════════════════════════════════
-   MEMORY CARD
+   LIGHTBOX WITH PINCH-TO-ZOOM
 ══════════════════════════════════════════ */
-function MemoryCard({ memory: m, onClick }: { memory: WallMemory; onClick: () => void }) {
-  const isVideo = m.kind === "video";
-  const thumbs = isVideo ? [] : m.images;
+function Lightbox({ item, src, onClose }: { item: FeedItem, src: string, onClose: () => void }) {
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [showInfo, setShowInfo] = useState(true);
+
+  // Touch handlers for pinch-to-zoom
+  const touchStartRef = useRef<{ dist: number, scale: number, x: number, y: number, px: number, py: number } | null>(null);
+
+  const getDistance = (touches: React.TouchList) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getCenter = (touches: React.TouchList) => {
+    return {
+      x: (touches[0].clientX + touches[1].clientX) / 2,
+      y: (touches[0].clientY + touches[1].clientY) / 2
+    };
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      touchStartRef.current = {
+        dist: getDistance(e.touches),
+        scale: scale,
+        x: getCenter(e.touches).x,
+        y: getCenter(e.touches).y,
+        px: position.x,
+        py: position.y
+      };
+    } else if (e.touches.length === 1) {
+      touchStartRef.current = {
+        dist: 0,
+        scale: scale,
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        px: position.x,
+        py: position.y
+      };
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    
+    if (e.touches.length === 2 && touchStartRef.current.dist > 0) {
+      const newDist = getDistance(e.touches);
+      const newScale = Math.max(1, Math.min(touchStartRef.current.scale * (newDist / touchStartRef.current.dist), 5));
+      setScale(newScale);
+    } else if (e.touches.length === 1 && scale > 1) {
+      // Pan
+      const dx = e.touches[0].clientX - touchStartRef.current.x;
+      const dy = e.touches[0].clientY - touchStartRef.current.y;
+      setPosition({
+        x: touchStartRef.current.px + dx,
+        y: touchStartRef.current.py + dy
+      });
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    touchStartRef.current = null;
+    if (e.touches.length === 0 && scale <= 1) {
+      setPosition({ x: 0, y: 0 });
+    }
+  };
+
+  const handleDownload = () => {
+    const a = document.createElement("a");
+    a.href = src;
+    a.download = `nct-moment-${Date.now()}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const info = item.type === "memory" 
+    ? { title: item.data.title, caption: item.data.caption, author: item.data.author, role: item.data.role }
+    : { title: item.data.title, caption: item.data.excerpt, author: item.data.author, role: "Câu chuyện", slug: item.data.slug };
 
   return (
-    <article
-      className={`group break-inside-avoid mb-5 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/60 transition-all ${
-        isVideo ? "" : "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg"
-      }`}
-      onClick={isVideo ? undefined : onClick}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex flex-col bg-black/96 backdrop-blur-xl"
+      onClick={() => onClose()}
     >
-      {isVideo ? (
-        <video src={m.images[0]} controls preload="none" className="w-full bg-slate-900" onClick={(e) => e.stopPropagation()} />
-      ) : thumbs.length === 1 ? (
-        <img src={thumbs[0]} alt={m.title} loading="lazy" decoding="async" className="w-full object-cover max-h-[500px]" />
-      ) : (
-        <div className={`grid gap-px ${thumbs.length >= 2 ? "grid-cols-2" : "grid-cols-1"}`}>
-          {thumbs.slice(0, 4).map((src, idx) => (
-            <div key={idx} className={`relative overflow-hidden bg-slate-100 ${thumbs.length === 3 && idx === 0 ? "col-span-2 aspect-[2/1]" : "aspect-square"}`}>
-              <Image src={src} alt={m.title} fill className="object-cover" sizes="(max-width: 768px) 50vw, 33vw" />
-              {idx === 3 && thumbs.length > 4 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/55 text-lg font-extrabold text-white">
-                  +{thumbs.length - 4}
-                </div>
-              )}
-            </div>
-          ))}
+      <div className="absolute top-0 inset-x-0 p-4 z-[110] flex justify-between items-start pointer-events-none">
+        <div className="flex gap-2 pointer-events-auto">
+          {/* Desktop Zoom/Download Buttons */}
+          <div className="hidden md:flex gap-2 bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10">
+            <button
+              onClick={(e) => { e.stopPropagation(); setScale(s => Math.min(s + 0.5, 5)); }}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Zoom In"
+            >
+              <span className="material-symbols-rounded text-xl">zoom_in</span>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setScale(s => Math.max(s - 0.5, 1)); if(scale-0.5 <= 1) setPosition({x:0, y:0}); }}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Zoom Out"
+            >
+              <span className="material-symbols-rounded text-xl">zoom_out</span>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Download"
+            >
+              <span className="material-symbols-rounded text-xl">download</span>
+            </button>
+          </div>
         </div>
-      )}
-
-      <div className="px-4 py-3.5 md:px-5">
-        <p className="mb-0.5 text-sm font-extrabold leading-snug text-slate-900 line-clamp-2">{m.title}</p>
-        {m.caption && m.caption !== m.title && (
-          <p className="mb-2 text-xs leading-relaxed text-slate-500 line-clamp-2">{m.caption}</p>
-        )}
-        <div className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
-          <span className="material-symbols-rounded text-[0.85em]">person</span>
-          <span className="truncate">{m.author}</span>
-          {m.isCommunity && m.role && (
-            <span className="ml-auto shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-              {m.role}
-            </span>
-          )}
-        </div>
+        
+        <button
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors pointer-events-auto"
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+        >
+          <span className="material-symbols-rounded text-xl">close</span>
+        </button>
       </div>
-    </article>
-  );
-}
 
-/* ══════════════════════════════════════════
-   POST FEED CARD
-══════════════════════════════════════════ */
-function PostFeedCard({ post: p, onClick }: { post: Post; onClick: () => void }) {
-  return (
-    <article
-      className="group break-inside-avoid mb-5 cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-[#1d4ed8]/15 transition-all hover:-translate-y-0.5 hover:shadow-lg"
-      onClick={onClick}
-    >
-      {p.cover && (
-        <img src={p.cover} alt={p.title} loading="lazy" decoding="async" className="w-full object-cover max-h-[400px]" />
-      )}
-      <div className="px-4 py-3.5 md:px-5">
-        <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-[#1d4ed8]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#1d4ed8]">
-          <span className="material-symbols-rounded text-[0.8em]">article</span>
-          Câu chuyện
-        </span>
-        <p className="mb-3 text-sm font-extrabold leading-snug text-slate-900 line-clamp-2">{p.title}</p>
-        <div className="flex items-center justify-between gap-2">
-          <p className="flex min-w-0 items-center gap-1 text-[11px] font-semibold text-slate-400">
-            <span className="material-symbols-rounded text-[0.85em]">person</span>
-            <span className="truncate">{p.author}</span>
-          </p>
-          <Link
-            href={`/cau-chuyen/${p.slug}`}
-            className="shrink-0 inline-flex items-center gap-1 rounded-xl bg-[#1d4ed8] px-3 py-1.5 text-[11px] font-extrabold text-white hover:bg-blue-700 transition-colors"
+      <div
+        className="relative flex-1 flex items-center justify-center overflow-hidden touch-none"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowInfo(!showInfo);
+        }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onWheel={(e) => {
+          if (e.deltaY < 0) {
+            setScale(s => Math.min(s + 0.1, 5));
+          } else {
+            setScale(s => Math.max(s - 0.1, 1));
+            if (scale - 0.1 <= 1) setPosition({ x: 0, y: 0 });
+          }
+        }}
+      >
+        <motion.img
+          src={src}
+          alt=""
+          className="max-h-full max-w-full object-contain pointer-events-auto"
+          draggable={false}
+          animate={{ scale, x: position.x, y: position.y }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        />
+      </div>
+
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div 
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="z-[110] border-t border-white/10 bg-black/70 backdrop-blur-md" 
             onClick={(e) => e.stopPropagation()}
           >
-            Xem bài
-            <span className="material-symbols-rounded text-[0.85em]">arrow_forward</span>
-          </Link>
-        </div>
-      </div>
-    </article>
+            <div className="flex w-full items-center justify-between px-5 py-3.5 text-left">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="material-symbols-rounded shrink-0 text-slate-400">person</span>
+                <span className="truncate text-sm font-semibold text-white">{info.author}</span>
+                {info.role && (
+                  <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                    {info.role}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="border-t border-white/10 px-5 pb-6 pt-3 text-sm text-slate-300 space-y-1">
+              {info.title && <p className="font-extrabold text-white text-base">{info.title}</p>}
+              {info.caption && info.caption !== info.title && (
+                <p className="leading-relaxed max-h-32 overflow-y-auto hide-scrollbar">{info.caption}</p>
+              )}
+              {info.slug && (
+                <Link
+                  href={`/cau-chuyen/${info.slug}`}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#1d4ed8] px-4 py-2 text-xs font-extrabold text-white hover:bg-blue-600 transition-colors"
+                  onClick={() => onClose()}
+                >
+                  Đọc bài đầy đủ
+                  <span className="material-symbols-rounded text-[1em]">arrow_forward</span>
+                </Link>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

@@ -74,7 +74,7 @@ function InvitationContent() {
   useEffect(() => {
     if (data?.invitation) {
       const { invitation, member } = data;
-      const name = member?.name || "Khách";
+      const name = invitation?.attendeeName || member?.name || "Khách";
       const phone = member?.phone || "";
       const code = invitation?.code || "";
       const text = `${name} - ${phone} - ${code}`;
@@ -239,7 +239,7 @@ function InvitationContent() {
                     <div className="space-y-1.5 text-[15px] text-gray-800">
                       <p>
                         <span className="font-semibold text-gray-700 w-28 inline-block">Cựu học sinh:</span>
-                        <span className="prata-regular font-black text-gray-900 text-lg tracking-wide">{member.name}</span>
+                        <span className="prata-regular font-black text-gray-900 text-lg tracking-wide">{invitation?.attendeeName || member.name}</span>
                       </p>
                       <p>
                         <span className="font-semibold text-gray-700 w-28 inline-block">Niên khóa:</span>

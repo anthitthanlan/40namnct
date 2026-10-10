@@ -136,6 +136,7 @@ export async function POST(req: NextRequest) {
       author,
       authorRole,
       caption,
+      status: admin ? "approved" : "pending",
     });
     await addMediaItem({
       id: randomUUID(),

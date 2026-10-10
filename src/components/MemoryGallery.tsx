@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import SkeletonBlock from "@/components/SkeletonBlock";
+import MomentCard from "./MomentCard";
 
 type MediaRow = {
   id: string;
@@ -18,7 +19,6 @@ type MediaRow = {
 
 export default function MemoryGallery() {
   const [items, setItems] = useState<MediaRow[] | null>(null);
-  const [zoom, setZoom] = useState<MediaRow | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -57,7 +57,6 @@ export default function MemoryGallery() {
     );
   }
 
-
   if (items.length === 0) {
     return (
       <div className="rounded-3xl bg-white/10 p-8 text-center text-sm font-semibold text-slate-200">
@@ -69,83 +68,41 @@ export default function MemoryGallery() {
 
   return (
     <>
-      <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
+      {/* Mobile view: Auto-snapping carousel */}
+      <div className="flex md:hidden snap-x snap-mandatory overflow-x-auto gap-4 pb-4 -mx-6 px-6 hide-scrollbar">
         {items.map((m) => (
-          <figure
-            key={m.id}
-            className="btn-lightship-soft overflow-hidden rounded-3xl bg-white"
-          >
-            {m.kind === "image" ? (
-              <div className="skeleton-reveal h-56 w-full">
-                {/* Pulsing skeleton behind the image */}
-                <SkeletonBlock className="skeleton-reveal__placeholder h-56 w-full rounded-none" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={m.url}
-                  alt={m.caption || `Kỷ niệm gửi bởi ${m.author}`}
-                  loading="lazy"
-                  className="skeleton-reveal__content h-56 w-full cursor-zoom-in object-cover"
-                  onLoad={(e) => {
-                    const img = e.currentTarget;
-                    img.classList.add("is-loaded");
-                    img.previousElementSibling?.classList.add("is-loaded");
-                  }}
-                  onClick={() => setZoom(m)}
-                />
-              </div>
-            ) : (
-              <video
-                src={m.url}
-                controls
-                preload="metadata"
-                className="h-56 w-full bg-slate-900 object-cover"
-              />
-            )}
-            <figcaption className="p-4">
-              <p className="line-clamp-2 text-sm font-bold text-slate-800">
-                {m.caption || "Kỷ niệm dưới mái trường Trứ"}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                🧡 {m.author} · {m.authorRole}
-              </p>
-              <p className="mt-0.5 text-[11px] font-bold text-slate-400">
-                📅 {String(m.month).padStart(2, "0")}.{m.year}
-              </p>
-            </figcaption>
-          </figure>
+          <div key={m.id} className="w-[75vw] shrink-0 snap-center">
+            <MomentCard
+              size="sm"
+              coverUrl={m.url}
+              title={m.caption || "Kỷ niệm dưới mái trường Trứ"}
+              author={m.author}
+              role={m.authorRole}
+              year={m.year}
+              kind={m.kind}
+              href={`/khoanh-khac?moment=${m.id}#moment-${m.id}`}
+            />
+          </div>
         ))}
       </div>
 
-      {zoom && zoom.kind === "image" && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/90 p-6"
-          onClick={() => setZoom(null)}
-        >
-          <div
-            className="max-h-full max-w-4xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={zoom.url}
-              alt={zoom.caption || "Kỷ niệm"}
-              className="max-h-[78vh] w-auto rounded-2xl"
+      {/* Desktop view: Masonry */}
+      <div className="hidden md:block columns-2 lg:columns-3 gap-5 space-y-5">
+        {items.map((m) => (
+          <div key={m.id} className="break-inside-avoid">
+            <MomentCard
+              size="sm"
+              coverUrl={m.url}
+              title={m.caption || "Kỷ niệm dưới mái trường Trứ"}
+              author={m.author}
+              role={m.authorRole}
+              year={m.year}
+              kind={m.kind}
+              href={`/khoanh-khac?moment=${m.id}#moment-${m.id}`}
             />
-            <p className="mt-4 text-center text-sm font-semibold text-slate-200">
-              {zoom.caption} - 🧡 {zoom.author}
-            </p>
-            <button
-              type="button"
-              onClick={() => setZoom(null)}
-              className="mx-auto mt-4 block rounded-full bg-white px-6 py-2 text-sm font-extrabold text-slate-900"
-            >
-              ✕ Đóng
-            </button>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </>
   );
 }

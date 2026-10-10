@@ -10,15 +10,18 @@ export async function sendInvitationEmail(invitationId: string) {
     if (!inv) return false;
 
     const member = await getMemberById(inv.memberId);
-    if (!member || !member.email) return false;
+    const email = member?.email || (inv as any).memberEmail;
+    if (!email) return false;
+
+    const displayName = inv.attendeeName || member?.name || "Quý khách";
 
     const html = await render(
       InvitationEmail({
-        name: member.name,
+        name: displayName,
         amount: inv.amount || 0,
         invitationId: inv.id,
         nienKhoa: inv.nienKhoa || undefined,
-        phone: member.phone,
+        phone: member?.phone,
         appUrl: process.env.NEXT_PUBLIC_APP_URL || `https://40namnctru.nctitc.io.vn`,
         type: inv.type === "group" ? "Tập thể" : "Cá nhân",
         shirts: inv.sizes || {},
@@ -29,7 +32,7 @@ export async function sendInvitationEmail(invitationId: string) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        to: [member.email.trim()],
+        to: [email.trim()],
         subject: "Thư mời tham dự Hội ngộ 40 năm NCT",
         html: html,
         from_email: "Thư mời <bantochuc@40namnctru.nctitc.io.vn>",

@@ -104,7 +104,7 @@ export default function AdminEmail({ onAuthError }: { onAuthError?: () => void }
 
             mappedUsers.push({
               id: m.id || email,
-              name: m.name || "Khách mời",
+              name: inv?.attendeeName || m.name || "Khách mời",
               email: email,
               phone: m.phone || "",
               status: mappedStatus,

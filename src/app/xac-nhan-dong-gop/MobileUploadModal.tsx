@@ -7,7 +7,7 @@ export default function MobileUploadModal({
   isOpen,
   setIsOpen,
   children,
-  buttonText = "Xác minh đóng góp",
+  buttonText = "Tải biên lai xác thực",
   onButtonClick,
   isVisible = true,
 }: {
@@ -98,13 +98,14 @@ export default function MobileUploadModal({
           <motion.div
             initial={false}
             animate={{
-              width: isOpen ? "100%" : "220px",
+              width: isOpen ? "100%" : "250px",
               height: isOpen ? finalHeight : "56px",
               borderRadius: isOpen ? "32px" : "28px",
               y: isOpen ? -8 : 0, 
+              backgroundColor: isOpen ? "#ffffff" : "#1d4ed8",
             }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }}
-            className="bg-white origin-bottom w-full max-w-lg"
+            className="origin-bottom w-full max-w-lg shadow-lg"
           />
         </div>
 
@@ -124,9 +125,12 @@ export default function MobileUploadModal({
                     setIsOpen(true);
                   }
                 }}
-                className="w-[220px] h-[56px] mx-auto flex items-center justify-center font-bold text-blue-600 text-[15px] outline-none"
+                className="w-[250px] h-[56px] mx-auto flex items-center justify-center gap-2 font-bold text-white text-[15px] outline-none"
               >
-                {buttonText}
+                <span className="material-symbols-rounded text-xl text-white">
+                  {buttonText === "Xem thư mời" ? "visibility" : "cloud_upload"}
+                </span>
+                <span>{buttonText}</span>
               </motion.button>
             ) : (
               <motion.div

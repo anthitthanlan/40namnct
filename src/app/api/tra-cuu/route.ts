@@ -62,16 +62,33 @@ export async function POST(req: NextRequest) {
         );
 
         const listToReturn = matched.length > 0 ? matched : items;
+        let memberEmail = listToReturn[0].memberEmail || listToReturn[0].email || "";
+        if (!memberEmail && listToReturn[0].memberId) {
+          try {
+            const memRes = await fetch(`${backendUrl}/api/members/${listToReturn[0].memberId}`, { cache: "no-store" });
+            if (memRes.ok) {
+              const memData = (await memRes.json()) as { email?: string };
+              memberEmail = memData.email || "";
+            }
+          } catch {
+            // bỏ qua nếu lỗi
+          }
+        }
+
         return NextResponse.json({
           ok: true,
           member: {
             name: listToReturn[0].attendeeName || name,
+            email: memberEmail,
           },
-          invitations: listToReturn,
+          invitations: listToReturn.map((inv) => ({
+            ...inv,
+            memberEmail: inv.memberEmail || memberEmail,
+          })),
           isFallback: false,
         });
       } else {
-        // Nếu FastAPI trả về rỗng, có thể vé được tạo lúc đang fallback (lưu ở Local DB)
+        // Nếu FastAPI trả về rỗng, có thể thư mời được tạo lúc đang fallback (lưu ở Local DB)
         // Nên ném lỗi để nhảy vào khối catch và tìm ở Local DB
         throw new Error("FastAPI returned empty, trying local DB fallback...");
       }
@@ -98,7 +115,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Lấy danh sách vé của thành viên
+  // Lấy danh sách thư mời của thành viên
   const allInvitations = await listInvitations();
   const memberInvitations = allInvitations
     .filter((t) => t.memberId === member.id)
@@ -108,12 +125,16 @@ export async function POST(req: NextRequest) {
       code: t.code,
       type: t.type,
       attendeeName: t.attendeeName,
+      nienKhoa: t.nienKhoa || "",
+      size: t.size || null,
       quantity: t.quantity,
       sizes: t.sizes,
       amount: t.amount,
       status: t.status,
       note: t.note,
       checkedIn: t.checkedIn,
+      shirtReceived: t.shirtReceived,
+      memberEmail: member.email,
       createdAt: t.createdAt,
     }));
 
@@ -121,6 +142,7 @@ export async function POST(req: NextRequest) {
     ok: true,
     member: {
       name: member.name,
+      email: member.email,
     },
     invitations: memberInvitations,
     isFallback: true,

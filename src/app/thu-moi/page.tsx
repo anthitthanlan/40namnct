@@ -48,7 +48,7 @@ function InvitationContent() {
 
   useEffect(() => {
     if (!id) {
-      setError("Không tìm thấy ID vé.");
+      setError("Không tìm thấy ID thư mời.");
       setLoading(false);
       return;
     }
@@ -163,22 +163,12 @@ function InvitationContent() {
   }
 
   const { invitation, member } = data;
+  const attendeeName = invitation?.attendeeName || member?.name || "";
 
   return (
     <main className="min-h-screen bg-gray-50 pt-28 pb-20 px-3 md:px-6">
       <div className="w-full max-w-[1200px] mx-auto flex flex-col items-center">
-        <Reveal>
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-              Thư Mời Tham Dự
-            </h1>
-            <p className="text-gray-500 mt-2">
-              Chụp ảnh màn hình hoặc tải thư mời này về để sử dụng tại sự kiện.
-            </p>
-          </div>
-        </Reveal>
-
-        <div className="flex flex-col-reverse lg:flex-row lg:items-start lg:justify-center gap-8 lg:gap-20 xl:gap-32 mt-6 w-full max-w-[1200px] mx-auto">
+        <div className="flex flex-col-reverse lg:flex-row lg:items-start lg:justify-center gap-8 lg:gap-20 xl:gap-32 w-full max-w-[1200px] mx-auto">
           {/* Left Column: Invitation Card (~3 parts) */}
           <div className="w-full lg:w-[380px] flex flex-col items-center shrink-0" style={{ height: scale < 1 ? `calc(600px * ${scale})` : 'auto' }}>
             <Reveal delay={150} className="w-full flex justify-center">
@@ -298,9 +288,29 @@ function InvitationContent() {
             </div>
           </div>
 
-          {/* Right Column: Order Details (~7 parts) */}
+          {/* Right Column: Order Details & Greeting (~7 parts) */}
           <Reveal delay={250} className="w-full lg:flex-1 lg:max-w-[500px]">
             <div className="sticky top-28 bg-transparent px-2 sm:px-6 lg:px-0">
+              {/* Header: Lời chào & Định danh thư mời */}
+              <div className="text-left mb-6 sm:mb-8">
+                <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-blue-600 mb-1.5">
+                  Thư Mời Tham Dự
+                </p>
+                <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
+                  {attendeeName ? (
+                    <>
+                      <span>Mừng bạn trở về,</span>
+                      <span className="block mt-1 sm:mt-1.5">{attendeeName}!</span>
+                    </>
+                  ) : (
+                    "Thư Mời Tham Dự"
+                  )}
+                </h1>
+                <p className="text-gray-500 mt-2 text-sm sm:text-base leading-relaxed">
+                  Chụp ảnh màn hình hoặc tải thư mời này về để sử dụng tại sự kiện.
+                </p>
+              </div>
+
               <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
                 <svg className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

@@ -15,18 +15,35 @@ type InvitationResult = {
   code: string;
   type: "individual" | "group";
   attendeeName: string;
+  nienKhoa?: string;
+  size?: string | null;
   quantity: number;
   sizes: Record<string, number>;
   amount: number;
   status: InvitationStatus;
   note: string;
   checkedIn?: boolean;
+  shirtReceived?: boolean;
+  memberEmail?: string;
+  email?: string;
   createdAt: string;
 };
 
 type LookupResult = {
-  member: { name: string };
+  member: {
+    name: string;
+    email?: string;
+    phone?: string;
+  };
   invitations: InvitationResult[];
+};
+
+const STATUS_PRIORITY: Record<string, number> = {
+  confirmed: 1, // đã duyệt
+  pending_approval: 2, // chờ 48h
+  pending_payment: 3, // chờ thanh toán
+  pending: 3,
+  rejected: 4, // từ chối
 };
 
 export default function TraCuuClient() {
@@ -145,7 +162,7 @@ export default function TraCuuClient() {
           {error && (
             <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-medium text-rose-600 flex flex-col gap-3">
               <div className="flex items-start gap-2">
-                <span>⚠️</span>
+                <span className="material-symbols-rounded text-rose-600 text-lg shrink-0 mt-0.5">warning</span>
                 <span>{error}</span>
               </div>
               <a
@@ -188,12 +205,12 @@ export default function TraCuuClient() {
               <h2 className="text-2xl font-black text-slate-900">
                 Xin chào, {result.member.name}!
               </h2>
-              <p className="mt-2 text-sm text-slate-600 font-medium bg-blue-50/50 inline-block px-4 py-1.5 rounded-full border border-blue-100">
-                Có <span className="font-extrabold text-blue-700">{result.invitations.length}</span> thư mời trùng khớp với thông tin.
+              <p className="mt-1.5 text-sm text-slate-500 font-medium">
+                Tìm thấy <span className="font-bold text-slate-700">{result.invitations.length}</span> thư mời trùng khớp với thông tin.
               </p>
             </div>
 
-          {/* Danh sách vé */}
+          {/* Danh sách thư mời */}
           {result.invitations.length === 0 ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
               <p className="text-sm text-slate-500">
@@ -208,119 +225,182 @@ export default function TraCuuClient() {
               </p>
             </div>
           ) : (
-            result.invitations.map((invitation) => {
-              const status = invitationStatusInfo(invitation.status);
-              return (
-                <div
-                  key={invitation.id}
-                  className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden"
-                >
-                  {/* Header vé */}
-                  <div className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-slate-50">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${status.cls}`}
-                        >
-                          {status.label}
-                        </span>
+            [...result.invitations]
+              .sort((a, b) => {
+                const rankA = STATUS_PRIORITY[a.status] ?? 5;
+                const rankB = STATUS_PRIORITY[b.status] ?? 5;
+                if (rankA !== rankB) {
+                  return rankA - rankB;
+                }
+                return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+              })
+              .map((invitation) => {
+                const status = invitationStatusInfo(invitation.status);
+                return (
+                  <div
+                    key={invitation.id}
+                    className="rounded-2xl border border-slate-200/60 bg-white shadow-sm overflow-hidden"
+                  >
+                    {/* Header thư mời */}
+                    <div className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-slate-50">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${status.cls}`}
+                          >
+                            {status.label}
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-sm font-semibold text-slate-700">
+                          {invitation.type === "individual"
+                            ? `Thư mời cá nhân · ${invitation.attendeeName}`
+                            : `Thư mời tập thể · ${invitation.quantity} suất`}
+                        </p>
+                        {(() => {
+                          const itemSizeText = sizesLabel(
+                            invitation.type,
+                            invitation.type === "individual"
+                              ? invitation.size || (invitation.sizes ? Object.keys(invitation.sizes)[0] : null)
+                              : null,
+                            invitation.sizes || {},
+                          );
+                          return (
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              {formatVnd(invitation.amount)}
+                              {itemSizeText ? ` · ${itemSizeText}` : ""}
+                            </p>
+                          );
+                        })()}
                       </div>
-                      <p className="mt-1.5 text-sm font-semibold text-slate-700">
-                        {invitation.type === "individual"
-                          ? `Thư mời cá nhân · ${invitation.attendeeName}`
-                          : `Thư mời tập thể · ${invitation.quantity} suất`}
-                      </p>
-                      <p className="mt-0.5 text-xs text-slate-400">
-                        {formatVnd(invitation.amount)} ·{" "}
-                        {sizesLabel(
-                          invitation.type,
-                          invitation.type === "individual"
-                            ? Object.keys(invitation.sizes)[0] || null
-                            : null,
-                          invitation.sizes,
-                        )}
-                      </p>
                     </div>
-                  </div>
 
-                  {/* Chi tiết mở rộng */}
-                  {(() => {
-                    const rejectMatch = invitation.note?.match(/\[Lý do từ chối: (.*?)\]/);
-                    const rejectReason = rejectMatch ? rejectMatch[1] : null;
-                    const cleanNote = invitation.note?.replace(/ \| \[Lý do từ chối: (.*?)\]/, "")?.replace(/\[Lý do từ chối: (.*?)\]/, "")?.trim();
+                    {/* Chi tiết mở rộng */}
+                    {(() => {
+                      const rejectMatch = invitation.note?.match(/\[Lý do từ chối: (.*?)\]/);
+                      const rejectReason = rejectMatch ? rejectMatch[1] : null;
 
-                    return (
-                      <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-4">
-                        {status.desc && (
-                          <p className="text-xs text-slate-500">{status.desc}</p>
-                        )}
-                        {invitation.status === "rejected" && rejectReason && (
-                          <div className="rounded-lg bg-red-50 p-3 border border-red-100">
-                            <p className="text-[13px] text-red-700 font-bold mb-1">Thư mời bị từ chối</p>
-                            <p className="text-xs text-red-600">{rejectReason}</p>
+                      // Trích xuất Lớp từ ghi chú
+                      const lopMatch = invitation.note?.match(/Lớp:\s*([^|\[\n\r]+)/i);
+                      const extractedLop = lopMatch ? lopMatch[1].trim() : (invitation as any).lop || "";
+
+                      // Trích xuất Niên khóa
+                      const nienKhoaMatch = invitation.note?.match(/Niên khóa:\s*([^|\[\n\r]+)/i);
+                      const extractedNienKhoa =
+                        invitation.nienKhoa ||
+                        (invitation as any).nien_khoa ||
+                        (nienKhoaMatch ? nienKhoaMatch[1].trim() : "");
+
+                      const displayEmail =
+                        invitation.memberEmail ||
+                        invitation.email ||
+                        result.member.email ||
+                        "";
+
+                      const displayName = invitation.attendeeName || result.member.name;
+
+                      return (
+                        <div className="border-t border-slate-100 bg-slate-50/50 p-5 space-y-4">
+                          {status.desc && invitation.status !== "rejected" && (
+                            <p className="text-xs text-slate-500 leading-relaxed font-normal">{status.desc}</p>
+                          )}
+                          {invitation.status === "rejected" && (
+                            <div className="rounded-xl bg-red-600 p-3.5 text-white shadow-sm space-y-1">
+                              <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-white">
+                                <span className="material-symbols-rounded text-base">error</span>
+                                <span>Lý do từ chối:</span>
+                              </div>
+                              <p className="text-[13px] text-white/95 leading-relaxed font-medium pl-5">
+                                {rejectReason || "Không khớp thông tin chuyển khoản hoặc chưa nhận được tiền."}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Thông tin chi tiết: Mã thư mời, Họ và tên, Lớp, Niên khóa, Email */}
+                          <div className="space-y-2 py-3 border-t border-slate-200/80 text-xs">
+                            {invitation.code && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-slate-500 font-medium">Mã thư mời</span>
+                                <span className="font-mono font-bold text-slate-800 text-[13px] tracking-wide">
+                                  {invitation.code}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500 font-medium">Họ và tên</span>
+                              <span className="font-bold text-slate-800 text-[13px]">{displayName}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500 font-medium">Lớp</span>
+                              <span className="font-semibold text-slate-700">{extractedLop || "—"}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500 font-medium">Niên khóa</span>
+                              <span className="font-semibold text-slate-700">{extractedNienKhoa || "—"}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500 font-medium">Email</span>
+                              <span className="font-semibold text-slate-700">{displayEmail || "—"}</span>
+                            </div>
                           </div>
-                        )}
-                        {cleanNote && (
-                          <p className="text-xs text-slate-600 mb-4">
-                            <strong>Ghi chú:</strong> {cleanNote}
-                          </p>
-                        )}
 
-                        <div className="space-y-3 pt-2 border-t border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-slate-600">Trạng thái thanh toán</span>
-                          {invitation.status === "confirmed" ? (
-                            <span className="text-[13px] font-bold text-emerald-600">Đã thanh toán</span>
+                          {/* 3 trạng thái: Ẩn hoàn toàn nếu bị từ chối */}
+                          {invitation.status !== "rejected" && (
+                            <div className="space-y-3 pt-2 border-t border-slate-200">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[13px] font-medium text-slate-600">Trạng thái thanh toán</span>
+                                {invitation.status === "confirmed" ? (
+                                  <span className="text-[13px] font-bold text-emerald-600">Đã thanh toán</span>
+                                ) : invitation.status === "pending_approval" ? (
+                                  <span className="text-[13px] font-bold text-blue-600">Đang chờ xác thực</span>
+                                ) : (
+                                  <span className="text-[13px] font-bold text-amber-600">Chưa thanh toán</span>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[13px] font-medium text-slate-600">Trạng thái nhận áo</span>
+                                {invitation.shirtReceived ? (
+                                  <span className="text-[13px] font-bold text-emerald-600">Đã nhận</span>
+                                ) : (
+                                  <span className="text-[13px] font-medium text-amber-600">Chưa nhận</span>
+                                )}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[13px] font-medium text-slate-600">Điểm danh sự kiện</span>
+                                {invitation.checkedIn ? (
+                                  <span className="text-[13px] font-bold text-emerald-600">Đã check-in</span>
+                                ) : (
+                                  <span className="text-[13px] font-medium text-slate-500">Chưa điểm danh</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                        <div className="pt-2">
+                          {["pending_payment", "pending"].includes(invitation.status) ? (
+                            <Link
+                              href={`/xac-nhan-dong-gop?id=${invitation.id}`}
+                              className="w-full text-center rounded-xl bg-[#1d4ed8] px-4 py-3.5 text-sm font-bold text-white transition-all hover:bg-blue-700 active:scale-[0.98] shadow-sm flex items-center justify-center gap-2"
+                            >
+                              <span className="material-symbols-rounded text-lg">cloud_upload</span>
+                              <span>Tải ảnh biên lai để kích hoạt thư mời</span>
+                            </Link>
+                          ) : invitation.status === "confirmed" ? (
+                            <Link
+                              href={`/thu-moi?id=${invitation.id}`}
+                              className="w-full text-center rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700 flex items-center justify-center gap-1.5 shadow-sm"
+                            >
+                              <span className="material-symbols-rounded text-lg">mail</span>
+                              <span>Xem & Tải thư mời</span>
+                            </Link>
                           ) : invitation.status === "pending_approval" ? (
-                            <span className="text-[13px] font-bold text-blue-600">Đang chờ xác thực</span>
-                          ) : (
-                            <span className="text-[13px] font-bold text-amber-600">Chưa thanh toán</span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-slate-600">Trạng thái nhận áo</span>
-                          {(!invitation.sizes || Object.keys(invitation.sizes).length === 0) ? (
-                            <span className="text-[13px] font-medium text-slate-500">Không đăng ký</span>
-                          ) : (
-                            <span className="text-[13px] font-medium text-amber-600">Chưa nhận</span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-slate-600">Điểm danh sự kiện</span>
-                          {invitation.checkedIn ? (
-                            <span className="text-[13px] font-bold text-emerald-600">Đã check-in</span>
-                          ) : (
-                            <span className="text-[13px] font-medium text-slate-500">Chưa điểm danh</span>
-                          )}
+                            <div className="w-full text-center rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-xs font-semibold text-blue-700 flex items-center justify-center gap-1.5">
+                              <span className="material-symbols-rounded text-base animate-spin">progress_activity</span>
+                              <span>Hệ thống đang đối soát biên lai (tối đa 48h)</span>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
-
-                      <div className="flex justify-center pt-4 mt-2">
-                        {["pending_payment", "pending"].includes(invitation.status) ? (
-                          <Link
-                            href={`/xac-nhan-dong-gop?id=${invitation.id}`}
-                            className="w-full text-center rounded-xl bg-[#1d4ed8] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700"
-                          >
-                            Xác thực giao dịch
-                          </Link>
-                        ) : invitation.status === "rejected" ? (
-                          <Link
-                            href={`/xac-nhan-dong-gop?id=${invitation.id}`}
-                            className="w-full text-center rounded-xl bg-rose-100 px-4 py-3 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-200"
-                          >
-                            Xem lý do từ chối
-                          </Link>
-                        ) : (
-                          <Link
-                            href={`/thu-moi?id=${invitation.id}`}
-                            className="w-full text-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
-                          >
-                            Xem & Tải thư mời
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                    );
+                      );
                   })()}
                 </div>
               );

@@ -10,7 +10,7 @@ export const UNIT_PRICE = 500_000;
 export type InvitationStatus =
   | "pending" // Đăng ký dùng, đang chờ chuyển khoản
   | "pending_payment" // Mới tạo, đang chờ chuyển khoản
-  | "pending_approval" // Người dùng đã xác nhận chuyển khoản, chờ Admin duyệt cấp vé (24h)
+  | "pending_approval" // Người dùng đã xác nhận chuyển khoản, chờ Admin duyệt cấp thư mời (24h)
   | "confirmed" // Đã duyệt phát hành, hiển thị mã QR động 30s
   | "rejected" // Bị từ chối (chưa nhận được tiền)
   | "cancelled"; // Đã hủy
@@ -68,32 +68,32 @@ export function invitationStatusInfo(status: InvitationStatus | string): {
     case "confirmed":
       return {
         label: "Đã phát hành",
-        cls: "bg-emerald-600 text-white border border-emerald-700",
-        desc: "Vé hợp lệ · Xuất trình mã QR khi vào cổng 08/11/2026",
+        cls: "bg-emerald-600 text-white font-bold",
+        desc: "Mã QR thư mời sẽ được dùng để nhận áo và xuất trình vào cổng ngày hội 08/11/2026.",
       };
     case "pending_approval":
       return {
         label: "Chờ đối soát (48h)",
-        cls: "bg-blue-100 text-blue-800 border border-blue-300",
+        cls: "bg-blue-600 text-white font-bold",
         desc: "Đã gửi xác nhận đóng góp, Ban Tổ chức đang đối soát biên lai (tối đa 48h)",
       };
     case "pending_payment":
     case "pending":
       return {
         label: "Chờ thanh toán",
-        cls: "bg-amber-100 text-amber-800 border border-amber-300",
+        cls: "bg-amber-500 text-white font-bold",
         desc: "Đang chờ người dùng quét QR và upload biên lai đóng góp",
       };
     case "rejected":
       return {
         label: "Đã từ chối",
-        cls: "bg-rose-100 text-rose-700 border border-rose-300",
+        cls: "bg-red-600 text-white font-bold",
         desc: "Không khớp thông tin chuyển khoản",
       };
     default:
       return {
         label: "Đã hủy",
-        cls: "bg-slate-100 text-slate-600 border border-slate-300",
+        cls: "bg-slate-500 text-white font-bold",
       };
   }
 }

@@ -48,6 +48,7 @@ function copyToClipboard(text: string, onCopied: () => void) {
 }
 
 const SESSION_KEY = "nct40_xacnhan_invitationId";
+const PENDING_STORAGE_KEY = "nct40_pending_invitation";
 
 // ============================================================
 // Sub-components
@@ -209,6 +210,7 @@ export default function XacNhanDongGopContent() {
   const [loading, setLoading] = useState(true);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   const [uploadState, setUploadState] = useState<UploadState>({ phase: "idle" });
 
@@ -233,18 +235,54 @@ export default function XacNhanDongGopContent() {
               setLoadError(`Thư mời này đã bị từ chối xác nhận đóng góp.\n\nLý do: ${reason}\n\nVui lòng liên hệ Ban Tổ chức qua Fanpage để được hỗ trợ xử lý.`);
               return;
             } else if (data.status === "confirmed") {
+              try {
+                localStorage.removeItem(PENDING_STORAGE_KEY);
+              } catch {}
               setUploadState({
                 phase: "success",
                 confidence: "high",
                 message: "Thư mời của bạn đã được thanh toán và kích hoạt thành công!"
               });
             } else if (data.status === "pending_approval") {
+              try {
+                localStorage.removeItem(PENDING_STORAGE_KEY);
+              } catch {}
               setUploadState({
                 phase: "success",
                 confidence: "low",
                 message: "Giao dịch đã được đưa vào hàng chờ. Ban Tổ chức sẽ đối soát và xác nhận trong vòng 48 giờ."
               });
               setIsMobileModalOpen(true);
+            } else {
+              // Lưu vào localStorage để hỗ trợ quay lại tiếp tục xác thực
+              try {
+                localStorage.setItem(
+                  PENDING_STORAGE_KEY,
+                  JSON.stringify({
+                    id: data.id,
+                    attendeeName: data.attendeeName,
+                    amount: data.amount,
+                    status: data.status,
+                    timestamp: Date.now(),
+                  })
+                );
+              } catch {}
+
+              // Tự động bật modal hướng dẫn trên mobile nếu chưa bấm tắt trong phiên
+              if (typeof window !== "undefined") {
+                const dismissed = sessionStorage.getItem(`nct40_guide_dismissed_${data.id}`);
+                if (!dismissed && window.innerWidth < 768) {
+                  setShowGuideModal(true);
+                }
+              }
+            }
+          } else {
+            // Trường hợp DEV mode
+            if (typeof window !== "undefined") {
+              const dismissed = sessionStorage.getItem(`nct40_guide_dismissed_DEV`);
+              if (!dismissed && window.innerWidth < 768) {
+                setShowGuideModal(true);
+              }
             }
           }
         }
@@ -322,9 +360,12 @@ export default function XacNhanDongGopContent() {
         phase: "success",
         confidence: data.confidence === "high" ? "high" : "low",
         message: data.message || (data.confidence === "high"
-            ? "Biên lai hợp lệ, vé của bạn đã được kích hoạt!"
+            ? "Biên lai hợp lệ, thư mời của bạn đã được kích hoạt!"
             : "Giao dịch đã được đưa vào hàng chờ. Ban Tổ chức sẽ đối soát và xác nhận trong vòng 24 giờ."),
       });
+      try {
+        localStorage.removeItem(PENDING_STORAGE_KEY);
+      } catch {}
       
       // Auto redirect to invitation after 3 seconds on success (if not dev mode)
       if (invitationId !== "DEV" && data.confidence === "high") {
@@ -624,7 +665,7 @@ export default function XacNhanDongGopContent() {
               <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col items-center">
                 <div className="w-full text-left mb-6 space-y-3">
                   {info.attendeeName && (
-                    <p className="font-bold text-xl text-gray-900">Xin chào {info.attendeeName},</p>
+                    <p className="font-bold text-xl text-gray-900">Xin chào, {info.attendeeName}</p>
                   )}
                   <p className="text-[14px] text-red-600 font-semibold leading-relaxed">
                     * Bắt buộc ghi đúng Nội dung CK để hệ thống xác nhận tự động.
@@ -716,7 +757,7 @@ export default function XacNhanDongGopContent() {
         isOpen={isMobileModalOpen} 
         setIsOpen={setIsMobileModalOpen}
         isVisible={!isExiting}
-        buttonText={isConfirmed ? "Xem thư mời" : "Xác minh đóng góp"}
+        buttonText={isConfirmed ? "Xem thư mời" : "Tải biên lai xác thực"}
         onButtonClick={
           isConfirmed 
             ? () => {
@@ -729,6 +770,79 @@ export default function XacNhanDongGopContent() {
       >
         {uploadContent}
       </MobileUploadModal>
+
+      {/* Modal hướng dẫn 2 bước trên Mobile (Hiện tự động khi vào trang) */}
+      <AnimatePresence>
+        {showGuideModal && !isConfirmed && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  sessionStorage.setItem(`nct40_guide_dismissed_${info.id}`, "true");
+                }
+                setShowGuideModal(false);
+              }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="relative w-full max-w-[340px] rounded-3xl bg-white px-4 py-5 shadow-2xl z-10 space-y-4"
+            >
+              <div>
+                <h3 className="font-extrabold text-gray-900 text-lg tracking-tight">
+                  Lưu ý nhận thư mời
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Vui lòng hoàn tất 2 bước để kích hoạt thư mời:
+                </p>
+              </div>
+
+              <div className="space-y-3 text-[13px]">
+                <div className="flex items-start gap-2.5">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center justify-center mt-0.5">
+                    1
+                  </span>
+                  <p className="text-gray-700 leading-relaxed">
+                    <strong className="text-gray-900">Chuyển khoản:</strong> Quét QR hoặc copy STK, ghi đúng nội dung chuyển khoản.
+                  </p>
+                </div>
+
+                <div className="flex items-start gap-2.5">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center mt-0.5">
+                    2
+                  </span>
+                  <p className="text-gray-700 leading-relaxed">
+                    <strong className="text-blue-700">Tải ảnh biên lai (bắt buộc):</strong> Chụp lại màn hình giao dịch và bấm nút tải ảnh ở cuối trang.
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-gray-400 leading-relaxed pt-1 border-t border-gray-100">
+                * Thư mời chỉ được kích hoạt sau khi bạn tải ảnh biên lai xác thực lên hệ thống.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    sessionStorage.setItem(`nct40_guide_dismissed_${info.id}`, "true");
+                  }
+                  setShowGuideModal(false);
+                }}
+                className="w-full py-3 rounded-xl bg-[#1d4ed8] text-white font-bold text-sm hover:bg-blue-700 active:scale-[0.98] transition-all"
+              >
+                Tôi đã hiểu
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

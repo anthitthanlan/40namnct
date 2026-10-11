@@ -119,6 +119,59 @@ export default function RegisterForm() {
   const [showSizeModal, setShowSizeModal] = useState(false);
   const sizeChartRef = useRef<HTMLDivElement>(null);
 
+  // Smart Resume & Early Phone Check
+  const [savedPending, setSavedPending] = useState<{
+    id: string;
+    attendeeName?: string;
+    amount?: number;
+    timestamp?: number;
+  } | null>(null);
+  const [dismissedPendingBanner, setDismissedPendingBanner] = useState(false);
+
+  const [phoneCheckResult, setPhoneCheckResult] = useState<{
+    exists: boolean;
+    hasPending: boolean;
+    latestInvitationId?: string;
+    attendeeName?: string;
+  } | null>(null);
+  const [checkingPhone, setCheckingPhone] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("nct40_pending_invitation");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.id && (!parsed.timestamp || Date.now() - parsed.timestamp < 48 * 3600 * 1000)) {
+          setSavedPending(parsed);
+        }
+      }
+    } catch {}
+  }, []);
+
+  const handlePhoneBlur = async () => {
+    const clean = phone.replace(/\D/g, "");
+    if (clean.length < 9) {
+      setPhoneCheckResult(null);
+      return;
+    }
+    setCheckingPhone(true);
+    try {
+      const res = await fetch(`/api/auth/check-phone?phone=${encodeURIComponent(phone.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.exists) {
+          setPhoneCheckResult(data);
+        } else {
+          setPhoneCheckResult(null);
+        }
+      }
+    } catch {
+      // Bỏ qua lỗi kết nối nền
+    } finally {
+      setCheckingPhone(false);
+    }
+  };
+
   const handleDownloadPNG = async () => {
     // Load fonts to match website rendering exactly
     // Unbounded (titles) — static weight 700 woff2
@@ -466,6 +519,18 @@ export default function RegisterForm() {
         return;
       }
       if (amount > 0) {
+        try {
+          localStorage.setItem(
+            "nct40_pending_invitation",
+            JSON.stringify({
+              id: data.invitationId,
+              attendeeName: name,
+              phone: phone,
+              amount: amount,
+              timestamp: Date.now(),
+            })
+          );
+        } catch {}
         window.location.href = `/xac-nhan-dong-gop?id=${data.invitationId}`;
       } else {
         window.location.href = `/thu-moi?id=${data.invitationId}`;
@@ -609,6 +674,55 @@ export default function RegisterForm() {
             noValidate
             className="flex flex-col items-center"
           >
+            {/* Smart Reminder Banner từ localStorage */}
+            {savedPending && !dismissedPendingBanner && (
+              <motion.div
+                layout
+                transition={boxTransition}
+                className="w-full max-w-[64rem] mb-6 p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                    <span className="material-symbols-rounded text-2xl">pending_actions</span>
+                  </div>
+                  <div>
+                    <p className="font-bold text-[15px] text-amber-900">
+                      Bạn có lượt đăng ký chưa hoàn tất xác thực đóng góp
+                    </p>
+                    <p className="text-xs sm:text-sm text-amber-800/90 mt-0.5">
+                      {savedPending.attendeeName ? `Người đăng ký: ${savedPending.attendeeName}` : `Mã phiếu: ${savedPending.id}`}
+                      {savedPending.amount ? ` · Số tiền: ${(savedPending.amount).toLocaleString("vi-VN")}đ` : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+                  <Link
+                    href={`/xac-nhan-dong-gop?id=${savedPending.id}`}
+                    className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[#1d4ed8] text-white text-xs sm:text-sm font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <span>Tiếp tục tải ảnh</span>
+                    <span className="material-symbols-rounded text-base">arrow_forward</span>
+                  </Link>
+                  <Link
+                    href="/tra-cuu"
+                    className="px-3.5 py-2.5 rounded-xl bg-white border border-amber-300 text-amber-800 text-xs sm:text-sm font-bold hover:bg-amber-100/50 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <span className="material-symbols-rounded text-base">search</span>
+                    <span>Tra cứu</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setDismissedPendingBanner(true)}
+                    className="p-2 text-amber-700 hover:text-amber-900 rounded-lg hover:bg-amber-100/60 transition-colors"
+                    title="Đóng thông báo"
+                  >
+                    <span className="material-symbols-rounded text-lg">close</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
             {/* Thông báo tính chất sự kiện - Box riêng */}
             <motion.div 
               layout
@@ -626,8 +740,9 @@ export default function RegisterForm() {
                   <p className="mt-1.5 text-blue-800/80 text-sm">
                     Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện.
                   </p>
-                  <p className="mt-2 text-red-600 font-semibold text-sm">
-                    ⚠️ Lưu ý quan trọng: Nếu quý khách đang truy cập từ Zalo, Facebook hoặc Messenger, vui lòng mở liên kết bằng trình duyệt mặc định của hệ thống (Safari, Chrome...) để quá trình đăng ký không bị lỗi.
+                  <p className="mt-2 text-red-600 font-semibold text-sm flex items-center gap-1">
+                    <span className="material-symbols-rounded text-base">warning</span>
+                    <span>Lưu ý quan trọng: Nếu quý khách đang truy cập từ Zalo, Facebook hoặc Messenger, vui lòng mở liên kết bằng trình duyệt mặc định của hệ thống (Safari, Chrome...) để quá trình đăng ký không bị lỗi.</span>
                   </p>
                 </div>
               </div>
@@ -707,12 +822,51 @@ export default function RegisterForm() {
                     type="tel"
                     value={phone}
                     disabled={isInfoLocked}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      if (phoneCheckResult) setPhoneCheckResult(null);
+                    }}
+                    onBlur={handlePhoneBlur}
                     placeholder="0901234567"
                     required
                     className={`w-full px-4 py-3 rounded-xl border focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 disabled:bg-gray-100/90 disabled:text-gray-600 disabled:border-gray-200 disabled:cursor-not-allowed ${fieldErrors["phone"] ? "shake-error border-red-500 bg-red-50/50" : "border-gray-200"
                       }`}
                   />
+                  {checkingPhone && (
+                    <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
+                      <span className="material-symbols-rounded text-sm animate-spin">progress_activity</span>
+                      Đang kiểm tra số điện thoại...
+                    </p>
+                  )}
+                  {phoneCheckResult && (
+                    <div className="mt-2.5 p-3 rounded-xl bg-blue-50/90 border border-blue-200 text-blue-900 text-xs flex flex-col gap-2">
+                      <div className="flex items-start gap-2">
+                        <span className="material-symbols-rounded text-blue-600 text-base shrink-0 mt-0.5">info</span>
+                        <p className="leading-relaxed">
+                          Số điện thoại này đã có lượt đăng ký trên hệ thống
+                          {phoneCheckResult.attendeeName ? ` (${phoneCheckResult.attendeeName})` : ""}.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-1 border-t border-blue-100">
+                        <Link
+                          href="/tra-cuu"
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors flex items-center gap-1"
+                        >
+                          <span className="material-symbols-rounded text-sm">search</span>
+                          Tra cứu thư mời
+                        </Link>
+                        {phoneCheckResult.hasPending && phoneCheckResult.latestInvitationId && (
+                          <Link
+                            href={`/xac-nhan-dong-gop?id=${phoneCheckResult.latestInvitationId}`}
+                            className="px-3 py-1.5 rounded-lg bg-white border border-blue-300 text-blue-700 font-bold text-xs hover:bg-blue-50 transition-colors flex items-center gap-1"
+                          >
+                            <span className="material-symbols-rounded text-sm">cloud_upload</span>
+                            Tiếp tục tải ảnh xác thực
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -1182,7 +1336,7 @@ export default function RegisterForm() {
                 Đăng ký thành công!
               </h2>
               <p className="text-gray-500 mt-2">
-                Dưới đây là mã định danh (mã vé) của bạn.
+                Dưới đây là mã định danh thư mời của bạn.
               </p>
             </div>
 
@@ -1230,11 +1384,12 @@ export default function RegisterForm() {
 
             {/* Warning */}
             <div className="mt-6 p-4 rounded-xl bg-amber-50 border border-amber-100">
-              <p className="text-sm text-amber-800 font-medium">
-                ⚠️ Thông tin quan trọng
+              <p className="text-sm text-amber-800 font-medium flex items-center gap-1.5">
+                <span className="material-symbols-rounded text-base text-amber-600">warning</span>
+                <span>Thông tin quan trọng</span>
               </p>
               <p className="text-sm text-amber-700 mt-2">
-                Chúng tôi sẽ sớm gửi Vé QR về hòm thư <strong>{email}</strong> (nếu có). Bạn hãy sử dụng mã vé để kiểm tra thông tin và xuất trình tại sự kiện.
+                Chúng tôi sẽ sớm gửi Thư mời điện tử về hòm thư <strong>{email}</strong> (nếu có). Bạn hãy sử dụng mã thư mời để kiểm tra thông tin và xuất trình tại sự kiện.
               </p>
             </div>
           </motion.div>

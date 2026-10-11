@@ -21,7 +21,7 @@ export default function DangKyPage() {
               <span className="text-[#1d4ed8]">Ngày Trở Về – 08/11/2026</span>
             </h1>
             <p className="text-gray-500 mt-4 text-lg">
-              Chào mừng bạn trở về mái trường xưa. Vui lòng điền thông tin để nhận mã vé.
+              Chào mừng bạn trở về mái trường xưa. Vui lòng điền thông tin để nhận thư mời điện tử.
             </p>
           </div>
         </Reveal>

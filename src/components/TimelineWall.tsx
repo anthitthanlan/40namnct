@@ -238,7 +238,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
           </div>
         ) : (
           <>
-            <div className="columns-2 md:columns-3 gap-3 sm:gap-4 lg:gap-5">
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-4 lg:gap-5">
               {visibleItems.map((item, idx) => {
                 if (item.type === "memory") {
                   const m = item.data;
@@ -249,15 +249,16 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                     <div
                       key={`${m.id}-${item.imageIndex}`}
                       id={item.imageIndex === 0 ? `moment-${m.id}` : undefined}
-                      className={`break-inside-avoid mb-3 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
+                      className={`break-inside-avoid mb-5 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
                         isTarget
-                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.03] shadow-2xl relative z-10"
+                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
                           : ""
                       }`}
                     >
                       <MomentCard
                         coverUrl={src}
                         title={m.title}
+                        caption={m.caption}
                         author={m.author}
                         role={m.isCommunity ? m.role : ""}
                         year={m.year}
@@ -275,15 +276,16 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                     <div
                       key={`post-${p.id}`}
                       id={`moment-${p.id}`}
-                      className={`break-inside-avoid mb-3 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
+                      className={`break-inside-avoid mb-5 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
                         isTarget
-                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.03] shadow-2xl relative z-10"
+                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
                           : ""
                       }`}
                     >
                       <MomentCard
                         coverUrl={p.cover!}
                         title={p.title}
+                        caption={p.excerpt}
                         author={p.author}
                         role="Câu chuyện"
                         year={new Date(p.createdAt).getFullYear()}

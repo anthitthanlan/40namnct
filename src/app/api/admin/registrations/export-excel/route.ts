@@ -36,12 +36,14 @@ export async function GET(req: NextRequest) {
     { key: "stt", width: 8 }, // Cột 1: STT nhỏ vừa đủ
     { key: "name", width: 34 }, // Cột 2: Họ và Tên rộng rãi
     { key: "phone", width: 17 }, // Cột 3: SĐT đủ chuẩn 12 số
-    { key: "type", width: 18 }, // Cột 4: Loại đăng ký
-    { key: "size", width: 16 }, // Cột 5: Size áo
-    { key: "quantity", width: 12 }, // Cột 6: Số lượng
-    { key: "approval", width: 16 }, // Cột 7: Phê duyệt
-    { key: "code", width: 25 }, // Cột 8: Mã thư mời
-    { key: "email", width: 32 }, // Cột 9: Email
+    { key: "nienKhoa", width: 18 }, // Cột 4: Niên khóa
+    { key: "lop", width: 14 }, // Cột 5: Lớp
+    { key: "type", width: 18 }, // Cột 6: Loại đăng ký
+    { key: "size", width: 16 }, // Cột 7: Size áo
+    { key: "quantity", width: 12 }, // Cột 8: Số lượng
+    { key: "approval", width: 16 }, // Cột 9: Phê duyệt
+    { key: "code", width: 25 }, // Cột 10: Mã thư mời
+    { key: "email", width: 32 }, // Cột 11: Email
   ];
 
   // Header row
@@ -49,6 +51,8 @@ export async function GET(req: NextRequest) {
     "STT",
     "Họ và Tên",
     "SĐT",
+    "Niên khóa",
+    "Lớp",
     "Loại đăng ký",
     "Size áo",
     "Số lượng",
@@ -97,6 +101,29 @@ export async function GET(req: NextRequest) {
     const approvalText =
       inv.ocrResult?.confidence === "high" ? "Tự động" : "Thủ công";
 
+    // Trích xuất Niên khóa
+    const nienKhoaMatch = inv.note?.match(/Niên khóa:\s*([^|\[\n\r]+)/i);
+    const nienKhoa =
+      inv.nienKhoa ||
+      (inv as any).nien_khoa ||
+      (member as any)?.nienKhoa ||
+      (nienKhoaMatch ? nienKhoaMatch[1].trim() : "");
+
+    // Trích xuất Lớp
+    const lopMatch = inv.note?.match(/Lớp:\s*([^|\[\n\r]+)/i);
+    let lop = lopMatch
+      ? lopMatch[1].trim()
+      : ((inv as any).lop || (member as any)?.lop || "");
+    if (
+      !lop &&
+      inv.note &&
+      !inv.note.includes(":") &&
+      !inv.note.includes("[") &&
+      !inv.note.includes("|")
+    ) {
+      lop = inv.note.trim();
+    }
+
     // Phân tích sizes
     type SizeItem = { size: string; qty: number | string };
     let sizeItems: SizeItem[] = [];
@@ -125,6 +152,8 @@ export async function GET(req: NextRequest) {
         currentStt,
         fullName,
         phone,
+        nienKhoa,
+        lop,
         isGroup ? "Tập thể" : "Cá nhân",
         item.size,
         item.qty,
@@ -163,41 +192,53 @@ export async function GET(req: NextRequest) {
       c3.numFmt = "@";
       c3.border = thinBorder;
 
-      // Cột 4: Loại đăng ký
-      // Cá nhân: Nền xanh dương 0R 0G 255B chữ trắng
-      // Tập thể: Nền xanh lá đậm 0R 145G 0B chữ trắng
+      // Cột 4: Niên khóa
       const c4 = row.getCell(4);
+      c4.font = { name: "Times New Roman", size: 11 };
       c4.alignment = { vertical: "middle", horizontal: "center" };
       c4.border = thinBorder;
+
+      // Cột 5: Lớp
+      const c5 = row.getCell(5);
+      c5.font = { name: "Times New Roman", size: 11 };
+      c5.alignment = { vertical: "middle", horizontal: "center" };
+      c5.border = thinBorder;
+
+      // Cột 6: Loại đăng ký
+      // Cá nhân: Nền xanh dương 0R 0G 255B chữ trắng
+      // Tập thể: Nền xanh lá đậm 0R 145G 0B chữ trắng
+      const c6 = row.getCell(6);
+      c6.alignment = { vertical: "middle", horizontal: "center" };
+      c6.border = thinBorder;
       if (isGroup) {
-        c4.font = { name: "Times New Roman", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
-        c4.fill = {
+        c6.font = { name: "Times New Roman", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+        c6.fill = {
           type: "pattern",
           pattern: "solid",
           fgColor: { argb: "FF009100" }, // 0R, 145G, 0B
         };
       } else {
-        c4.font = { name: "Times New Roman", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
-        c4.fill = {
+        c6.font = { name: "Times New Roman", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+        c6.fill = {
           type: "pattern",
           pattern: "solid",
           fgColor: { argb: "FF0000FF" }, // 0R, 0G, 255B
         };
       }
 
-      // Cột 5 & 6: Size áo & Số lượng
+      // Cột 7 & 8: Size áo & Số lượng
       // Nam nền 76R 128G 186B (FF4C80BA) chữ đen
       // Nữ nền 196R 112G 138B (FFC4708A) chữ đen
-      const c5 = row.getCell(5);
-      const c6 = row.getCell(6);
+      const c7 = row.getCell(7);
+      const c8 = row.getCell(8);
 
-      c5.font = { name: "Times New Roman", size: 11, color: { argb: "FF000000" } };
-      c5.alignment = { vertical: "middle", horizontal: "center" };
-      c5.border = thinBorder;
+      c7.font = { name: "Times New Roman", size: 11, color: { argb: "FF000000" } };
+      c7.alignment = { vertical: "middle", horizontal: "center" };
+      c7.border = thinBorder;
 
-      c6.font = { name: "Times New Roman", size: 11, color: { argb: "FF000000" } };
-      c6.alignment = { vertical: "middle", horizontal: "center" };
-      c6.border = thinBorder;
+      c8.font = { name: "Times New Roman", size: 11, color: { argb: "FF000000" } };
+      c8.alignment = { vertical: "middle", horizontal: "center" };
+      c8.border = thinBorder;
 
       const sizeStr = String(currentItem.size).trim();
       if (sizeStr.toLowerCase().startsWith("nam") || sizeStr.toLowerCase().includes("nam-")) {
@@ -206,41 +247,41 @@ export async function GET(req: NextRequest) {
           pattern: "solid",
           fgColor: { argb: "FF4C80BA" }, // 76R, 128G, 186B
         };
-        c5.fill = namFill;
-        c6.fill = namFill;
+        c7.fill = namFill;
+        c8.fill = namFill;
       } else if (sizeStr.toLowerCase().startsWith("nữ") || sizeStr.toLowerCase().startsWith("nu") || sizeStr.toLowerCase().includes("nữ-") || sizeStr.toLowerCase().includes("nu-")) {
         const nuFill: ExcelJS.Fill = {
           type: "pattern",
           pattern: "solid",
           fgColor: { argb: "FFC4708A" }, // 196R, 112G, 138B
         };
-        c5.fill = nuFill;
-        c6.fill = nuFill;
+        c7.fill = nuFill;
+        c8.fill = nuFill;
       }
 
-      // Cột 7: Phê duyệt
-      const c7 = row.getCell(7);
-      c7.font = { name: "Times New Roman", size: 11 };
-      c7.alignment = { vertical: "middle", horizontal: "center" };
-      c7.border = thinBorder;
-
-      // Cột 8: Mã thư mời
-      const c8 = row.getCell(8);
-      c8.font = { name: "Times New Roman", size: 11, bold: true };
-      c8.alignment = { vertical: "middle", horizontal: "center" };
-      c8.border = thinBorder;
-
-      // Cột 9: Email
+      // Cột 9: Phê duyệt
       const c9 = row.getCell(9);
       c9.font = { name: "Times New Roman", size: 11 };
-      c9.alignment = { vertical: "middle", horizontal: "left" };
+      c9.alignment = { vertical: "middle", horizontal: "center" };
       c9.border = thinBorder;
+
+      // Cột 10: Mã thư mời
+      const c10 = row.getCell(10);
+      c10.font = { name: "Times New Roman", size: 11, bold: true };
+      c10.alignment = { vertical: "middle", horizontal: "center" };
+      c10.border = thinBorder;
+
+      // Cột 11: Email
+      const c11 = row.getCell(11);
+      c11.font = { name: "Times New Roman", size: 11 };
+      c11.alignment = { vertical: "middle", horizontal: "left" };
+      c11.border = thinBorder;
     }
 
     // Gộp ô cho tập thể có nhiều size áo
     if (isGroup && sizeItems.length > 1) {
-      // Gộp các cột: 1, 2, 3, 4, 7, 8, 9
-      [1, 2, 3, 4, 7, 8, 9].forEach((colIdx) => {
+      // Gộp các cột: 1 (STT), 2 (Họ và Tên), 3 (SĐT), 4 (Niên khóa), 5 (Lớp), 6 (Loại đăng ký), 9 (Phê duyệt), 10 (Mã thư mời), 11 (Email)
+      [1, 2, 3, 4, 5, 6, 9, 10, 11].forEach((colIdx) => {
         worksheet.mergeCells(startRowNum, colIdx, endRowNum, colIdx);
       });
     }

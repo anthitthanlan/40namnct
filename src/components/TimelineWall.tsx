@@ -588,11 +588,11 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       className="group relative h-screen min-h-[600px] w-full overflow-hidden bg-slate-950 select-none cursor-grab active:cursor-grabbing"
       style={{ touchAction: "pan-y" }}
     >
-      {/* Slideshow - top 45vh on mobile, full width/height on desktop/tablet */}
+      {/* Slideshow - top 52vh on mobile with feather mask, full width/height on desktop/tablet */}
       {slides.map((s, i) => (
         <div
           key={i}
-          className={`hero-slide overflow-hidden !bottom-auto !h-[45vh] md:!bottom-0 md:!h-full ${i === current ? "active" : ""}`}
+          className={`hero-slide hero-slide-mobile-feather overflow-hidden !bottom-auto !top-0 !h-[52vh] md:!top-0 md:!bottom-0 md:!h-full ${i === current ? "active" : ""}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -606,39 +606,41 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
         </div>
       ))}
 
-      {/* Top blur edge (overlay tối trên cho navbar và làm mờ viền trên) */}
-      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
-      {/* Bottom blur edge cho mobile để fade phần rìa dưới của ảnh vào nền đen */}
-      <div className="absolute inset-x-0 top-[20vh] h-[26vh] bg-gradient-to-t from-slate-950 from-5% to-transparent md:hidden pointer-events-none" />
+      {/* Top blur edge (overlay nhẹ tinh tế cho navbar không lấn át ảnh) */}
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/80 via-slate-950/30 to-transparent pointer-events-none z-[3]" />
+      {/* Bottom blur edge gọn gàng ở mép dưới ảnh, không kéo dài che khuất chi tiết */}
+      <div className="absolute inset-x-0 top-[40vh] h-[14vh] bg-gradient-to-b from-transparent via-slate-950/40 to-slate-950 md:hidden pointer-events-none z-[3]" />
 
       {/* Gradient tối ở đáy & bên trái cho desktop để text ở góc dưới bên trái đọc cực rõ và không che mặt người ở giữa */}
-      <div className="absolute inset-x-0 bottom-0 h-72 md:h-80 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent pointer-events-none" />
-      <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-slate-950/60 via-slate-950/20 to-transparent hidden md:block pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-72 md:h-80 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent pointer-events-none z-[3]" />
+      <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-slate-950/60 via-slate-950/20 to-transparent hidden md:block pointer-events-none z-[3]" />
 
       {/* Ánh sáng glow mờ dưới đáy cho mobile bớt đơn điệu */}
       <div className="absolute inset-x-0 bottom-0 h-[50vh] bg-[radial-gradient(ellipse_at_bottom,rgba(30,58,138,0.3),transparent_70%)] md:hidden pointer-events-none" />
 
-      {/* Nội dung (Bottom-Left Align: Căn góc dưới bên trái) */}
-      <div className="relative z-10 flex h-full flex-col items-start justify-end pb-20 sm:pb-24 md:pb-24 lg:pb-28 px-6 sm:px-10 md:pl-16 xl:pl-24 md:max-w-[65%] text-left text-white pointer-events-none">
-        <div className="mb-3.5 floaty btn-lightship-soft inline-block max-w-full rounded-full bg-white px-4 py-1.5 font-bold tracking-wide text-[#1d4ed8] text-left whitespace-nowrap text-[clamp(0.65rem,3.5vw,0.85rem)] shadow-lg pointer-events-auto">
-          {slide.year ? `1986 - 2026 · KỶ NIỆM NĂM ${slide.year}` : "1986 - 2026 · 40 NĂM TRỒNG NGƯỜI"}
+      {/* Nội dung (Bottom-Left Align: Nâng độ cao tối thiểu & khoảng cách an toàn phía dưới) */}
+      <div className="relative z-10 flex h-full flex-col items-start justify-end pb-28 sm:pb-32 md:pb-24 lg:pb-28 px-6 sm:px-10 md:pl-16 xl:pl-24 md:max-w-[65%] text-left text-white pointer-events-none">
+        <div className="w-full min-h-[175px] sm:min-h-[195px] flex flex-col justify-end items-start pointer-events-auto">
+          <div className="mb-3.5 floaty btn-lightship-soft inline-block max-w-full rounded-full bg-white px-4 py-1.5 font-bold tracking-wide text-[#1d4ed8] text-left whitespace-nowrap text-[clamp(0.65rem,3.5vw,0.85rem)] shadow-lg">
+            {slide.year ? `1986 - 2026 · KỶ NIỆM NĂM ${slide.year}` : "1986 - 2026 · 40 NĂM TRỒNG NGƯỜI"}
+          </div>
+          <h1 className="line-clamp-2 max-w-xl text-lg sm:text-xl md:text-2xl lg:text-[1.5rem] font-bold leading-snug text-white drop-shadow-md">
+            {slide.title}
+          </h1>
+          <p className="mt-3 flex items-center gap-2 text-sm sm:text-base md:text-lg font-medium text-slate-200/90 drop-shadow">
+            <span className="material-symbols-rounded text-[1.1em] text-blue-400">person</span>
+            <span>{slide.author || "Thành viên NCT"}</span>
+            {slide.slug && (
+              <Link
+                href={`/cau-chuyen/${slide.slug}`}
+                className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-600/70 hover:bg-blue-600 px-3 py-0.5 text-xs font-bold text-white transition-colors"
+              >
+                Đọc bài
+                <span className="material-symbols-rounded text-xs">arrow_forward</span>
+              </Link>
+            )}
+          </p>
         </div>
-        <h1 className="line-clamp-2 max-w-4xl font-extrabold leading-tight text-white drop-shadow-lg text-[clamp(1.4rem,5.5vw,3.25rem)] pointer-events-auto">
-          {slide.title}
-        </h1>
-        <p className="mt-3 flex items-center gap-2 text-sm sm:text-base md:text-lg font-medium text-slate-200/90 drop-shadow pointer-events-auto">
-          <span className="material-symbols-rounded text-[1.1em] text-blue-400">person</span>
-          <span>{slide.author || "Thành viên NCT"}</span>
-          {slide.slug && (
-            <Link
-              href={`/cau-chuyen/${slide.slug}`}
-              className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-600/70 hover:bg-blue-600 px-3 py-0.5 text-xs font-bold text-white transition-colors"
-            >
-              Đọc bài
-              <span className="material-symbols-rounded text-xs">arrow_forward</span>
-            </Link>
-          )}
-        </p>
       </div>
 
       {/* Desktop Prev / Next Buttons */}

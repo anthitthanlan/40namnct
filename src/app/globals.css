@@ -108,6 +108,36 @@ h6,
   }
 }
 
+/* Feathered mask on mobile to eliminate any hard cuts at top & bottom without over-blurring */
+@media (max-width: 767px) {
+  .hero-slide-mobile-feather {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 2%,
+      rgba(0, 0, 0, 0.4) 6%,
+      rgba(0, 0, 0, 0.85) 10%,
+      black 14%,
+      black 84%,
+      rgba(0, 0, 0, 0.85) 90%,
+      rgba(0, 0, 0, 0.4) 95%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 2%,
+      rgba(0, 0, 0, 0.4) 6%,
+      rgba(0, 0, 0, 0.85) 10%,
+      black 14%,
+      black 84%,
+      rgba(0, 0, 0, 0.85) 90%,
+      rgba(0, 0, 0, 0.4) 95%,
+      transparent 100%
+    );
+  }
+}
+
 /* ===== ẨN SCROLLBAR (trang vẫn cuộn bình thường) ===== */
 html::-webkit-scrollbar {
   display: none;

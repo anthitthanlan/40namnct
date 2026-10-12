@@ -50,7 +50,7 @@ export default function Reveal({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "0px 0px -8% 0px", amount: 0.12 }}
+      viewport={{ once: true, margin: "0px 0px 60px 0px", amount: "some" }}
       variants={variants}
     >
       {children}

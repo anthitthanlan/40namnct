@@ -278,11 +278,11 @@ export default async function Home() {
       {/* Đóng góp Media / CTA */}
       <section
         id="dong-gop"
-        className="relative overflow-hidden bg-gradient-to-b from-[#1d4ed8] to-[#0f172a] py-32 text-white"
+        className="relative overflow-hidden bg-gradient-to-b from-[#1d4ed8] to-[#0f172a] py-14 sm:py-20 lg:py-32 text-white"
       >
-        <div className="mx-auto max-w-7xl px-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           {/* Tiêu đề chung (Căn giữa ngang) */}
-          <div className="mb-16 text-center">
+          <div className="mb-8 sm:mb-12 lg:mb-16 text-center">
             <Reveal variant="up">
               <div className="inline-flex items-center gap-3 text-xs font-extrabold tracking-widest text-blue-200 sm:text-sm">
                 <span className="h-0.5 w-6 rounded-full bg-blue-300" />
@@ -290,31 +290,31 @@ export default async function Home() {
                 <span className="h-0.5 w-6 rounded-full bg-blue-300" />
               </div>
             </Reveal>
-            <Reveal variant="up" delay={100}>
-              <h2 className="mt-5 text-2xl font-extrabold leading-tight sm:text-4xl">
+            <Reveal variant="up" delay={60}>
+              <h2 className="mt-4 text-2xl font-extrabold leading-tight sm:text-4xl">
                 Lưu giữ lại một thời để nhớ
               </h2>
             </Reveal>
-            <Reveal variant="up" delay={180}>
-              <p className="mx-auto mt-4 max-w-2xl text-base text-blue-100 sm:text-lg">
+            <Reveal variant="up" delay={120}>
+              <p className="mx-auto mt-3 max-w-2xl text-sm sm:text-base text-blue-100 sm:text-lg">
                 Mỗi bức ảnh cũ, kỷ vật hay câu chuyện là một mảnh ghép quý giá làm
                 nên bức tranh 40 năm của mái trường Nguyễn Công Trứ.
               </p>
             </Reveal>
           </div>
 
-          <div className="grid gap-16 lg:grid-cols-12 lg:items-start">
+          <div className="grid gap-8 lg:gap-16 lg:grid-cols-12 lg:items-start w-full min-w-0 max-w-full">
             {/* Cột trái: CTA chuyển hướng */}
-            <div className="lg:col-span-5">
-              <Reveal variant="up" delay={240}>
-                <div className="rounded-[2rem] bg-white/5 p-8 backdrop-blur-md border border-white/10 text-center lg:text-left">
-                  <h3 className="text-2xl font-bold text-white mb-4">Gửi gắm kỷ niệm của bạn</h3>
-                  <p className="text-blue-100 mb-8 text-sm leading-relaxed">
+            <div className="lg:col-span-5 w-full min-w-0">
+              <Reveal variant="up" delay={160} className="w-full min-w-0">
+                <div className="w-full min-w-0 rounded-[2rem] bg-white/10 p-6 sm:p-8 backdrop-blur-md border border-white/15 text-center lg:text-left shadow-xl shadow-blue-950/20">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">Gửi gắm kỷ niệm của bạn</h3>
+                  <p className="text-blue-100 mb-6 sm:mb-8 text-xs sm:text-sm leading-relaxed">
                     Bạn có những bức ảnh cũ, những đoạn video quý giá hay những câu chuyện thanh xuân chưa từng kể? Hãy chia sẻ cùng chúng tôi để làm phong phú thêm Tường ký ức 40 năm.
                   </p>
                   <Link 
                     href="/gui-bai"
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-extrabold text-[#1d4ed8] shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-50 hover:shadow-xl"
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-extrabold text-[#1d4ed8] shadow-lg transition-all hover:-translate-y-1 hover:bg-blue-50 hover:shadow-xl active:scale-95"
                   >
                     <span className="material-symbols-rounded">upload</span>
                     Gửi kỷ niệm ngay
@@ -324,14 +324,23 @@ export default async function Home() {
             </div>
 
             {/* Cột phải: Gallery và CTA chung tay */}
-            <div className="lg:col-span-7">
+            <div className="lg:col-span-7 w-full min-w-0">
               {/* Triển lãm ký ức trực tiếp */}
-              <Reveal variant="up" delay={300}>
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-widest text-blue-200">
-                    Góc kỷ niệm được gửi về gần đây
-                  </span>
-                  <div className="mt-6">
+              <Reveal variant="up" delay={200} className="w-full min-w-0">
+                <div className="w-full min-w-0">
+                  <div className="flex items-center justify-between mb-3 sm:mb-6">
+                    <span className="text-xs font-bold uppercase tracking-widest text-blue-200">
+                      Góc kỷ niệm được gửi về gần đây
+                    </span>
+                    <Link
+                      href="/khoanh-khac"
+                      className="text-xs font-bold text-blue-200 hover:text-white transition-colors flex items-center gap-1"
+                    >
+                      Xem tất cả
+                      <span className="material-symbols-rounded text-sm">arrow_forward</span>
+                    </Link>
+                  </div>
+                  <div className="w-full min-w-0">
                     <MemoryGallery />
                   </div>
                 </div>

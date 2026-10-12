@@ -41,18 +41,29 @@ export default function MemoryGallery() {
   }, []);
 
   if (items === null) {
-    // Skeleton grid — same 3-column layout as the real gallery
     return (
-      <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="overflow-hidden rounded-3xl bg-white/10">
-            <SkeletonBlock className="h-56 w-full rounded-none opacity-60" />
-            <div className="space-y-2 p-4">
-              <SkeletonBlock className="h-4 w-3/4 opacity-50" />
-              <SkeletonBlock className="h-3 w-1/2 opacity-40" />
+      <div className="w-full min-w-0 max-w-full">
+        {/* Mobile skeleton: hàng ngang tương thích với carousel */}
+        <div className="flex md:hidden gap-4 overflow-hidden -mx-4 px-4 sm:-mx-6 sm:px-6">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="w-[78vw] max-w-[320px] shrink-0 overflow-hidden rounded-2xl bg-white/10 aspect-[4/5]">
+              <SkeletonBlock className="h-full w-full rounded-none opacity-60" />
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {/* Desktop skeleton: lưới 3 cột */}
+        <div className="hidden md:grid gap-5 sm:grid-cols-2 md:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="overflow-hidden rounded-3xl bg-white/10">
+              <SkeletonBlock className="h-56 w-full rounded-none opacity-60" />
+              <div className="space-y-2 p-4">
+                <SkeletonBlock className="h-4 w-3/4 opacity-50" />
+                <SkeletonBlock className="h-3 w-1/2 opacity-40" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -67,11 +78,14 @@ export default function MemoryGallery() {
   }
 
   return (
-    <>
+    <div className="w-full min-w-0 max-w-full">
       {/* Mobile view: Auto-snapping carousel */}
-      <div className="flex md:hidden snap-x snap-mandatory overflow-x-auto gap-4 pb-4 -mx-6 px-6 hide-scrollbar">
+      <div
+        className="flex md:hidden snap-x snap-mandatory overflow-x-auto gap-4 pb-4 -mx-4 px-4 sm:-mx-6 sm:px-6 hide-scrollbar overscroll-x-contain touch-pan-x"
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x" }}
+      >
         {items.map((m) => (
-          <div key={m.id} className="w-[75vw] shrink-0 snap-center">
+          <div key={m.id} className="w-[78vw] max-w-[320px] shrink-0 snap-start">
             <MomentCard
               size="sm"
               coverUrl={m.url}
@@ -104,6 +118,6 @@ export default function MemoryGallery() {
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 }

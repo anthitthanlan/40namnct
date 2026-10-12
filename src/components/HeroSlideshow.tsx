@@ -144,9 +144,9 @@ export default function HeroSlideshow() {
       className="group relative h-screen min-h-[600px] w-full overflow-hidden bg-slate-950 select-none cursor-grab active:cursor-grabbing"
       style={{ touchAction: "pan-y" }}
     >
-      {/* Slideshow - top 45vh on mobile, full width/height on desktop/tablet */}
+      {/* Slideshow - top 52vh on mobile with feather mask, full width/height on desktop/tablet */}
       {slides.map((slide, i) => (
-        <div key={slide.src} className={`hero-slide overflow-hidden !bottom-auto !h-[45vh] md:!bottom-0 md:!h-full ${i === current ? "active" : ""}`}>
+        <div key={slide.src} className={`hero-slide hero-slide-mobile-feather overflow-hidden !bottom-auto !top-0 !h-[52vh] md:!top-0 md:!bottom-0 md:!h-full ${i === current ? "active" : ""}`}>
           <div
             className={`skeleton-pulse absolute inset-0 rounded-none transition-opacity duration-[var(--duration-very-slow)] ${
               loaded[i] ? "opacity-0" : "opacity-100"
@@ -172,12 +172,12 @@ export default function HeroSlideshow() {
         </div>
       ))}
 
-      {/* Top blur edge (overlay tối trên cho navbar và làm mờ viền trên) */}
-      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
-      {/* Bottom blur edge cho mobile để fade phần rìa dưới của ảnh vào nền đen */}
-      <div className="absolute inset-x-0 top-[20vh] h-[26vh] bg-gradient-to-t from-slate-950 from-5% to-transparent md:hidden pointer-events-none" />
+      {/* Top blur edge (overlay nhẹ tinh tế cho navbar không lấn át ảnh) */}
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/80 via-slate-950/30 to-transparent pointer-events-none z-[3]" />
+      {/* Bottom blur edge gọn gàng ở mép dưới ảnh, không kéo dài che khuất chi tiết */}
+      <div className="absolute inset-x-0 top-[40vh] h-[14vh] bg-gradient-to-b from-transparent via-slate-950/40 to-slate-950 md:hidden pointer-events-none z-[3]" />
       {/* Gradient nhẹ bên trái để text đọc được trên desktop/tablet */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent hidden md:block pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent hidden md:block pointer-events-none z-[3]" />
       
       {/* Ánh sáng glow mờ dưới đáy cho mobile bớt đơn điệu */}
       <div className="absolute inset-x-0 bottom-0 h-[50vh] bg-[radial-gradient(ellipse_at_bottom,rgba(30,58,138,0.3),transparent_70%)] md:hidden pointer-events-none" />

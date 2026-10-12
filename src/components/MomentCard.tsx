@@ -82,20 +82,22 @@ export default function MomentCard({
             src={coverUrl}
             alt={title}
             loading="lazy"
+            draggable={false}
             className={`${
               isFixed
-                ? "absolute inset-0 h-full w-full object-cover"
-                : "w-full h-auto min-h-[180px] sm:min-h-[190px] max-h-[600px] object-cover block"
+                ? "absolute inset-0 h-full w-full object-cover select-none pointer-events-none"
+                : "w-full h-auto min-h-[180px] sm:min-h-[190px] max-h-[600px] object-cover block select-none pointer-events-none"
             } transition-transform duration-500 ease-out group-hover:scale-[1.03]`}
           />
         ) : (
           <video
             src={coverUrl}
             preload="metadata"
+            draggable={false}
             className={`${
               isFixed
-                ? "absolute inset-0 h-full w-full object-cover"
-                : "w-full h-auto min-h-[180px] sm:min-h-[190px] max-h-[600px] object-cover block"
+                ? "absolute inset-0 h-full w-full object-cover select-none pointer-events-none"
+                : "w-full h-auto min-h-[180px] sm:min-h-[190px] max-h-[600px] object-cover block select-none pointer-events-none"
             } transition-transform duration-500 ease-out group-hover:scale-[1.03]`}
           />
         )}
@@ -172,7 +174,7 @@ export default function MomentCard({
     </>
   );
 
-  const containerClasses = `group relative block w-full transition-all duration-300 ${
+  const containerClasses = `group relative block w-full transition-all duration-300 touch-manipulation select-none ${
     isFixed
       ? "aspect-[4/5] rounded-2xl sm:rounded-3xl bg-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.015] overflow-hidden"
       : "bg-transparent sm:bg-slate-100 sm:rounded-3xl sm:border sm:border-transparent sm:shadow-sm sm:overflow-hidden sm:hover:shadow-xl sm:hover:scale-[1.015]"

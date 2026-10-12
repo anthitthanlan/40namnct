@@ -495,80 +495,204 @@ function FilterModal({ currentYear, onSelect, onClose }: { currentYear: number |
 ══════════════════════════════════════════ */
 function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
   const [current, setCurrent] = useState(0);
-  
-  useEffect(() => {
+
+  const next = useCallback(() => {
     if (slides.length <= 1) return;
-    const id = setInterval(() => setCurrent((c) => (c + 1) % slides.length), 4000);
-    return () => clearInterval(id);
-  }, [slides.length, current]);
+    setCurrent((c) => (c + 1) % slides.length);
+  }, [slides.length]);
+
+  const prev = useCallback(() => {
+    if (slides.length <= 1) return;
+    setCurrent((c) => (c - 1 + slides.length) % slides.length);
+  }, [slides.length]);
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (slides.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      if (!document.hidden) {
+        setCurrent((c) => (c + 1) % slides.length);
+      }
+    }, 5500);
+  }, [slides.length]);
+
+  useEffect(() => {
+    resetTimer();
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (timerRef.current) clearInterval(timerRef.current);
+      } else {
+        resetTimer();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [resetTimer]);
+
+  // Swipe / Drag handling (Desktop & Mobile)
+  const isPointerDown = useRef(false);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const startTime = useRef(0);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    isPointerDown.current = true;
+    startX.current = e.clientX;
+    startY.current = e.clientY;
+    startTime.current = Date.now();
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isPointerDown.current) return;
+    isPointerDown.current = false;
+    const dx = e.clientX - startX.current;
+    const dy = e.clientY - startY.current;
+    const elapsed = Date.now() - startTime.current;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const isFlick = Math.abs(dx) > 25 && elapsed < 350;
+      const isSwipe = Math.abs(dx) > 45;
+      if (isFlick || isSwipe) {
+        if (dx < 0) {
+          next();
+        } else {
+          prev();
+        }
+        resetTimer();
+      }
+    }
+  };
+
+  const handlePointerCancel = () => {
+    isPointerDown.current = false;
+  };
 
   if (slides.length === 0) return null;
 
   const slide = slides[current];
-  const prev = () => setCurrent((i) => (i > 0 ? i - 1 : slides.length - 1));
-  const next = () => setCurrent((i) => (i < slides.length - 1 ? i + 1 : 0));
 
   return (
-    <div className="relative h-screen overflow-hidden bg-slate-900">
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onDragStart={(e) => e.preventDefault()}
+      className="group relative h-screen min-h-[600px] w-full overflow-hidden bg-slate-950 select-none cursor-grab active:cursor-grabbing"
+      style={{ touchAction: "pan-y" }}
+    >
+      {/* Slideshow - top 45vh on mobile, full width/height on desktop/tablet */}
       {slides.map((s, i) => (
         <div
           key={i}
-          className="absolute inset-0 transition-opacity duration-700"
-          style={{ opacity: i === current ? 1 : 0 }}
+          className={`hero-slide overflow-hidden !bottom-auto !h-[45vh] md:!bottom-0 md:!h-full ${i === current ? "active" : ""}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={s.src} alt={s.title} decoding="async" {...(i === 0 ? { fetchPriority: "high" } : { loading: "lazy" })} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent hidden lg:block" />
+          <img
+            src={s.src}
+            alt={s.title}
+            decoding="async"
+            draggable={false}
+            {...(i === 0 ? { fetchPriority: "high" } : { loading: "lazy" })}
+            className="h-full w-full object-cover select-none pointer-events-none"
+          />
         </div>
       ))}
 
-      <div className="absolute inset-x-0 bottom-0 px-6 pb-28 md:px-16 md:pb-36 lg:px-24">
-        <span className="btn-lightship-soft inline-flex rounded-full bg-white px-4 py-1.5 text-xs font-bold tracking-widest text-[#1d4ed8]">
-          {slide.year}
-        </span>
-        <h2 className="mt-5 line-clamp-2 max-w-4xl text-4xl font-extrabold leading-tight text-white drop-shadow-lg md:text-5xl lg:text-6xl">
+      {/* Top blur edge (overlay tối trên cho navbar và làm mờ viền trên) */}
+      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
+      {/* Bottom blur edge cho mobile để fade phần rìa dưới của ảnh vào nền đen */}
+      <div className="absolute inset-x-0 top-[20vh] h-[26vh] bg-gradient-to-t from-slate-950 from-5% to-transparent md:hidden pointer-events-none" />
+      {/* Gradient nhẹ bên trái để text đọc được trên desktop/tablet */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent hidden md:block pointer-events-none" />
+
+      {/* Ánh sáng glow mờ dưới đáy cho mobile bớt đơn điệu */}
+      <div className="absolute inset-x-0 bottom-0 h-[50vh] bg-[radial-gradient(ellipse_at_bottom,rgba(30,58,138,0.3),transparent_70%)] md:hidden pointer-events-none" />
+
+      {/* Nội dung (Bố cục như trang chủ: căn dưới trên mobile, căn trái trên desktop) */}
+      <div className="relative z-10 flex h-full flex-col items-center justify-end pb-[16vh] px-6 text-center text-white md:items-start md:justify-center md:pb-0 md:text-left md:max-w-[60%] md:pl-16 xl:pl-24 pointer-events-none">
+        <div className="mb-4 floaty btn-lightship-soft inline-block max-w-full rounded-full bg-white px-5 py-2 font-bold tracking-wide text-[#1d4ed8] text-center whitespace-nowrap text-[clamp(0.6rem,3.5vw,0.875rem)] shadow-lg pointer-events-auto">
+          {slide.year ? `1986 - 2026 · KỶ NIỆM NĂM ${slide.year}` : "1986 - 2026 · 40 NĂM TRỒNG NGƯỜI"}
+        </div>
+        <h1 className="line-clamp-2 max-w-4xl font-extrabold leading-tight text-white drop-shadow-lg text-[clamp(1.4rem,6vw,3.25rem)] pointer-events-auto">
           {slide.title}
-        </h2>
-        <p className="mt-4 flex items-center gap-2 text-base font-medium text-slate-100/90 drop-shadow md:text-xl">
-          <span className="material-symbols-rounded text-[1.2em]">person</span>
-          {slide.author}
+        </h1>
+        <p className="mt-3.5 flex items-center justify-center md:justify-start gap-2 text-sm sm:text-base md:text-lg font-medium text-slate-200/90 drop-shadow pointer-events-auto">
+          <span className="material-symbols-rounded text-[1.1em] text-blue-400">person</span>
+          <span>{slide.author || "Thành viên NCT"}</span>
+          {slide.slug && (
+            <Link
+              href={`/cau-chuyen/${slide.slug}`}
+              className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-600/70 hover:bg-blue-600 px-3 py-0.5 text-xs font-bold text-white transition-colors"
+            >
+              Đọc bài
+              <span className="material-symbols-rounded text-xs">arrow_forward</span>
+            </Link>
+          )}
         </p>
       </div>
 
-      <button
-        onClick={prev}
-        className="absolute left-5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full bg-black/30 p-3 text-white backdrop-blur-sm hover:bg-black/50 md:flex"
-      >
-        <span className="material-symbols-rounded text-3xl">chevron_left</span>
-      </button>
-      <button
-        onClick={next}
-        className="absolute right-5 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full bg-black/30 p-3 text-white backdrop-blur-sm hover:bg-black/50 md:flex"
-      >
-        <span className="material-symbols-rounded text-3xl">chevron_right</span>
-      </button>
+      {/* Desktop Prev / Next Buttons */}
+      {slides.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              prev();
+              resetTimer();
+            }}
+            className="absolute left-5 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-11 w-11 items-center justify-center rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md border border-white/15 opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-95 pointer-events-auto"
+            aria-label="Slide trước"
+          >
+            <span className="material-symbols-rounded text-2xl">chevron_left</span>
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              next();
+              resetTimer();
+            }}
+            className="absolute right-5 top-1/2 -translate-y-1/2 z-20 hidden md:flex h-11 w-11 items-center justify-center rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md border border-white/15 opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-95 pointer-events-auto"
+            aria-label="Slide kế tiếp"
+          >
+            <span className="material-symbols-rounded text-2xl">chevron_right</span>
+          </button>
+        </>
+      )}
 
-      <div className="absolute bottom-14 left-6 flex items-center gap-2 md:bottom-16 md:left-16 lg:left-24">
+      {/* Chấm điều hướng + progress trên Desktop */}
+      <div className="absolute bottom-8 left-1/2 z-20 hidden -translate-x-1/2 items-center gap-2.5 md:flex pointer-events-auto">
         {slides.map((_, i) => (
           <button
             key={i}
-            onClick={() => setCurrent(i)}
             aria-label={`Slide ${i + 1}`}
-            className={`rounded-full transition-all duration-300 ${
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrent(i);
+              resetTimer();
+            }}
+            className={`h-2.5 rounded-full transition-all duration-300 ${
               i === current
-                ? "h-2.5 w-8 bg-white shadow-sm"
-                : "h-2.5 w-2.5 bg-white/40 hover:bg-white/70"
+                ? "w-8 bg-white shadow-sm"
+                : "w-2.5 bg-white/40 hover:bg-white/70"
             }`}
           />
         ))}
-        <span className="ml-2 text-xs font-bold tracking-widest text-white/60">
-          {current + 1} / {slides.length}
-        </span>
       </div>
 
+      {/* Nút Xem tiếp cuộn xuống feed */}
       <button
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           const feedStart = document.getElementById("timeline-feed-start");
           if (feedStart) {
             const y = feedStart.getBoundingClientRect().top + window.scrollY - 90;
@@ -577,15 +701,13 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
             window.scrollBy({ top: window.innerHeight - 80, behavior: "smooth" });
           }
         }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 text-white/90 transition-all hover:text-white hover:scale-110 active:scale-95"
+        className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 flex flex-col items-center gap-1 text-white/80 transition-all hover:text-white hover:scale-105 active:scale-95 md:bottom-6 pointer-events-auto"
         style={{ animation: "scrollPulse 2.5s ease-in-out infinite" }}
         aria-label="Cuộn xuống xem nội dung"
       >
-        <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] drop-shadow-md">Xem tiếp</span>
-        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/20 shadow-[0_4px_12px_rgba(0,0,0,0.3)] backdrop-blur-md">
-          <span className="material-symbols-rounded text-2xl font-light">
-            keyboard_arrow_down
-          </span>
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] drop-shadow-md">Xem tiếp</span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/20 shadow-md backdrop-blur-md">
+          <span className="material-symbols-rounded text-lg font-light">keyboard_arrow_down</span>
         </div>
       </button>
     </div>

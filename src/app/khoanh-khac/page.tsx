@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import fs from "fs";
-import path from "path";
 import TimelineWall, { type WallMemory } from "@/components/TimelineWall";
 import { listApprovedMediaChronological, mediaFileUrl } from "@/lib/media";
 import { listPublished } from "@/lib/posts";
@@ -15,20 +13,21 @@ export const metadata: Metadata = {
 
 async function readMemories(): Promise<WallMemory[]> {
   const memories: WallMemory[] = [];
+  const list = await listApprovedMediaChronological();
 
-  for (const m of await listApprovedMediaChronological()) {
+  for (const m of list) {
     if (m.mediaType === "post") continue;
     if (!m.caption && !m.author && m.mediaType !== "feed") continue; // Bỏ qua ảnh upload cho bài viết cũ
     memories.push({
       id: m.id,
       title: m.caption || "Kỷ niệm dưới mái trường Trứ",
-      caption: m.caption,
+      caption: m.caption || "",
       icon: "",
-      author: m.author,
-      role: m.authorRole,
-      year: m.year,
-      month: m.month,
-      kind: m.kind,
+      author: m.author || "",
+      role: m.authorRole || "",
+      year: m.year || 2026,
+      month: m.month || 1,
+      kind: m.kind || "image",
       images: [mediaFileUrl(m.file)],
       isCommunity: true,
     });
@@ -36,9 +35,9 @@ async function readMemories(): Promise<WallMemory[]> {
 
   memories.sort(
     (a, b) =>
-      a.year - b.year ||
-      a.month - b.month ||
-      a.title.localeCompare(b.title),
+      (a.year || 0) - (b.year || 0) ||
+      (a.month || 0) - (b.month || 0) ||
+      (a.title || "").localeCompare(b.title || ""),
   );
   return memories;
 }

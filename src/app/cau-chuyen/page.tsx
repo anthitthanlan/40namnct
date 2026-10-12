@@ -48,18 +48,20 @@ export default async function BaiVietPage() {
   const communityPosts = rest.filter((p) => p.source !== "admin" && !p.pinned);
 
   const allMedia = await listApprovedMediaChronological();
-  const validMoments = allMedia.filter(m => m.mediaType !== "post" && (m.caption || m.author || m.mediaType === "feed"));
+  const validMoments = (allMedia || []).filter(
+    (m) => m && m.mediaType !== "post" && (m.caption || m.author || m.mediaType === "feed")
+  );
   const shuffled = validMoments.sort(() => 0.5 - Math.random()).slice(0, 5);
   const carouselMoments: WallMemory[] = shuffled.map((m) => ({
     id: m.id,
     title: m.caption || "Kỷ niệm dưới mái trường Trứ",
-    caption: m.caption,
+    caption: m.caption || "",
     icon: "",
-    author: m.author,
-    role: m.authorRole,
-    year: m.year,
-    month: m.month,
-    kind: m.kind,
+    author: m.author || "",
+    role: m.authorRole || "",
+    year: m.year || 2026,
+    month: m.month || 1,
+    kind: m.kind || "image",
     images: [mediaFileUrl(m.file)],
     isCommunity: true,
   }));

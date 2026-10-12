@@ -1,5 +1,3 @@
-import { convertToWebp, isConvertibleImage } from "./image-convert";
-
 export type MediaStatus = "pending" | "approved" | "rejected";
 
 export type MediaItem = {
@@ -35,6 +33,30 @@ export const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB sau khi tối ưu thàn
 export const MAX_RAW_IMAGE_BYTES = 50 * 1024 * 1024; // 50MB cho tệp ảnh gốc chưa nén
 export const MAX_VIDEO_BYTES = 40 * 1024 * 1024; // 40MB
 
+export const CONVERTIBLE_IMAGE_EXTS = new Set([
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "avif",
+  "tiff",
+  "heic",
+  "bmp",
+]);
+
+export function isConvertibleImage(ext: string): boolean {
+  return CONVERTIBLE_IMAGE_EXTS.has(ext.toLowerCase().replace(/^\./, ""));
+}
+
+export async function convertToWebp(
+  buffer: Buffer,
+  _ext?: string
+): Promise<{ buffer: Buffer; info: Record<string, any> }> {
+  // Client đã tối ưu và nén WebP bằng HTML5 Canvas trước khi gửi lên máy chủ
+  return { buffer, info: {} };
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
 
 function getHeaders(token?: string) {
@@ -56,8 +78,6 @@ export function kindForExt(ext: string): "image" | "video" | null {
   return null;
 }
 
-export { convertToWebp, isConvertibleImage };
-
 export async function saveUploadFile(
   buffer: Buffer,
   ext: string,
@@ -74,19 +94,8 @@ export async function saveUploadFile(
     status?: string;
   }
 ): Promise<string> {
-  let uploadBuffer = buffer;
-  let uploadExt = ext.toLowerCase().replace(/^\./, "");
-
-  // Tự động chuyển đổi ảnh tải lên Feed & Post sang định dạng WebP chất lượng cao
-  if (kindForExt(uploadExt) === "image" || isConvertibleImage(uploadExt)) {
-    try {
-      const { buffer: webpBuf } = await convertToWebp(buffer, uploadExt);
-      uploadBuffer = webpBuf;
-      uploadExt = "webp";
-    } catch (err) {
-      console.warn("[saveUploadFile] Chuyển đổi sang WebP thất bại, fallback về định dạng gốc:", err);
-    }
-  }
+  const uploadBuffer = buffer;
+  const uploadExt = ext.toLowerCase().replace(/^\./, "");
 
   // Tính dung lượng file ảnh sau cùng sau khi chuyển thành WebP
   if (uploadExt === "webp" && uploadBuffer.length > MAX_IMAGE_BYTES) {
@@ -144,9 +153,6 @@ export async function saveUploadFile(
 
 export async function addMediaItem(item: MediaItem): Promise<void> {
   // FastAPI handles adding the record during upload for now.
-  // Or we might need to send an update if necessary.
-  // Since FastAPI /api/media/upload already creates the record, this might be a no-op 
-  // or we might have to patch it if they want to update details.
   return;
 }
 
@@ -157,8 +163,9 @@ export async function listApprovedMedia(): Promise<MediaItem[]> {
     });
     if (!res.ok) return [];
     const items = await res.json();
+    if (!Array.isArray(items)) return [];
     return items.sort((a: MediaItem, b: MediaItem) =>
-      b.createdAt.localeCompare(a.createdAt)
+      (b.createdAt || "").localeCompare(a.createdAt || "")
     );
   } catch {
     return [];
@@ -172,11 +179,12 @@ export async function listApprovedMediaChronological(): Promise<MediaItem[]> {
     });
     if (!res.ok) return [];
     const items = await res.json();
+    if (!Array.isArray(items)) return [];
     return items.sort(
       (a: MediaItem, b: MediaItem) =>
-        a.year - b.year ||
-        a.month - b.month ||
-        b.createdAt.localeCompare(a.createdAt),
+        (a.year || 0) - (b.year || 0) ||
+        (a.month || 0) - (b.month || 0) ||
+        (b.createdAt || "").localeCompare(a.createdAt || ""),
     );
   } catch {
     return [];
@@ -191,11 +199,12 @@ export async function listAllMedia(token?: string): Promise<MediaItem[]> {
     });
     if (!res.ok) return [];
     const items = await res.json();
+    if (!Array.isArray(items)) return [];
     const order: Record<MediaStatus, number> = { pending: 0, approved: 1, rejected: 2 };
     return items.sort(
       (a: MediaItem, b: MediaItem) =>
-        order[a.status] - order[b.status] ||
-        b.createdAt.localeCompare(a.createdAt),
+        (order[a.status] ?? 99) - (order[b.status] ?? 99) ||
+        (b.createdAt || "").localeCompare(a.createdAt || ""),
     );
   } catch {
     return [];

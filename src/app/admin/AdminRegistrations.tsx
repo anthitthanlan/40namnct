@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
+import { Modal } from "@/components/modal";
 import {
   formatVnd,
   sizesLabel,
@@ -68,6 +68,9 @@ export default function AdminRegistrations({
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [mainTab, setMainTab] = useState<"approve" | "sizes" | "transactions">("approve");
   const [editingInvitation, setEditingInvitation] = useState<InvitationRow | null>(null);
+  const [rejectingInvitation, setRejectingInvitation] = useState<InvitationRow | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [inviIdInput, setInviIdInput] = useState("");
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [viewingLogsFor, setViewingLogsFor] = useState<InvitationRow | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -110,6 +113,98 @@ export default function AdminRegistrations({
     load();
   }, [load]);
 
+  const duplicateInvitations = useMemo(() => {
+    if (!rejectingInvitation) return [];
+    const phone = rejectingInvitation.memberPhone?.trim();
+    return (invitations || []).filter(
+      (inv) =>
+        inv.id !== rejectingInvitation.id &&
+        Boolean(phone && inv.memberPhone?.trim() === phone)
+    );
+  }, [rejectingInvitation, invitations]);
+
+  function openRejectModal(t: InvitationRow) {
+    setRejectingInvitation(t);
+    const match = t.note?.match(/\[Lý do từ chối: (.*?)\]/);
+    const existingReason = match ? match[1].trim() : "";
+    setRejectReason(existingReason);
+
+    const phone = t.memberPhone?.trim();
+    const other = (invitations || []).find(
+      (inv) =>
+        inv.id !== t.id &&
+        ((phone && inv.memberPhone?.trim() === phone) ||
+          (inv.memberId && inv.memberId === t.memberId))
+    );
+    setInviIdInput(other?.code || "");
+  }
+
+  function applyPreset1(overrideCode?: string) {
+    const code = overrideCode || inviIdInput.trim() || "[invi_id]";
+    setRejectReason(`Đã tồn tại mã thư mời ${code}. Vui lòng tra cứu để biết thêm thông tin chi tiết!`);
+  }
+
+  function applyPreset2() {
+    setRejectReason("Đã hết thời gian đăng kí và thực hiện giao dịch đợt 1. Quý khách vui lòng thực hiện đăng kí mới ở đợt sau.");
+  }
+
+  function handleInviIdChange(newVal: string) {
+    const val = newVal.trim().toUpperCase();
+    setInviIdInput(val);
+    if (rejectReason.includes("Đã tồn tại mã thư mời")) {
+      setRejectReason(`Đã tồn tại mã thư mời ${val || "[invi_id]"}. Vui lòng tra cứu để biết thêm thông tin chi tiết!`);
+    }
+  }
+
+  async function handleConfirmReject() {
+    if (!rejectingInvitation) return;
+    const t = rejectingInvitation;
+    const reason = rejectReason.trim();
+
+    if (!reason) {
+      if (!window.confirm("Bạn chưa nhập lý do từ chối. Vẫn tiếp tục từ chối thư mời này?")) return;
+    }
+
+    let finalNote = t.note || "";
+    finalNote = finalNote.split(" | [Lý do từ chối:")[0].split("[Lý do từ chối:")[0].trim();
+
+    if (reason) {
+      finalNote += (finalNote ? " | " : "") + `[Lý do từ chối: ${reason}]`;
+    }
+
+    setBusy(true);
+    try {
+      const payload: any = {
+        id: t.id,
+        status: "rejected",
+        rejectReason: finalNote,
+      };
+
+      const res = await fetch("/api/admin/registrations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        onAuthError?.();
+        return;
+      }
+      const data = await res.json();
+      if (!data.ok) {
+        flash(false, data.message || "Thao tác thất bại.");
+        return;
+      }
+      flash(true, `Đã từ chối thư mời ${t.code}`);
+      setRejectingInvitation(null);
+      await load();
+    } catch {
+      flash(false, "Lỗi kết nối.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function act(
     t: InvitationRow,
     status: InvitationView["status"],
@@ -117,18 +212,8 @@ export default function AdminRegistrations({
   ) {
     let finalNote = t.note || "";
     if (status === "rejected") {
-      const reason = window.prompt("Nhập lý do từ chối (sẽ hiển thị cho người dùng):");
-      if (reason === null) return;
-      if (!reason.trim()) {
-        if (!window.confirm("Bạn chưa nhập lý do. Vẫn tiếp tục từ chối?")) return;
-      }
-
-      // Remove old reject reason if exists
-      finalNote = finalNote.split(" | [Lý do từ chối:")[0].trim();
-
-      if (reason.trim()) {
-        finalNote += (finalNote ? " | " : "") + `[Lý do từ chối: ${reason.trim()}]`;
-      }
+      openRejectModal(t);
+      return;
     } else if (status === "confirmed") {
       finalNote = finalNote.split(" | [Lý do từ chối:")[0].trim();
     }
@@ -136,7 +221,7 @@ export default function AdminRegistrations({
     setBusy(true);
     try {
       const payload: any = { id: t.id, status };
-      if (status === "rejected" || status === "confirmed") {
+      if (status === "confirmed") {
         payload.rejectReason = finalNote;
       }
 
@@ -959,12 +1044,23 @@ export default function AdminRegistrations({
                               <button
                                 type="button"
                                 disabled={busy}
-                                onClick={() =>
-                                  act(t, "rejected", `Đã từ chối thư mời ${t.code}`)
-                                }
-                                className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50"
+                                onClick={() => openRejectModal(t)}
+                                className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 flex items-center gap-1"
                               >
+                                <span className="material-symbols-rounded text-sm text-rose-500">cancel</span>
                                 Từ chối
+                              </button>
+                            )}
+
+                            {t.status === "rejected" && (
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => openRejectModal(t)}
+                                className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 flex items-center gap-1"
+                              >
+                                <span className="material-symbols-rounded text-sm">edit_note</span>
+                                Sửa lý do từ chối
                               </button>
                             )}
 
@@ -1203,331 +1299,477 @@ export default function AdminRegistrations({
       )}
 
       {/* Filter Modal */}
-      {showFilterModal && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/40 p-4 backdrop-blur-sm sm:items-center">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 p-5">
-              <h3 className="text-lg font-bold text-slate-900">Bộ lọc danh sách</h3>
+      <Modal
+        isOpen={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        size="md"
+        title="Bộ lọc danh sách"
+        footer={
+          <button
+            type="button"
+            onClick={() => setShowFilterModal(false)}
+            className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-xs transition-all hover:bg-blue-700 active:scale-[0.99]"
+          >
+            Hiển thị {filteredInvitations.length} kết quả
+          </button>
+        }
+        bodyClassName="space-y-6 max-h-[60vh]"
+      >
+        {/* Nhóm 1: Loại đăng ký */}
+        <div>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Loại đăng ký
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "all", label: "Tất cả" },
+              { id: "individual", label: "Cá nhân" },
+              { id: "group", label: "Tập thể" },
+            ].map((tab) => (
               <button
-                onClick={() => setShowFilterModal(false)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                key={tab.id}
+                onClick={() => setTypeFilter(tab.id as typeof typeFilter)}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                  typeFilter === tab.id
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
               >
-                <span className="material-symbols-rounded block text-xl">close</span>
+                {tab.label}
               </button>
-            </div>
-
-            <div className="max-h-[60vh] overflow-y-auto p-5 space-y-6">
-              {/* Nhóm 1: Loại đăng ký */}
-              <div>
-                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Loại đăng ký
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: "all", label: "Tất cả" },
-                    { id: "individual", label: "Cá nhân" },
-                    { id: "group", label: "Tập thể" },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setTypeFilter(tab.id as typeof typeFilter)}
-                      className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${typeFilter === tab.id
-                          ? "bg-blue-600 text-white shadow-sm"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nhóm 2: Trạng thái */}
-              <div>
-                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Trạng thái đăng ký
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: "all", label: "Tất cả" },
-                    { id: "pending_approval", label: "Chờ đối soát (48h)" },
-                    { id: "confirmed", label: "Đã duyệt" },
-                    { id: "pending_payment", label: "Chờ thanh toán" },
-                    { id: "checked_in", label: "Đã check-in" },
-                    { id: "shirt_received", label: "Đã nhận áo" },
-                    { id: "rejected", label: "Đã từ chối" },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        setStatusFilter(tab.id as typeof statusFilter);
-                        if (tab.id !== "confirmed") setEmailFilter("all");
-                      }}
-                      className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${statusFilter === tab.id
-                          ? "bg-slate-900 text-white shadow-sm"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nhóm Email (Chỉ khi chọn Đã duyệt) */}
-              <div className={`transition-opacity duration-300 ${statusFilter !== "confirmed" ? "opacity-50 pointer-events-none" : ""}`}>
-                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Trạng thái Email {statusFilter !== "confirmed" && "(Chỉ áp dụng khi chọn Đã duyệt)"}
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: "all", label: "Tất cả" },
-                    { id: "sent", label: "Đã gửi mail" },
-                    { id: "not_sent", label: "Chưa gửi mail" },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setEmailFilter(tab.id as typeof emailFilter)}
-                      className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${emailFilter === tab.id
-                          ? "bg-indigo-600 text-white shadow-sm"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nhóm 3: Khác */}
-              <div>
-                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Bộ lọc khác
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setMultiTicketPhoneFilter(!multiTicketPhoneFilter)}
-                    className={`rounded-xl px-4 py-2 text-sm font-bold transition-all flex items-center gap-2 ${multiTicketPhoneFilter
-                        ? "bg-slate-900 text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      }`}
-                  >
-                    <span className="material-symbols-rounded text-[18px]">
-                      {multiTicketPhoneFilter ? "check_box" : "check_box_outline_blank"}
-                    </span>
-                    SĐT có từ 2 vé đăng ký trở lên
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-slate-100 p-5 bg-slate-50">
-              <button
-                onClick={() => setShowFilterModal(false)}
-                className="w-full rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-blue-700 active:scale-[0.98]"
-              >
-                Hiển thị {filteredInvitations.length} kết quả
-              </button>
-            </div>
+            ))}
           </div>
-        </div>,
-        document.body
-      )}
+        </div>
 
-      {viewingLogsFor && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 p-5">
-              <h3 className="text-lg font-bold text-slate-900">Lịch sử: {viewingLogsFor.code}</h3>
+        {/* Nhóm 2: Trạng thái */}
+        <div>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Trạng thái đăng ký
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "all", label: "Tất cả" },
+              { id: "pending_approval", label: "Chờ đối soát (48h)" },
+              { id: "confirmed", label: "Đã duyệt" },
+              { id: "pending_payment", label: "Chờ thanh toán" },
+              { id: "checked_in", label: "Đã check-in" },
+              { id: "shirt_received", label: "Đã nhận áo" },
+              { id: "rejected", label: "Đã từ chối" },
+            ].map((tab) => (
               <button
-                type="button"
-                onClick={() => setViewingLogsFor(null)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                key={tab.id}
+                onClick={() => {
+                  setStatusFilter(tab.id as typeof statusFilter);
+                  if (tab.id !== "confirmed") setEmailFilter("all");
+                }}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                  statusFilter === tab.id
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
               >
-                <span className="material-symbols-rounded block text-xl">close</span>
+                {tab.label}
               </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Nhóm Email (Chỉ khi chọn Đã duyệt) */}
+        <div
+          className={`transition-opacity duration-300 ${
+            statusFilter !== "confirmed" ? "opacity-50 pointer-events-none" : ""
+          }`}
+        >
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Trạng thái Email {statusFilter !== "confirmed" && "(Chỉ áp dụng khi chọn Đã duyệt)"}
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "all", label: "Tất cả" },
+              { id: "sent", label: "Đã gửi mail" },
+              { id: "not_sent", label: "Chưa gửi mail" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setEmailFilter(tab.id as typeof emailFilter)}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                  emailFilter === tab.id
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Nhóm 3: Khác */}
+        <div>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Bộ lọc khác
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setMultiTicketPhoneFilter(!multiTicketPhoneFilter)}
+              className={`rounded-xl px-4 py-2 text-sm font-bold transition-all flex items-center gap-2 ${
+                multiTicketPhoneFilter
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              <span className="material-symbols-rounded text-[18px]">
+                {multiTicketPhoneFilter ? "check_box" : "check_box_outline_blank"}
+              </span>
+              SĐT có từ 2 vé đăng ký trở lên
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Action Logs Modal */}
+      <Modal
+        isOpen={!!viewingLogsFor}
+        onClose={() => setViewingLogsFor(null)}
+        size="lg"
+        title={viewingLogsFor ? `Lịch sử: ${viewingLogsFor.code}` : "Lịch sử thao tác"}
+        subtitle={viewingLogsFor ? viewingLogsFor.attendeeName || viewingLogsFor.memberName : undefined}
+        icon="history"
+        bodyClassName="space-y-4 max-h-[65vh]"
+      >
+        {viewingLogsFor && (() => {
+          const myLogs = logs.filter((l) => l.entityId === viewingLogsFor.id);
+          if (myLogs.length === 0) {
+            return (
+              <p className="text-sm text-slate-500 italic">
+                Chưa có lịch sử nào cho thư mời này.
+              </p>
+            );
+          }
+          return (
+            <div className="space-y-3">
+              {myLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="bg-slate-50 rounded-xl p-4 border border-slate-100"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-bold text-sm text-slate-800">
+                      {log.adminName}{" "}
+                      <span className="text-xs font-normal text-slate-500">
+                        ({log.adminUsername})
+                      </span>
+                    </div>
+                    <div className="text-[11px] font-semibold text-slate-500">
+                      {new Date(log.createdAt).toLocaleString("vi-VN")}
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed">{log.details}</p>
+                </div>
+              ))}
             </div>
-            <div className="max-h-[65vh] overflow-y-auto p-5 space-y-4 text-left">
-              {(() => {
-                const myLogs = logs.filter(l => l.entityId === viewingLogsFor.id);
-                if (myLogs.length === 0) {
-                  return <p className="text-sm text-slate-500 italic">Chưa có lịch sử nào cho thư mời này.</p>;
-                }
+          );
+        })()}
+      </Modal>
+
+      {/* Edit Registration Modal */}
+      <Modal
+        isOpen={!!editingInvitation}
+        onClose={() => setEditingInvitation(null)}
+        size="lg"
+        title="Chi tiết / Sửa Đăng Ký"
+        subtitle={editingInvitation?.code}
+        icon="edit_note"
+        bodyClassName="p-0"
+      >
+        {editingInvitation && (
+          <form onSubmit={handleUpdateInvitation}>
+            <div className="max-h-[60vh] overflow-y-auto p-5 space-y-4 text-left">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">
+                  Mã đăng ký
+                </label>
+                <input
+                  type="text"
+                  disabled
+                  value={editingInvitation.code}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">
+                  Họ và tên
+                </label>
+                <input
+                  type="text"
+                  value={editingInvitation.attendeeName || editingInvitation.memberName || ""}
+                  onChange={(e) =>
+                    setEditingInvitation({
+                      ...editingInvitation,
+                      attendeeName: e.target.value,
+                      memberName: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">
+                  Niên khóa
+                </label>
+                <input
+                  type="text"
+                  value={editingInvitation.nienKhoa || ""}
+                  onChange={(e) =>
+                    setEditingInvitation({ ...editingInvitation, nienKhoa: e.target.value })
+                  }
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editingInvitation.memberEmail || ""}
+                  onChange={(e) =>
+                    setEditingInvitation({ ...editingInvitation, memberEmail: e.target.value })
+                  }
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                  placeholder="example@gmail.com"
+                />
+              </div>
+              {editingInvitation.type === "individual" && (() => {
+                const parts = (editingInvitation.size || "Nam-M").split("-");
+                const gender = parts.length === 2 ? parts[0] : "Nam";
+                const sizeVal = parts.length === 2 ? parts[1] : (editingInvitation.size || "M");
                 return (
-                  <div className="space-y-3">
-                    {myLogs.map((log) => (
-                      <div key={log.id} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-bold text-sm text-slate-800">{log.adminName} <span className="text-xs font-normal text-slate-500">({log.adminUsername})</span></div>
-                          <div className="text-[11px] font-semibold text-slate-500">{new Date(log.createdAt).toLocaleString("vi-VN")}</div>
-                        </div>
-                        <p className="text-xs text-slate-700 leading-relaxed">{log.details}</p>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">
+                        Giới tính
+                      </label>
+                      <select
+                        value={gender}
+                        onChange={(e) =>
+                          setEditingInvitation({
+                            ...editingInvitation,
+                            size: `${e.target.value}-${sizeVal}`,
+                          })
+                        }
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                      >
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">
+                        Size áo
+                      </label>
+                      <select
+                        value={sizeVal}
+                        onChange={(e) =>
+                          setEditingInvitation({
+                            ...editingInvitation,
+                            size: `${gender}-${e.target.value}`,
+                          })
+                        }
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                      >
+                        {["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"].map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 );
               })()}
+              {editingInvitation.type === "group" && (
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">
+                    Phân bổ size (Tập thể)
+                  </label>
+                  <textarea
+                    disabled
+                    rows={3}
+                    value={JSON.stringify(editingInvitation.sizes, null, 2)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono text-xs"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    *Để sửa phân bổ size tập thể vui lòng thao tác trực tiếp vào CSDL.
+                  </p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1">
+                  Lớp
+                </label>
+                <input
+                  type="text"
+                  value={editingInvitation.note || ""}
+                  onChange={(e) =>
+                    setEditingInvitation({ ...editingInvitation, note: e.target.value })
+                  }
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                />
+              </div>
+            </div>
+            <div className="border-t border-slate-100 px-5 py-3.5 bg-slate-50/60 flex justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setEditingInvitation(null)}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={busy}
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-2xs"
+              >
+                {busy ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* Rejection Modal */}
+      <Modal
+        isOpen={!!rejectingInvitation}
+        onClose={() => setRejectingInvitation(null)}
+        size="md"
+        title="Từ chối thư mời"
+        subtitle={
+          rejectingInvitation ? (
+            <span>
+              {rejectingInvitation.attendeeName || rejectingInvitation.memberName} ·{" "}
+              <span className="font-mono font-bold text-rose-600">
+                {rejectingInvitation.code}
+              </span>
+            </span>
+          ) : undefined
+        }
+        icon="cancel"
+        footer={
+          <>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setRejectingInvitation(null)}
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200 transition-colors disabled:opacity-50"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handleConfirmReject}
+              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors disabled:opacity-50 shadow-2xs"
+            >
+              {busy ? "Đang xử lý…" : "Xác nhận từ chối"}
+            </button>
+          </>
+        }
+      >
+        {rejectingInvitation && (
+          <div className="space-y-4">
+            {/* Presets chọn nhanh */}
+            <div className="space-y-2">
+              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                Chọn nhanh lý do:
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => applyPreset1()}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 transition-colors border border-slate-200/60"
+                >
+                  Mẫu 1: Trùng mã thư mời
+                </button>
+                <button
+                  type="button"
+                  onClick={applyPreset2}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-amber-50 hover:text-amber-800 text-slate-700 transition-colors border border-slate-200/60"
+                >
+                  Mẫu 2: Hết hạn đợt 1
+                </button>
+              </div>
+            </div>
+
+            {/* Duplicate hints if any */}
+            {duplicateInvitations.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className="text-xs text-slate-400 font-medium shrink-0">Mã gợi ý:</span>
+                {duplicateInvitations.map((dup) => (
+                  <button
+                    key={dup.id}
+                    type="button"
+                    onClick={() => {
+                      setInviIdInput(dup.code);
+                      applyPreset1(dup.code);
+                    }}
+                    className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-colors border ${
+                      inviIdInput === dup.code
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                    }`}
+                    title="Bấm để chèn mã này vào Mẫu 1"
+                  >
+                    {dup.code}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Textarea */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Nội dung lý do từ chối:
+              </label>
+              <textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Nhập lý do từ chối hoặc chọn mẫu phía trên..."
+                className="w-full rounded-xl border border-slate-200 p-3 text-xs leading-relaxed text-slate-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 font-medium"
+              />
             </div>
           </div>
-        </div>,
-        document.body
-      )}
+        )}
+      </Modal>
 
-      {editingInvitation && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl transition-all animate-in fade-in zoom-in-95 duration-200">
-            <form onSubmit={handleUpdateInvitation}>
-              <div className="flex items-center justify-between border-b border-slate-100 p-5">
-                <h3 className="text-lg font-bold text-slate-900">Chi tiết / Sửa Đăng Ký</h3>
-                <button
-                  type="button"
-                  onClick={() => setEditingInvitation(null)}
-                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-                >
-                  <span className="material-symbols-rounded block text-xl">close</span>
-                </button>
-              </div>
-              <div className="max-h-[65vh] overflow-y-auto p-5 space-y-4 text-left">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Mã đăng ký</label>
-                  <input type="text" disabled value={editingInvitation.code} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono" />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Họ và tên</label>
-                  <input
-                    type="text"
-                    value={editingInvitation.attendeeName || editingInvitation.memberName || ""}
-                    onChange={(e) => setEditingInvitation({ 
-                      ...editingInvitation, 
-                      attendeeName: e.target.value,
-                      memberName: e.target.value
-                    })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Niên khóa</label>
-                  <input
-                    type="text"
-                    value={editingInvitation.nienKhoa || ""}
-                    onChange={(e) => setEditingInvitation({ ...editingInvitation, nienKhoa: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={editingInvitation.memberEmail || ""}
-                    onChange={(e) => setEditingInvitation({ ...editingInvitation, memberEmail: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                    placeholder="example@gmail.com"
-                  />
-                </div>
-                {editingInvitation.type === "individual" && (() => {
-                  const parts = (editingInvitation.size || "Nam-M").split("-");
-                  const gender = parts.length === 2 ? parts[0] : "Nam";
-                  const sizeVal = parts.length === 2 ? parts[1] : (editingInvitation.size || "M");
-                  return (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1">Giới tính</label>
-                        <select
-                          value={gender}
-                          onChange={(e) => setEditingInvitation({ ...editingInvitation, size: `${e.target.value}-${sizeVal}` })}
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                        >
-                          <option value="Nam">Nam</option>
-                          <option value="Nữ">Nữ</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1">Size áo</label>
-                        <select
-                          value={sizeVal}
-                          onChange={(e) => setEditingInvitation({ ...editingInvitation, size: `${gender}-${e.target.value}` })}
-                          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                        >
-                          {["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"].map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  );
-                })()}
-                {editingInvitation.type === "group" && (
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Phân bổ size (Tập thể)</label>
-                    <textarea
-                      disabled
-                      rows={3}
-                      value={JSON.stringify(editingInvitation.sizes, null, 2)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono text-xs"
-                    />
-                    <p className="text-xs text-slate-500 mt-1">*Để sửa phân bổ size tập thể vui lòng thao tác trực tiếp vào CSDL.</p>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Lớp</label>
-                  <input
-                    type="text"
-                    value={editingInvitation.note || ""}
-                    onChange={(e) => setEditingInvitation({ ...editingInvitation, note: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-              </div>
-              <div className="border-t border-slate-100 p-5 bg-slate-50 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setEditingInvitation(null)}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-                >
-                  {busy ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {/* LIGHTBOX MODAL */}
-      {lightboxImage && createPortal(
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setLightboxImage(null)}
-        >
-          <button
-            type="button"
-            className="absolute top-4 right-4 text-white hover:text-slate-300 transition-colors p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md"
-            onClick={(e) => { e.stopPropagation(); setLightboxImage(null); }}
-            title="Đóng"
-          >
-            <span className="material-symbols-rounded block text-3xl">close</span>
-          </button>
-          <div
-            className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-lg shadow-2xl shadow-black/50"
-            onClick={(e) => e.stopPropagation()}
-          >
+      {/* Lightbox Modal */}
+      <Modal
+        isOpen={!!lightboxImage}
+        onClose={() => setLightboxImage(null)}
+        unstyled
+        zIndex={200}
+        backdropClassName="bg-black/90 backdrop-blur-sm"
+      >
+        {lightboxImage && (
+          <div className="relative max-h-[90vh] max-w-[90vw] flex items-center justify-center">
+            <button
+              type="button"
+              className="fixed top-4 right-4 text-white hover:text-slate-300 transition-colors p-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md z-20"
+              onClick={() => setLightboxImage(null)}
+              title="Đóng"
+            >
+              <span className="material-symbols-rounded block text-3xl">close</span>
+            </button>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={lightboxImage}
               alt="Biên lai phóng to"
-              className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+              className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl shadow-black/50"
             />
           </div>
-        </div>,
-        document.body
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

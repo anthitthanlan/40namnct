@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { Modal } from "./modal";
 
 const SIZES = ["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"] as const;
 type Size = (typeof SIZES)[number];
@@ -1397,159 +1398,174 @@ export default function RegisterForm() {
       </AnimatePresence>
 
       {/* Size Chart Modal */}
-      <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${showSizeModal ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSizeModal(false)} />
-        <div className={`t-modal bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 relative z-10 ${showSizeModal ? 'is-open' : 'is-closing'}`}>
-          <button type="button" onClick={() => setShowSizeModal(false)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M18 6L6 18M6 6l12 12" /></svg>
-          </button>
-          <h3 className="text-xl font-bold text-gray-900 mb-4">Bảng Size Áo</h3>
-          <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-            <div ref={sizeChartRef} className="bg-white">
-              <div className="mb-6">
-                <h4 className="font-bold text-blue-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nam</h4>
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
-                  <table className="w-full text-sm text-center whitespace-nowrap">
-                    <thead className="bg-blue-50 text-blue-900 font-semibold">
-                      <tr>
-                        <th className="px-3 py-2 border-b border-r border-gray-200 bg-blue-50 sticky left-0 z-10 text-left">SIZE</th>
-                        <th className="px-3 py-2 border-b border-gray-200">S</th>
-                        <th className="px-3 py-2 border-b border-gray-200">M</th>
-                        <th className="px-3 py-2 border-b border-gray-200">L</th>
-                        <th className="px-3 py-2 border-b border-gray-200">XL</th>
-                        <th className="px-3 py-2 border-b border-gray-200">XXL</th>
-                        <th className="px-3 py-2 border-b border-gray-200">NC1</th>
-                        <th className="px-3 py-2 border-b border-gray-200">NC2</th>
-                        <th className="px-3 py-2 border-b border-gray-200">NC3</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-gray-700">
-                      <tr>
-                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                        <td className="px-3 py-2 border-b border-gray-200">&lt;160</td>
-                        <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
-                        <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
-                        <td className="px-3 py-2 border-b border-gray-200">170 - 175</td>
-                        <td className="px-3 py-2 border-b border-gray-200">175 - 180</td>
-                        <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
-                        <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
-                        <td className="px-3 py-2 border-b border-gray-200">&gt;175</td>
-                      </tr>
-                      <tr className="bg-gray-50">
-                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
-                        <td className="px-3 py-2 border-b border-gray-200">45 - 55</td>
-                        <td className="px-3 py-2 border-b border-gray-200">55 - 62</td>
-                        <td className="px-3 py-2 border-b border-gray-200">63 - 69</td>
-                        <td className="px-3 py-2 border-b border-gray-200">70 - 75</td>
-                        <td className="px-3 py-2 border-b border-gray-200">76 - 82</td>
-                        <td className="px-3 py-2 border-b border-gray-200">82 - 90</td>
-                        <td className="px-3 py-2 border-b border-gray-200">90 - 110</td>
-                        <td className="px-3 py-2 border-b border-gray-200">110 - 130</td>
-                      </tr>
-                      <tr>
-                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                        <td className="px-3 py-2 border-b border-gray-200">46</td>
-                        <td className="px-3 py-2 border-b border-gray-200">48</td>
-                        <td className="px-3 py-2 border-b border-gray-200">50</td>
-                        <td className="px-3 py-2 border-b border-gray-200">52</td>
-                        <td className="px-3 py-2 border-b border-gray-200">54</td>
-                        <td className="px-3 py-2 border-b border-gray-200">55</td>
-                        <td className="px-3 py-2 border-b border-gray-200">61</td>
-                        <td className="px-3 py-2 border-b border-gray-200">67</td>
-                      </tr>
-                      <tr className="bg-gray-50">
-                        <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                        <td className="px-3 py-2">64</td>
-                        <td className="px-3 py-2">66</td>
-                        <td className="px-3 py-2">68</td>
-                        <td className="px-3 py-2">70</td>
-                        <td className="px-3 py-2">72</td>
-                        <td className="px-3 py-2">73</td>
-                        <td className="px-3 py-2">75</td>
-                        <td className="px-3 py-2">76</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-bold text-pink-800 mb-3 uppercase text-sm">Bảng thông số chọn size áo Polo Nữ</h4>
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
-                  <table className="w-full text-sm text-center whitespace-nowrap">
-                    <thead className="bg-pink-50 text-pink-900 font-semibold">
-                      <tr>
-                        <th className="px-3 py-2 border-b border-r border-gray-200 bg-pink-50 sticky left-0 z-10 text-left">SIZE</th>
-                        <th className="px-3 py-2 border-b border-gray-200">S</th>
-                        <th className="px-3 py-2 border-b border-gray-200">M</th>
-                        <th className="px-3 py-2 border-b border-gray-200">L</th>
-                        <th className="px-3 py-2 border-b border-gray-200">XL</th>
-                        <th className="px-3 py-2 border-b border-gray-200">XXL</th>
-                        <th className="px-3 py-2 border-b border-gray-200">NC1</th>
-                        <th className="px-3 py-2 border-b border-gray-200">NC2</th>
-                        <th className="px-3 py-2 border-b border-gray-200">NC3</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-gray-700">
-                      <tr>
-                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                        <td className="px-3 py-2 border-b border-gray-200">145 - 150</td>
-                        <td className="px-3 py-2 border-b border-gray-200">150 - 155</td>
-                        <td className="px-3 py-2 border-b border-gray-200">155 - 160</td>
-                        <td className="px-3 py-2 border-b border-gray-200">160 - 165</td>
-                        <td className="px-3 py-2 border-b border-gray-200">165 - 170</td>
-                        <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
-                        <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
-                        <td className="px-3 py-2 border-b border-gray-200">&gt;165</td>
-                      </tr>
-                      <tr className="bg-gray-50">
-                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-gray-500 font-normal">(kg)</span></td>
-                        <td className="px-3 py-2 border-b border-gray-200">38 - 42</td>
-                        <td className="px-3 py-2 border-b border-gray-200">42 - 46</td>
-                        <td className="px-3 py-2 border-b border-gray-200">47 - 53</td>
-                        <td className="px-3 py-2 border-b border-gray-200">54 - 59</td>
-                        <td className="px-3 py-2 border-b border-gray-200">60 - 65</td>
-                        <td className="px-3 py-2 border-b border-gray-200">65 - 75</td>
-                        <td className="px-3 py-2 border-b border-gray-200">75 - 85</td>
-                        <td className="px-3 py-2 border-b border-gray-200">85 - 95</td>
-                      </tr>
-                      <tr>
-                        <td className="px-3 py-2 border-b border-r border-gray-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                        <td className="px-3 py-2 border-b border-gray-200">41</td>
-                        <td className="px-3 py-2 border-b border-gray-200">43</td>
-                        <td className="px-3 py-2 border-b border-gray-200">45</td>
-                        <td className="px-3 py-2 border-b border-gray-200">47</td>
-                        <td className="px-3 py-2 border-b border-gray-200">49</td>
-                        <td className="px-3 py-2 border-b border-gray-200">50</td>
-                        <td className="px-3 py-2 border-b border-gray-200">54</td>
-                        <td className="px-3 py-2 border-b border-gray-200">58</td>
-                      </tr>
-                      <tr className="bg-gray-50">
-                        <td className="px-3 py-2 border-r border-gray-200 bg-gray-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-gray-500 font-normal">(cm)</span></td>
-                        <td className="px-3 py-2">57.5</td>
-                        <td className="px-3 py-2">59.5</td>
-                        <td className="px-3 py-2">61.5</td>
-                        <td className="px-3 py-2">63</td>
-                        <td className="px-3 py-2">64.5</td>
-                        <td className="px-3 py-2">65.5</td>
-                        <td className="px-3 py-2">68.5</td>
-                        <td className="px-3 py-2">71.5</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-600 flex justify-end gap-3">
-            <button type="button" onClick={handleDownloadPNG} className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+      <Modal
+        isOpen={showSizeModal}
+        onClose={() => setShowSizeModal(false)}
+        size="full"
+        title="Bảng Size Áo"
+        subtitle="Thông số kích thước chuẩn áo Polo Nam & Nữ"
+        icon="straighten"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={handleDownloadPNG}
+              className="px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors flex items-center gap-2 text-sm"
+            >
+              <span className="material-symbols-rounded text-lg">download</span>
               Tải PNG
             </button>
-            <button type="button" onClick={() => setShowSizeModal(false)} className="px-5 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">Đóng</button>
+            <button
+              type="button"
+              onClick={() => setShowSizeModal(false)}
+              className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm shadow-2xs"
+            >
+              Đóng
+            </button>
+          </>
+        }
+        bodyClassName="p-5 max-h-[70vh]"
+      >
+        <div ref={sizeChartRef} className="space-y-6">
+          <div>
+            <h4 className="font-bold text-blue-800 mb-3 uppercase text-xs sm:text-sm tracking-wide">
+              Bảng thông số chọn size áo Polo Nam
+            </h4>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-sm text-center whitespace-nowrap">
+                <thead className="bg-blue-50 text-blue-900 font-semibold">
+                  <tr>
+                    <th className="px-3 py-2.5 border-b border-r border-slate-200 bg-blue-50 sticky left-0 z-10 text-left">SIZE</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">S</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">M</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">L</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">XL</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">XXL</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">NC1</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">NC2</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">NC3</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-700">
+                  <tr>
+                    <td className="px-3 py-2 border-b border-r border-slate-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-slate-500 font-normal">(cm)</span></td>
+                    <td className="px-3 py-2 border-b border-slate-200">&lt;160</td>
+                    <td className="px-3 py-2 border-b border-slate-200">160 - 165</td>
+                    <td className="px-3 py-2 border-b border-slate-200">165 - 170</td>
+                    <td className="px-3 py-2 border-b border-slate-200">170 - 175</td>
+                    <td className="px-3 py-2 border-b border-slate-200">175 - 180</td>
+                    <td className="px-3 py-2 border-b border-slate-200">&gt;175</td>
+                    <td className="px-3 py-2 border-b border-slate-200">&gt;175</td>
+                    <td className="px-3 py-2 border-b border-slate-200">&gt;175</td>
+                  </tr>
+                  <tr className="bg-slate-50">
+                    <td className="px-3 py-2 border-b border-r border-slate-200 bg-slate-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-slate-500 font-normal">(kg)</span></td>
+                    <td className="px-3 py-2 border-b border-slate-200">45 - 55</td>
+                    <td className="px-3 py-2 border-b border-slate-200">55 - 62</td>
+                    <td className="px-3 py-2 border-b border-slate-200">63 - 69</td>
+                    <td className="px-3 py-2 border-b border-slate-200">70 - 75</td>
+                    <td className="px-3 py-2 border-b border-slate-200">76 - 82</td>
+                    <td className="px-3 py-2 border-b border-slate-200">82 - 90</td>
+                    <td className="px-3 py-2 border-b border-slate-200">90 - 110</td>
+                    <td className="px-3 py-2 border-b border-slate-200">110 - 130</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 border-b border-r border-slate-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-slate-500 font-normal">(cm)</span></td>
+                    <td className="px-3 py-2 border-b border-slate-200">46</td>
+                    <td className="px-3 py-2 border-b border-slate-200">48</td>
+                    <td className="px-3 py-2 border-b border-slate-200">50</td>
+                    <td className="px-3 py-2 border-b border-slate-200">52</td>
+                    <td className="px-3 py-2 border-b border-slate-200">54</td>
+                    <td className="px-3 py-2 border-b border-slate-200">55</td>
+                    <td className="px-3 py-2 border-b border-slate-200">61</td>
+                    <td className="px-3 py-2 border-b border-slate-200">67</td>
+                  </tr>
+                  <tr className="bg-slate-50">
+                    <td className="px-3 py-2 border-r border-slate-200 bg-slate-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-slate-500 font-normal">(cm)</span></td>
+                    <td className="px-3 py-2">64</td>
+                    <td className="px-3 py-2">66</td>
+                    <td className="px-3 py-2">68</td>
+                    <td className="px-3 py-2">70</td>
+                    <td className="px-3 py-2">72</td>
+                    <td className="px-3 py-2">73</td>
+                    <td className="px-3 py-2">75</td>
+                    <td className="px-3 py-2">76</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-pink-800 mb-3 uppercase text-xs sm:text-sm tracking-wide">
+              Bảng thông số chọn size áo Polo Nữ
+            </h4>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-sm text-center whitespace-nowrap">
+                <thead className="bg-pink-50 text-pink-900 font-semibold">
+                  <tr>
+                    <th className="px-3 py-2.5 border-b border-r border-slate-200 bg-pink-50 sticky left-0 z-10 text-left">SIZE</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">S</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">M</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">L</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">XL</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">XXL</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">NC1</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">NC2</th>
+                    <th className="px-3 py-2.5 border-b border-slate-200">NC3</th>
+                  </tr>
+                </thead>
+                <tbody className="text-slate-700">
+                  <tr>
+                    <td className="px-3 py-2 border-b border-r border-slate-200 bg-white sticky left-0 z-10 font-medium text-left">Chiều cao <span className="text-xs text-slate-500 font-normal">(cm)</span></td>
+                    <td className="px-3 py-2 border-b border-slate-200">145 - 150</td>
+                    <td className="px-3 py-2 border-b border-slate-200">150 - 155</td>
+                    <td className="px-3 py-2 border-b border-slate-200">155 - 160</td>
+                    <td className="px-3 py-2 border-b border-slate-200">160 - 165</td>
+                    <td className="px-3 py-2 border-b border-slate-200">165 - 170</td>
+                    <td className="px-3 py-2 border-b border-slate-200">&gt;165</td>
+                    <td className="px-3 py-2 border-b border-slate-200">&gt;165</td>
+                    <td className="px-3 py-2 border-b border-slate-200">&gt;165</td>
+                  </tr>
+                  <tr className="bg-slate-50">
+                    <td className="px-3 py-2 border-b border-r border-slate-200 bg-slate-50 sticky left-0 z-10 font-medium text-left">Cân nặng <span className="text-xs text-slate-500 font-normal">(kg)</span></td>
+                    <td className="px-3 py-2 border-b border-slate-200">38 - 42</td>
+                    <td className="px-3 py-2 border-b border-slate-200">42 - 46</td>
+                    <td className="px-3 py-2 border-b border-slate-200">47 - 53</td>
+                    <td className="px-3 py-2 border-b border-slate-200">54 - 59</td>
+                    <td className="px-3 py-2 border-b border-slate-200">60 - 65</td>
+                    <td className="px-3 py-2 border-b border-slate-200">65 - 75</td>
+                    <td className="px-3 py-2 border-b border-slate-200">75 - 85</td>
+                    <td className="px-3 py-2 border-b border-slate-200">85 - 95</td>
+                  </tr>
+                  <tr>
+                    <td className="px-3 py-2 border-b border-r border-slate-200 bg-white sticky left-0 z-10 font-medium text-left">Ngang ngực <span className="text-xs text-slate-500 font-normal">(cm)</span></td>
+                    <td className="px-3 py-2 border-b border-slate-200">41</td>
+                    <td className="px-3 py-2 border-b border-slate-200">43</td>
+                    <td className="px-3 py-2 border-b border-slate-200">45</td>
+                    <td className="px-3 py-2 border-b border-slate-200">47</td>
+                    <td className="px-3 py-2 border-b border-slate-200">49</td>
+                    <td className="px-3 py-2 border-b border-slate-200">50</td>
+                    <td className="px-3 py-2 border-b border-slate-200">54</td>
+                    <td className="px-3 py-2 border-b border-slate-200">58</td>
+                  </tr>
+                  <tr className="bg-slate-50">
+                    <td className="px-3 py-2 border-r border-slate-200 bg-slate-50 sticky left-0 z-10 font-medium text-left">Dài áo <span className="text-xs text-slate-500 font-normal">(cm)</span></td>
+                    <td className="px-3 py-2">57.5</td>
+                    <td className="px-3 py-2">59.5</td>
+                    <td className="px-3 py-2">61.5</td>
+                    <td className="px-3 py-2">63</td>
+                    <td className="px-3 py-2">64.5</td>
+                    <td className="px-3 py-2">65.5</td>
+                    <td className="px-3 py-2">68.5</td>
+                    <td className="px-3 py-2">71.5</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      </Modal>
     </>
   );
 }

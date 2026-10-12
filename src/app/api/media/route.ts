@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import { getAdminFromRequest } from "@/lib/auth";
+import { listActionLogs } from "@/lib/action-logs";
 import {
   addMediaItem,
   extOf,
@@ -22,15 +23,29 @@ function str(v: FormDataEntryValue | null, max: number): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
-/** Danh sách media: công khai chỉ thấy mục đã duyệt, admin thấy tất cả */
+/** Danh sách media: công khai chỉ thấy mục đã duyệt, admin thấy tất cả kèm logs */
 export async function GET(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  const items = (admin && admin.role !== "editor")
-    ? await listAllMedia()
-    : await listApprovedMedia();
+  const token = req.cookies.get(process.env.COOKIE_NAME || "nct_admin")?.value;
+  const items =
+    admin && admin.role !== "editor"
+      ? await listAllMedia(token)
+      : await listApprovedMedia();
+
+  let logs: any[] = [];
+  if (admin) {
+    try {
+      const allLogs = await listActionLogs(token);
+      logs = allLogs.filter((l) => l.group === "media");
+    } catch (e) {
+      console.error("Failed to fetch media action logs:", e);
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     media: items.map((m) => ({ ...m, url: mediaFileUrl(m.file) })),
+    logs,
   });
 }
 

@@ -1,80 +1,123 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState, useCallback, useRef } from "react";
+import Modal from "./modal/Modal";
+
+export type ConfirmOptions = {
+  title?: string;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: "danger" | "warning" | "info";
+};
 
 export function useConfirm() {
-  const [modal, setModal] = useState<{
-    message: string;
+  const [modalState, setModalState] = useState<{
     isOpen: boolean;
-  } | null>(null);
-  
+    message: string;
+    title: string;
+    confirmText: string;
+    cancelText: string;
+    variant: "danger" | "warning" | "info";
+  }>({
+    isOpen: false,
+    message: "",
+    title: "Xác nhận thao tác",
+    confirmText: "Tiếp tục",
+    cancelText: "Huỷ",
+    variant: "danger",
+  });
+
   const resolver = useRef<((value: boolean) => void) | null>(null);
 
-  const confirm = useCallback((message: string) => {
+  const confirm = useCallback((message: string, options?: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       resolver.current = resolve;
-      setModal({ message, isOpen: true });
+      setModalState({
+        isOpen: true,
+        message,
+        title: options?.title || "Xác nhận thao tác",
+        confirmText: options?.confirmText || "Tiếp tục",
+        cancelText: options?.cancelText || "Huỷ",
+        variant: options?.variant || "danger",
+      });
     });
   }, []);
 
   const handleConfirm = useCallback(() => {
     resolver.current?.(true);
-    setModal(null);
+    resolver.current = null;
+    setModalState((prev) => ({ ...prev, isOpen: false }));
   }, []);
 
   const handleCancel = useCallback(() => {
     resolver.current?.(false);
-    setModal(null);
+    resolver.current = null;
+    setModalState((prev) => ({ ...prev, isOpen: false }));
   }, []);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const ConfirmElement = mounted && modal?.isOpen ? createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/10 p-4 animate-in fade-in duration-200">
-      <div 
-        className="relative bg-[#ececec]/95 shadow-2xl rounded-[18px] w-full max-w-[320px] p-5 pt-6 text-center border border-white/50 animate-in fade-in zoom-in-95 duration-200"
-        style={{ backdropFilter: "blur(40px)" }}
-      >
-        {/* Help icon top right */}
-        <div className="absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-xs font-bold text-black/40">
-          ?
-        </div>
-        
-        {/* Warning Icon */}
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-rose-500 shadow-sm">
-          <span className="material-symbols-rounded text-3xl text-white">
-            warning
+  const ConfirmElement = (
+    <Modal
+      isOpen={modalState.isOpen}
+      onClose={handleCancel}
+      size="sm"
+      zIndex={9999}
+      showCloseButton={false}
+      closeOnOverlayClick={false}
+      bodyClassName="p-5 sm:p-6"
+    >
+      <div className="text-center pt-1">
+        {/* Icon status */}
+        <div
+          className={`mx-auto mb-3.5 flex h-12 w-12 items-center justify-center rounded-2xl ${
+            modalState.variant === "danger"
+              ? "bg-rose-50 text-rose-600 border border-rose-100"
+              : modalState.variant === "warning"
+              ? "bg-amber-50 text-amber-600 border border-amber-100"
+              : "bg-blue-50 text-blue-600 border border-blue-100"
+          }`}
+        >
+          <span className="material-symbols-rounded text-2xl">
+            {modalState.variant === "danger"
+              ? "warning"
+              : modalState.variant === "warning"
+              ? "priority_high"
+              : "info"}
           </span>
         </div>
 
-        <h3 className="mb-2 text-[15px] font-bold leading-snug text-slate-900 px-2">
-          {modal.message}
+        <h3 className="text-base font-bold text-slate-900 leading-snug">
+          {modalState.title}
         </h3>
-        
-        <p className="mb-6 text-[13px] font-medium leading-relaxed text-slate-500">
-          Thao tác này sẽ xoá vĩnh viễn dữ liệu và không thể khôi phục lại.
+
+        <p className="mt-2 text-sm text-slate-600 leading-relaxed font-normal">
+          {modalState.message}
         </p>
 
-        <div className="flex gap-2 px-1">
-          <button 
-            onClick={handleCancel} 
-            className="flex-1 rounded-[8px] bg-[#d1d1d6] py-1.5 text-[14px] font-medium text-slate-900 transition-colors hover:bg-[#c1c1c6] active:bg-[#b1b1b6]"
+        <div className="mt-6 flex gap-2.5">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-colors shadow-2xs"
           >
-            Huỷ
+            {modalState.cancelText}
           </button>
-          <button 
-            onClick={handleConfirm} 
-            className="flex-1 rounded-[8px] bg-[#007aff] py-1.5 text-[14px] font-medium text-white transition-colors hover:bg-[#0062cc] active:bg-[#005bb5]"
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className={`flex-1 rounded-xl py-2 text-sm font-semibold text-white transition-colors shadow-2xs ${
+              modalState.variant === "danger"
+                ? "bg-rose-600 hover:bg-rose-700 active:bg-rose-800"
+                : modalState.variant === "warning"
+                ? "bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
+                : "bg-blue-600 hover:bg-blue-700 active:bg-blue-800"
+            }`}
           >
-            Tiếp tục
+            {modalState.confirmText}
           </button>
         </div>
       </div>
-    </div>,
-    document.body
-  ) : null;
+    </Modal>
+  );
 
   return { confirm, ConfirmElement };
 }

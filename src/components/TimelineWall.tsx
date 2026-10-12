@@ -250,7 +250,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                     <div
                       key={`${m.id}-${item.imageIndex}`}
                       id={item.imageIndex === 0 ? `moment-${m.id}` : undefined}
-                      className={`break-inside-avoid mb-5 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
+                      className={`break-inside-avoid mb-14 sm:mb-4 lg:mb-5 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
                         isTarget
                           ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
                           : ""
@@ -277,7 +277,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                     <div
                       key={`post-${p.id}`}
                       id={`moment-${p.id}`}
-                      className={`break-inside-avoid mb-6 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
+                      className={`break-inside-avoid mb-14 sm:mb-4 lg:mb-5 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
                         isTarget
                           ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
                           : ""

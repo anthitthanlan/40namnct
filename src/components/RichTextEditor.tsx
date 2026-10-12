@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { convertImageToWebpClient } from "@/lib/client-image-convert";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Color from "@tiptap/extension-color";
@@ -36,7 +37,6 @@ import {
   Upload,
   ExternalLink,
 } from "lucide-react";
-import { useEffect } from "react";
 
 export default function RichTextEditor({
   content,
@@ -134,8 +134,18 @@ export default function RichTextEditor({
     setUploading(true);
     setUploadError("");
     try {
+      let uploadFile = file;
+      if (file.type.startsWith("image/") && !file.type.includes("gif")) {
+        try {
+          const res = await convertImageToWebpClient(file);
+          uploadFile = res.file;
+        } catch (err) {
+          console.warn("[RichTextEditor] Client WebP convert fallback:", err);
+        }
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", uploadFile);
       if (postTitle) formData.append("title", postTitle);
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import type { PostStatus } from "@/lib/posts";
 import type { Category } from "@/lib/categories";
 import RichTextEditor from "@/components/RichTextEditor";
+import { convertImageToWebpClient } from "@/lib/client-image-convert";
 import { ChevronLeft, Save, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -127,8 +128,18 @@ export default function AdminEditPost({
     e.target.value = "";
     setUploadingCover(true);
     try {
+      let uploadFile = file;
+      if (file.type.startsWith("image/") && !file.type.includes("gif")) {
+        try {
+          const res = await convertImageToWebpClient(file);
+          uploadFile = res.file;
+        } catch (err) {
+          console.warn("[AdminEditPost] Lỗi chuyển đổi WebP ở client, dùng tệp gốc:", err);
+        }
+      }
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", uploadFile);
       formData.append("title", draft?.title || "untitled");
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       const data = await res.json();

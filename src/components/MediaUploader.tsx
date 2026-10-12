@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { convertImageToWebpClient } from "@/lib/client-image-convert";
 
 const ROLES = [
   "Cựu học sinh",
@@ -22,8 +23,9 @@ const inputCls =
 const labelCls =
   "mt-5 block text-xs font-extrabold uppercase tracking-wider text-slate-500";
 
-const IMAGE_LIMIT = 10 * 1024 * 1024;
-const VIDEO_LIMIT = 40 * 1024 * 1024;
+const RAW_IMAGE_LIMIT = 50 * 1024 * 1024; // Cho phép ảnh gốc lên đến 50MB
+const WEBP_IMAGE_LIMIT = 10 * 1024 * 1024; // Giới hạn sau cùng sau khi chuyển thành WebP là 10MB
+const VIDEO_LIMIT = 40 * 1024 * 1024; // 40MB cho video
 const MAX_FILES = 8;
 
 function prettySize(bytes: number): string {
@@ -39,6 +41,8 @@ function isVideo(name: string) {
 type FileEntry = {
   file: File;
   previewUrl: string | null;
+  originalSize?: number;
+  isOptimized?: boolean;
 };
 
 export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: { onSuccess?: () => void; onCancel?: () => void; isAdmin?: boolean }) {
@@ -51,6 +55,7 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
   const [month, setMonth] = useState(isAdmin ? (new Date().getMonth() + 1).toString() : "");
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [busy, setBusy] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -61,14 +66,14 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
     );
     if (bad) return `Tệp "${bad.name}" không đúng định dạng ảnh/video.`;
     const over = picked.find((f) =>
-      isVideo(f.name) ? f.size > VIDEO_LIMIT : f.size > IMAGE_LIMIT
+      isVideo(f.name) ? f.size > VIDEO_LIMIT : f.size > RAW_IMAGE_LIMIT
     );
     if (over)
-      return `Tệp "${over.name}" quá lớn (tối đa 10MB ảnh / 40MB video).`;
+      return `Tệp "${over.name}" quá lớn (tối đa 50MB ảnh gốc / 40MB video).`;
     return null;
   }
 
-  function onPick(e: ChangeEvent<HTMLInputElement>) {
+  async function onPick(e: ChangeEvent<HTMLInputElement>) {
     setError("");
     const picked = Array.from(e.target.files ?? []);
     if (!picked.length) return;
@@ -82,22 +87,55 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
       return;
     }
 
-    // Merge new files with existing ones, deduplicate by name+size
-    setEntries((prev) => {
-      const existing = new Set(prev.map((e) => `${e.file.name}-${e.file.size}`));
-      const newEntries: FileEntry[] = picked
-        .filter((f) => !existing.has(`${f.name}-${f.size}`))
-        .map((f) => ({
-          file: f,
-          previewUrl: isVideo(f.name) ? null : URL.createObjectURL(f),
-        }));
-      const merged = [...prev, ...newEntries];
-      if (merged.length > MAX_FILES) {
-        setError(`Chỉ được chọn tối đa ${MAX_FILES} tệp.`);
-        return prev;
+    setOptimizing(true);
+    try {
+      const processed: FileEntry[] = [];
+      for (const f of picked) {
+        if (isVideo(f.name)) {
+          processed.push({
+            file: f,
+            previewUrl: null,
+            originalSize: f.size,
+            isOptimized: false,
+          });
+        } else {
+          // Tự động chuyển đổi ảnh sang WebP ngay trên trình duyệt và tính dung lượng sau cùng
+          const res = await convertImageToWebpClient(f);
+          if (res.file.size > WEBP_IMAGE_LIMIT) {
+            setError(
+              `Tệp "${f.name}" sau khi tối ưu WebP (${prettySize(res.file.size)}) vẫn vượt quá 10MB.`
+            );
+            setOptimizing(false);
+            return;
+          }
+          processed.push({
+            file: res.file,
+            previewUrl: URL.createObjectURL(res.file),
+            originalSize: res.originalSize,
+            isOptimized: res.isOptimized,
+          });
+        }
       }
-      return merged;
-    });
+
+      // Merge new files with existing ones, deduplicate by name+size
+      setEntries((prev) => {
+        const existing = new Set(prev.map((e) => `${e.file.name}-${e.file.size}`));
+        const newEntries = processed.filter(
+          (p) => !existing.has(`${p.file.name}-${p.file.size}`)
+        );
+        const merged = [...prev, ...newEntries];
+        if (merged.length > MAX_FILES) {
+          setError(`Chỉ được chọn tối đa ${MAX_FILES} tệp.`);
+          return prev;
+        }
+        return merged;
+      });
+    } catch (err) {
+      console.error("Lỗi tối ưu ảnh:", err);
+      setError("Không thể xử lý tối ưu ảnh. Vui lòng thử lại.");
+    } finally {
+      setOptimizing(false);
+    }
   }
 
   function removeFile(idx: number) {
@@ -143,6 +181,9 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
       form.append("title", title);
       form.append("year", `${y}`);
       form.append("month", `${m}`);
+      if (isAdmin) {
+        form.append("publishDirect", "true");
+      }
       entries.forEach(({ file }) => form.append("files", file));
       const res = await fetch("/api/media", { method: "POST", body: form });
       const data = await res.json();
@@ -202,7 +243,7 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
 
       {/* File picker */}
       <label className={labelCls} htmlFor="media-files">
-        Chọn ảnh / video * (tối đa {MAX_FILES} tệp · ảnh ≤ 10MB · video ≤ 40MB)
+        Chọn ảnh / video * (tối đa {MAX_FILES} tệp · ảnh gốc tới 50MB, tự động nén WebP ≤ 10MB · video ≤ 40MB)
       </label>
       <input
         ref={inputRef}
@@ -211,13 +252,22 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
         multiple
         accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
         onChange={onPick}
-        className="mt-2 w-full cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-[#1d4ed8] file:px-5 file:py-2 file:text-sm file:font-extrabold file:text-white"
+        disabled={busy || optimizing}
+        className="mt-2 w-full cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 bg-white px-4 py-6 text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-[#1d4ed8] file:px-5 file:py-2 file:text-sm file:font-extrabold file:text-white disabled:opacity-50"
       />
+
+      {/* Optimizing banner */}
+      {optimizing && (
+        <div className="mt-3 flex items-center gap-2.5 rounded-2xl bg-blue-50/80 border border-blue-200/60 px-4 py-3 text-xs font-bold text-blue-700">
+          <span className="material-symbols-rounded animate-spin text-base text-blue-600">sync</span>
+          <span>Đang tối ưu dung lượng và chuyển đổi ảnh sang WebP...</span>
+        </div>
+      )}
 
       {/* File list with previews and remove buttons */}
       {entries.length > 0 && (
         <ul className="mt-3 space-y-2">
-          {entries.map(({ file, previewUrl }, idx) => (
+          {entries.map(({ file, previewUrl, originalSize, isOptimized }, idx) => (
             <li
               key={`${file.name}-${file.size}-${idx}`}
               className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2"
@@ -238,15 +288,28 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
               {/* File info */}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold text-slate-700">{file.name}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">{prettySize(file.size)}</p>
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] mt-0.5">
+                  <span className="font-semibold text-slate-700">{prettySize(file.size)}</span>
+                  {originalSize && originalSize > file.size && (
+                    <span className="text-slate-400 line-through text-[10px]">
+                      {prettySize(originalSize)}
+                    </span>
+                  )}
+                  {isOptimized && (
+                    <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200/80">
+                      WebP {originalSize ? `· Giảm ${Math.round((1 - file.size / originalSize) * 100)}%` : ""}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Remove button */}
               <button
                 type="button"
                 onClick={() => removeFile(idx)}
+                disabled={busy || optimizing}
                 title="Xóa tệp này"
-                className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors disabled:opacity-50"
               >
                 <span className="material-symbols-rounded text-[18px]">close</span>
               </button>
@@ -379,16 +442,26 @@ export default function MediaUploader({ onSuccess, onCancel, isAdmin = false }: 
       <div className="mt-6 flex flex-col sm:flex-row gap-3">
         <button
           type="submit"
-          disabled={busy || entries.length === 0}
+          disabled={busy || optimizing || entries.length === 0}
           className="btn-lightship flex w-full items-center justify-center gap-2 bg-[#1d4ed8] py-3.5 text-base font-extrabold text-white disabled:opacity-50 sm:w-auto sm:px-10"
         >
-          {busy ? "Đang tải lên…" : <><span className="material-symbols-rounded">upload</span> {isAdmin ? "Đăng khoảnh khắc" : "Gửi kỷ niệm"}</>}
+          {optimizing ? (
+            <>
+              <span className="material-symbols-rounded animate-spin">sync</span> Đang tối ưu ảnh…
+            </>
+          ) : busy ? (
+            "Đang tải lên…"
+          ) : (
+            <>
+              <span className="material-symbols-rounded">upload</span> {isAdmin ? "Đăng khoảnh khắc" : "Gửi kỷ niệm"}
+            </>
+          )}
         </button>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            disabled={busy}
+            disabled={busy || optimizing}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3.5 text-base font-bold text-slate-600 hover:bg-slate-200 disabled:opacity-50 sm:w-auto sm:px-8"
           >
             Hủy

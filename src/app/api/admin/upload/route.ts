@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest } from "@/lib/auth";
-import { extOf, kindForExt, MAX_IMAGE_BYTES, mediaFileUrl, saveUploadFile } from "@/lib/media";
+import { extOf, kindForExt, MAX_RAW_IMAGE_BYTES, mediaFileUrl, saveUploadFile } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
 
@@ -29,8 +29,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: "Only image files are allowed for editor upload" }, { status: 400 });
   }
 
-  if (file.size > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ ok: false, message: "File is too large" }, { status: 400 });
+  if (file.size > MAX_RAW_IMAGE_BYTES) {
+    return NextResponse.json(
+      { ok: false, message: `Tệp ảnh gốc quá lớn (tối đa ${Math.round(MAX_RAW_IMAGE_BYTES / 1024 / 1024)}MB)` },
+      { status: 400 }
+    );
   }
 
   try {

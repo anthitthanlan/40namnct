@@ -10,6 +10,7 @@ import {
   listAllMedia,
   listApprovedMedia,
   MAX_IMAGE_BYTES,
+  MAX_RAW_IMAGE_BYTES,
   MAX_VIDEO_BYTES,
   mediaFileUrl,
   saveUploadFile,
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-    const limit = kind === "image" ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
+    const limit = kind === "image" ? MAX_RAW_IMAGE_BYTES : MAX_VIDEO_BYTES;
     if (file.size > limit) {
       return NextResponse.json(
         {
@@ -137,42 +138,57 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const publishDirect = form.get("publishDirect") === "true";
+  const isDirectPublish = !!admin && publishDirect;
+  const targetStatus = isDirectPublish ? "approved" : "pending";
+
   let uploadIndex = 1;
-  for (const file of files) {
-    const ext = extOf(file.name);
-    const kind = kindForExt(ext) as "image" | "video";
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const name = await saveUploadFile(buffer, ext, {
-      mediaType,
-      title,
-      uploadIndex: uploadIndex++,
-      year,
-      month,
-      author,
-      authorRole,
-      caption,
-      status: admin ? "approved" : "pending",
-    });
-    await addMediaItem({
-      id: randomUUID(),
-      file: name,
-      kind,
-      size: file.size,
-      year,
-      month,
-      author,
-      authorRole,
-      caption,
-      status: admin ? "approved" : "pending",
-      createdAt: new Date().toISOString(),
-    });
+  try {
+    for (const file of files) {
+      const ext = extOf(file.name);
+      const kind = kindForExt(ext) as "image" | "video";
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const name = await saveUploadFile(buffer, ext, {
+        mediaType,
+        title,
+        uploadIndex: uploadIndex++,
+        year,
+        month,
+        author,
+        authorRole,
+        caption,
+        status: targetStatus,
+      });
+      await addMediaItem({
+        id: randomUUID(),
+        file: name,
+        kind,
+        size: file.size,
+        year,
+        month,
+        author,
+        authorRole,
+        caption,
+        status: targetStatus,
+        createdAt: new Date().toISOString(),
+      });
+    }
+  } catch (err: any) {
+    console.error("Lỗi khi xử lý tệp upload media:", err);
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Lỗi khi tải tệp lên: ${err?.message || "Không thể xử lý tệp"}`,
+      },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json(
     {
       ok: true,
       count: files.length,
-      message: admin 
+      message: isDirectPublish 
         ? "Đã đăng khoảnh khắc lên trang Timeline thành công."
         : "Cảm ơn bạn! Kỷ niệm của bạn đã được gửi và đang chờ Ban Biên tập duyệt.",
     },

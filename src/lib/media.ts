@@ -1,3 +1,5 @@
+import { convertToWebp, isConvertibleImage } from "./image-convert";
+
 export type MediaStatus = "pending" | "approved" | "rejected";
 
 export type MediaItem = {
@@ -29,7 +31,8 @@ export const VIDEO_MIME: Record<string, string> = {
   webm: "video/webm",
 };
 
-export const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10MB sau khi tối ưu thành WebP
+export const MAX_RAW_IMAGE_BYTES = 50 * 1024 * 1024; // 50MB cho tệp ảnh gốc chưa nén
 export const MAX_VIDEO_BYTES = 40 * 1024 * 1024; // 40MB
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
@@ -47,10 +50,13 @@ export function extOf(fileName: string): string {
 }
 
 export function kindForExt(ext: string): "image" | "video" | null {
-  if (ext in IMAGE_MIME) return "image";
-  if (ext in VIDEO_MIME) return "video";
+  const clean = ext.toLowerCase().replace(/^\./, "");
+  if (clean in IMAGE_MIME || isConvertibleImage(clean)) return "image";
+  if (clean in VIDEO_MIME) return "video";
   return null;
 }
+
+export { convertToWebp, isConvertibleImage };
 
 export async function saveUploadFile(
   buffer: Buffer,
@@ -68,11 +74,39 @@ export async function saveUploadFile(
     status?: string;
   }
 ): Promise<string> {
+  let uploadBuffer = buffer;
+  let uploadExt = ext.toLowerCase().replace(/^\./, "");
+
+  // Tự động chuyển đổi ảnh tải lên Feed & Post sang định dạng WebP chất lượng cao
+  if (kindForExt(uploadExt) === "image" || isConvertibleImage(uploadExt)) {
+    try {
+      const { buffer: webpBuf } = await convertToWebp(buffer, uploadExt);
+      uploadBuffer = webpBuf;
+      uploadExt = "webp";
+    } catch (err) {
+      console.warn("[saveUploadFile] Chuyển đổi sang WebP thất bại, fallback về định dạng gốc:", err);
+    }
+  }
+
+  // Tính dung lượng file ảnh sau cùng sau khi chuyển thành WebP
+  if (uploadExt === "webp" && uploadBuffer.length > MAX_IMAGE_BYTES) {
+    throw new Error(
+      `Dung lượng ảnh sau khi chuyển thành WebP (${(uploadBuffer.length / 1024 / 1024).toFixed(1)}MB) vượt quá giới hạn cho phép (10MB).`
+    );
+  }
+
+  const mimeType =
+    uploadExt === "webp"
+      ? "image/webp"
+      : kindForExt(uploadExt) === "image"
+      ? IMAGE_MIME[uploadExt] || "image/jpeg"
+      : VIDEO_MIME[uploadExt] || "application/octet-stream";
+
   const formData = new FormData();
   formData.append(
     "file",
-    new Blob([new Uint8Array(buffer)], { type: "application/octet-stream" }),
-    `upload.${ext}`
+    new Blob([new Uint8Array(uploadBuffer)], { type: mimeType }),
+    `upload.${uploadExt}`
   );
 
   if (options) {

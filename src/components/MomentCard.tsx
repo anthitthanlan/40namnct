@@ -42,9 +42,9 @@ export default function MomentCard({
 
   const content = (
     <>
-      {/* ── MOBILE HEADER (Unsplash-style: tác giả & năm nằm trên ảnh, ẩn trên desktop) ── */}
+      {/* ── MOBILE HEADER (Tác giả & Năm để trực tiếp trên nền, không bỏ vào khung) ── */}
       {!isFixed && (
-        <div className="flex sm:hidden items-center justify-between gap-3 px-3.5 pt-3 pb-2.5 bg-white">
+        <div className="flex sm:hidden items-center justify-between gap-3 px-1 pt-0.5 pb-2.5 bg-transparent">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 border border-blue-200/60 text-xs font-bold text-[#1d4ed8] shadow-sm">
               {getInitial(author)}
@@ -61,15 +61,21 @@ export default function MomentCard({
             </div>
           </div>
           {year ? (
-            <span className="shrink-0 rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
+            <span className="shrink-0 rounded-full bg-slate-200/70 border border-slate-300/60 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
               {year}
             </span>
           ) : null}
         </div>
       )}
 
-      {/* ── KHỐI MEDIA (Ảnh / Video) ── */}
-      <div className={`relative overflow-hidden ${isFixed ? "h-full w-full" : "w-full"}`}>
+      {/* ── KHỐI MEDIA (Ảnh hiển thị trong khung bo tròn nhẹ) ── */}
+      <div
+        className={`relative ${
+          isFixed
+            ? "h-full w-full overflow-hidden"
+            : "w-full rounded-2xl sm:rounded-none overflow-hidden border border-slate-200/70 sm:border-0 shadow-sm sm:shadow-none bg-slate-200/50"
+        }`}
+      >
         {kind === "image" ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -95,7 +101,11 @@ export default function MomentCard({
         )}
 
         {/* Desktop Overlay Badges: Badge năm ở góc trên trái (chỉ hiện trên Desktop hoặc khi Fixed aspect) */}
-        <div className={`absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10 pointer-events-none ${isFixed ? "flex" : "hidden sm:flex"} items-center gap-1.5`}>
+        <div
+          className={`absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10 pointer-events-none ${
+            isFixed ? "flex" : "hidden sm:flex"
+          } items-center gap-1.5`}
+        >
           {year ? (
             <span className="rounded-full bg-black/45 backdrop-blur-md border border-white/20 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold tracking-wider text-white shadow-sm">
               {year}
@@ -112,10 +122,18 @@ export default function MomentCard({
         )}
 
         {/* Desktop Bottom Scrim Gradient (Ẩn trên Mobile khi hiển thị Feed tự nhiên) */}
-        <div className={`absolute inset-x-0 bottom-0 h-28 sm:h-32 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none ${isFixed ? "block" : "hidden sm:block"}`} />
+        <div
+          className={`absolute inset-x-0 bottom-0 h-28 sm:h-32 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none ${
+            isFixed ? "block" : "hidden sm:block"
+          }`}
+        />
 
         {/* Desktop Bottom Metadata (Ẩn trên Mobile khi hiển thị Feed tự nhiên) */}
-        <div className={`absolute inset-x-0 bottom-0 z-10 pointer-events-none p-2.5 sm:p-3.5 ${isFixed ? "block" : "hidden sm:block"}`}>
+        <div
+          className={`absolute inset-x-0 bottom-0 z-10 pointer-events-none p-2.5 sm:p-3.5 ${
+            isFixed ? "block" : "hidden sm:block"
+          }`}
+        >
           <h3 className="line-clamp-2 text-xs sm:text-sm font-semibold leading-snug text-white drop-shadow-sm transition-colors group-hover:text-blue-100">
             {title}
           </h3>
@@ -128,10 +146,10 @@ export default function MomentCard({
         </div>
       </div>
 
-      {/* ── MOBILE FOOTER (Unsplash-style: Tiêu đề & Chú thích dưới ảnh, ẩn trên desktop) ── */}
+      {/* ── MOBILE FOOTER (Tiêu đề & Chú thích để trực tiếp trên nền, không bỏ vào khung) ── */}
       {!isFixed && (
-        <div className="block sm:hidden px-3.5 pt-2.5 pb-3.5 bg-white">
-          <h3 className="text-[13px] font-bold leading-snug text-slate-900">
+        <div className="block sm:hidden px-1 pt-2.5 pb-1 bg-transparent">
+          <h3 className="text-[14px] font-bold leading-snug text-slate-900">
             {title}
           </h3>
           {caption && caption !== title && (
@@ -139,8 +157,8 @@ export default function MomentCard({
               {caption}
             </p>
           )}
-          <div className="mt-2.5 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
+          <div className="mt-2.5 flex items-center justify-between pt-1 text-xs text-slate-400">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
               <span className="material-symbols-rounded text-sm text-slate-400">photo_camera</span>
               Kỷ niệm 40 năm
             </span>
@@ -154,10 +172,10 @@ export default function MomentCard({
     </>
   );
 
-  const containerClasses = `group relative block w-full overflow-hidden transition-all duration-300 ${
+  const containerClasses = `group relative block w-full transition-all duration-300 ${
     isFixed
-      ? "aspect-[4/5] rounded-2xl sm:rounded-3xl bg-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.015]"
-      : "rounded-2xl sm:rounded-3xl bg-white sm:bg-slate-100 border border-slate-200/70 sm:border-transparent shadow-sm sm:shadow-sm hover:shadow-xl hover:scale-[1.015]"
+      ? "aspect-[4/5] rounded-2xl sm:rounded-3xl bg-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.015] overflow-hidden"
+      : "bg-transparent sm:bg-slate-100 sm:rounded-3xl sm:border sm:border-transparent sm:shadow-sm sm:overflow-hidden sm:hover:shadow-xl sm:hover:scale-[1.015]"
   } ${onClick || href ? "cursor-pointer" : ""}`;
 
   if (href) {

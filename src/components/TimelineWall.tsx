@@ -114,6 +114,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
 
   useEffect(() => {
     setVisibleCount(ITEMS_PER_PAGE);
+    setLightboxIndex(null);
   }, [activeYear]);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -135,7 +136,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
   const visibleItems = currentItems.slice(0, visibleCount);
 
   /* ─── Lightbox ─── */
-  const [lightboxItem, setLightboxItem] = useState<{ src: string; item: FeedItem } | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   /* ─── Target Moment & Highlight from URL ─── */
   const [highlightId, setHighlightId] = useState<string | null>(null);
@@ -264,7 +265,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                         year={m.year}
                         kind={isVideo ? "video" : "image"}
                         onClick={() => {
-                          if (!isVideo) setLightboxItem({ src, item });
+                          setLightboxIndex(idx);
                         }}
                       />
                     </div>
@@ -276,7 +277,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                     <div
                       key={`post-${p.id}`}
                       id={`moment-${p.id}`}
-                      className={`break-inside-avoid mb-5 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
+                      className={`break-inside-avoid mb-6 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
                         isTarget
                           ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
                           : ""
@@ -291,7 +292,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                         year={new Date(p.createdAt).getFullYear()}
                         kind="image"
                         onClick={() => {
-                          setLightboxItem({ src: p.cover!, item });
+                          setLightboxIndex(idx);
                         }}
                       />
                     </div>
@@ -311,11 +312,17 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
 
       {/* ═══════════ LIGHTBOX ═══════════ */}
       <AnimatePresence>
-        {lightboxItem && (
+        {lightboxIndex !== null && currentItems[lightboxIndex] && (
           <Lightbox
-            item={lightboxItem.item}
-            src={lightboxItem.src}
-            onClose={() => setLightboxItem(null)}
+            items={currentItems}
+            currentIndex={lightboxIndex}
+            onIndexChange={(nextIdx) => {
+              setLightboxIndex(nextIdx);
+              if (nextIdx >= visibleCount - 2) {
+                setVisibleCount((prev) => Math.max(prev, nextIdx + 5));
+              }
+            }}
+            onClose={() => setLightboxIndex(null)}
           />
         )}
       </AnimatePresence>
@@ -586,15 +593,82 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
 }
 
 /* ══════════════════════════════════════════
-   LIGHTBOX WITH PINCH-TO-ZOOM
+   LIGHTBOX WITH PINCH-TO-ZOOM, NAVIGATION & TOUCH SWIPE
 ══════════════════════════════════════════ */
-function Lightbox({ item, src, onClose }: { item: FeedItem, src: string, onClose: () => void }) {
+function getInitial(name?: string): string {
+  if (!name || !name.trim()) return "N";
+  const parts = name.trim().split(/\s+/);
+  const last = parts[parts.length - 1];
+  return last ? last[0].toUpperCase() : "N";
+}
+
+type LightboxProps = {
+  items: FeedItem[];
+  currentIndex: number;
+  onIndexChange: (index: number) => void;
+  onClose: () => void;
+};
+
+function Lightbox({ items, currentIndex, onIndexChange, onClose }: LightboxProps) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [showInfo, setShowInfo] = useState(true);
+  const [direction, setDirection] = useState<number>(0);
+  const [swipeOffset, setSwipeOffset] = useState<number>(0);
 
-  // Touch handlers for pinch-to-zoom
-  const touchStartRef = useRef<{ dist: number, scale: number, x: number, y: number, px: number, py: number } | null>(null);
+  const total = items.length;
+  const currentItem = items[currentIndex];
+
+  const goToNext = useCallback(() => {
+    if (total <= 1) return;
+    setDirection(1);
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+    setSwipeOffset(0);
+    const next = currentIndex < total - 1 ? currentIndex + 1 : 0;
+    onIndexChange(next);
+  }, [currentIndex, total, onIndexChange]);
+
+  const goToPrev = useCallback(() => {
+    if (total <= 1) return;
+    setDirection(-1);
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+    setSwipeOffset(0);
+    const prev = currentIndex > 0 ? currentIndex - 1 : total - 1;
+    onIndexChange(prev);
+  }, [currentIndex, total, onIndexChange]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        goToNext();
+      } else if (e.key === "ArrowLeft") {
+        goToPrev();
+      } else if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [goToNext, goToPrev, onClose]);
+
+  // Touch handlers for pinch-to-zoom & swipe
+  const touchStartRef = useRef<{
+    isPinching: boolean;
+    dist: number;
+    scale: number;
+    startX: number;
+    startY: number;
+    lastX: number;
+    lastY: number;
+    startTime: number;
+    px: number;
+    py: number;
+  } | null>(null);
+
+  const justSwipedRef = useRef(false);
 
   const getDistance = (touches: React.TouchList) => {
     const dx = touches[0].clientX - touches[1].clientX;
@@ -605,58 +679,143 @@ function Lightbox({ item, src, onClose }: { item: FeedItem, src: string, onClose
   const getCenter = (touches: React.TouchList) => {
     return {
       x: (touches[0].clientX + touches[1].clientX) / 2,
-      y: (touches[0].clientY + touches[1].clientY) / 2
+      y: (touches[0].clientY + touches[1].clientY) / 2,
     };
   };
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
       touchStartRef.current = {
+        isPinching: true,
         dist: getDistance(e.touches),
         scale: scale,
-        x: getCenter(e.touches).x,
-        y: getCenter(e.touches).y,
+        startX: getCenter(e.touches).x,
+        startY: getCenter(e.touches).y,
+        lastX: getCenter(e.touches).x,
+        lastY: getCenter(e.touches).y,
+        startTime: Date.now(),
         px: position.x,
-        py: position.y
+        py: position.y,
       };
     } else if (e.touches.length === 1) {
       touchStartRef.current = {
+        isPinching: false,
         dist: 0,
         scale: scale,
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY,
+        startX: e.touches[0].clientX,
+        startY: e.touches[0].clientY,
+        lastX: e.touches[0].clientX,
+        lastY: e.touches[0].clientY,
+        startTime: Date.now(),
         px: position.x,
-        py: position.y
+        py: position.y,
       };
     }
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
     if (!touchStartRef.current) return;
-    
-    if (e.touches.length === 2 && touchStartRef.current.dist > 0) {
+
+    if (e.touches.length === 2 && touchStartRef.current.isPinching) {
       const newDist = getDistance(e.touches);
-      const newScale = Math.max(1, Math.min(touchStartRef.current.scale * (newDist / touchStartRef.current.dist), 5));
-      setScale(newScale);
-    } else if (e.touches.length === 1 && scale > 1) {
-      // Pan
-      const dx = e.touches[0].clientX - touchStartRef.current.x;
-      const dy = e.touches[0].clientY - touchStartRef.current.y;
-      setPosition({
-        x: touchStartRef.current.px + dx,
-        y: touchStartRef.current.py + dy
-      });
+      if (touchStartRef.current.dist > 0) {
+        const newScale = Math.max(
+          1,
+          Math.min(touchStartRef.current.scale * (newDist / touchStartRef.current.dist), 5)
+        );
+        setScale(newScale);
+      }
+    } else if (e.touches.length === 1) {
+      const curX = e.touches[0].clientX;
+      const curY = e.touches[0].clientY;
+      const dx = curX - touchStartRef.current.startX;
+      const dy = curY - touchStartRef.current.startY;
+      touchStartRef.current.lastX = curX;
+      touchStartRef.current.lastY = curY;
+
+      if (scale > 1.05) {
+        // Pan
+        setPosition({
+          x: touchStartRef.current.px + dx,
+          y: touchStartRef.current.py + dy,
+        });
+      } else {
+        // Swipe gesture preview
+        if (Math.abs(dx) > Math.abs(dy)) {
+          setSwipeOffset(dx * 0.7);
+        }
+      }
     }
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const { startX, lastX, startTime } = touchStartRef.current;
     touchStartRef.current = null;
-    if (e.touches.length === 0 && scale <= 1) {
+
+    if (scale <= 1.05) {
+      setSwipeOffset(0);
+      const deltaX = lastX - startX;
+      const elapsed = Date.now() - startTime;
+      const isFlick = Math.abs(deltaX) > 30 && elapsed < 350;
+      const isLongSwipe = Math.abs(deltaX) > 60;
+
+      if (isFlick || isLongSwipe) {
+        justSwipedRef.current = true;
+        setTimeout(() => {
+          justSwipedRef.current = false;
+        }, 300);
+
+        if (deltaX < 0) {
+          goToNext();
+        } else {
+          goToPrev();
+        }
+        return;
+      }
+
       setPosition({ x: 0, y: 0 });
+    } else if (scale <= 1) {
+      setPosition({ x: 0, y: 0 });
+      setScale(1);
     }
   };
 
+  const handleContainerClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (justSwipedRef.current) return;
+    setShowInfo((prev) => !prev);
+  };
+
+  if (!currentItem) return null;
+
+  const isVideo = currentItem.type === "memory" && currentItem.data.kind === "video";
+  const src =
+    currentItem.type === "memory"
+      ? currentItem.data.images[currentItem.imageIndex] || ""
+      : currentItem.data.cover || "";
+
+  const info =
+    currentItem.type === "memory"
+      ? {
+          title: currentItem.data.title,
+          caption: currentItem.data.caption,
+          author: currentItem.data.author,
+          role: currentItem.data.isCommunity ? currentItem.data.role : "",
+          year: currentItem.data.year,
+          slug: undefined,
+        }
+      : {
+          title: currentItem.data.title,
+          caption: currentItem.data.excerpt,
+          author: currentItem.data.author,
+          role: "Câu chuyện",
+          year: new Date(currentItem.data.createdAt).getFullYear(),
+          slug: currentItem.data.slug,
+        };
+
   const handleDownload = () => {
+    if (!src) return;
     const a = document.createElement("a");
     a.href = src;
     a.download = `nct-moment-${Date.now()}.jpg`;
@@ -665,117 +824,236 @@ function Lightbox({ item, src, onClose }: { item: FeedItem, src: string, onClose
     document.body.removeChild(a);
   };
 
-  const info = item.type === "memory" 
-    ? { title: item.data.title, caption: item.data.caption, author: item.data.author, role: item.data.role }
-    : { title: item.data.title, caption: item.data.excerpt, author: item.data.author, role: "Câu chuyện", slug: item.data.slug };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex flex-col bg-black/96 backdrop-blur-xl"
+      className="fixed inset-0 z-[100] flex flex-col bg-black/96 backdrop-blur-xl select-none"
       onClick={() => onClose()}
     >
-      <div className="absolute top-0 inset-x-0 p-4 z-[110] flex justify-between items-start pointer-events-none">
-        <div className="flex gap-2 pointer-events-auto">
-          {/* Desktop Zoom/Download Buttons */}
-          <div className="hidden md:flex gap-2 bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10">
+      {/* ── TOP CONTROL BAR ── */}
+      <div className="absolute top-0 inset-x-0 p-3 sm:p-4 z-[120] flex justify-between items-center pointer-events-none">
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Slide counter */}
+          <span className="rounded-full bg-black/50 backdrop-blur-md border border-white/15 px-3 py-1 text-xs font-bold text-white shadow-sm">
+            {currentIndex + 1} / {total}
+          </span>
+
+          {/* Desktop Zoom/Download */}
+          <div className="hidden md:flex gap-1.5 bg-black/40 backdrop-blur-md rounded-full p-1 border border-white/10">
             <button
-              onClick={(e) => { e.stopPropagation(); setScale(s => Math.min(s + 0.5, 5)); }}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
-              title="Zoom In"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setScale((s) => Math.min(s + 0.5, 5));
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Phóng to"
             >
-              <span className="material-symbols-rounded text-xl">zoom_in</span>
+              <span className="material-symbols-rounded text-lg">zoom_in</span>
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); setScale(s => Math.max(s - 0.5, 1)); if(scale-0.5 <= 1) setPosition({x:0, y:0}); }}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
-              title="Zoom Out"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setScale((s) => Math.max(s - 0.5, 1));
+                if (scale - 0.5 <= 1) setPosition({ x: 0, y: 0 });
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Thu nhỏ"
             >
-              <span className="material-symbols-rounded text-xl">zoom_out</span>
+              <span className="material-symbols-rounded text-lg">zoom_out</span>
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
-              title="Download"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload();
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/20 transition-colors"
+              title="Tải ảnh về"
             >
-              <span className="material-symbols-rounded text-xl">download</span>
+              <span className="material-symbols-rounded text-lg">download</span>
             </button>
           </div>
         </div>
-        
+
+        {/* Close Button */}
         <button
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors pointer-events-auto"
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          type="button"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white hover:bg-white/20 transition-colors border border-white/15 pointer-events-auto shadow-md active:scale-95"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          aria-label="Đóng"
         >
           <span className="material-symbols-rounded text-xl">close</span>
         </button>
       </div>
 
+      {/* ── PREV BUTTON ── */}
+      {total > 1 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            goToPrev();
+          }}
+          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-[115] flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/45 hover:bg-black/75 text-white backdrop-blur-md border border-white/20 shadow-xl transition-all active:scale-90 pointer-events-auto"
+          aria-label="Khoảnh khắc trước"
+          title="Khoảnh khắc trước (Phím mũi tên trái)"
+        >
+          <span className="material-symbols-rounded text-2xl sm:text-3xl">chevron_left</span>
+        </button>
+      )}
+
+      {/* ── NEXT BUTTON ── */}
+      {total > 1 && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            goToNext();
+          }}
+          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-[115] flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-black/45 hover:bg-black/75 text-white backdrop-blur-md border border-white/20 shadow-xl transition-all active:scale-90 pointer-events-auto"
+          aria-label="Khoảnh khắc tiếp theo"
+          title="Khoảnh khắc tiếp theo (Phím mũi tên phải)"
+        >
+          <span className="material-symbols-rounded text-2xl sm:text-3xl">chevron_right</span>
+        </button>
+      )}
+
+      {/* ── MEDIA VIEWPORT (Hỗ trợ vuốt trái/phải & pinch zoom) ── */}
       <div
         className="relative flex-1 flex items-center justify-center overflow-hidden touch-none"
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowInfo(!showInfo);
-        }}
+        onClick={handleContainerClick}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onWheel={(e) => {
           if (e.deltaY < 0) {
-            setScale(s => Math.min(s + 0.1, 5));
+            setScale((s) => Math.min(s + 0.15, 5));
           } else {
-            setScale(s => Math.max(s - 0.1, 1));
-            if (scale - 0.1 <= 1) setPosition({ x: 0, y: 0 });
+            setScale((s) => Math.max(s - 0.15, 1));
+            if (scale - 0.15 <= 1) setPosition({ x: 0, y: 0 });
           }
         }}
       >
-        <motion.img
-          src={src}
-          alt=""
-          className="max-h-full max-w-full object-contain pointer-events-auto"
-          draggable={false}
-          animate={{ scale, x: position.x, y: position.y }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        />
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={currentIndex}
+            custom={direction}
+            variants={{
+              enter: (dir: number) => ({
+                x: dir > 0 ? 80 : -80,
+                opacity: 0,
+              }),
+              center: {
+                x: 0,
+                opacity: 1,
+                transition: { duration: 0.22, ease: "easeOut" },
+              },
+              exit: (dir: number) => ({
+                x: dir < 0 ? 80 : -80,
+                opacity: 0,
+                transition: { duration: 0.18, ease: "easeIn" },
+              }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="flex h-full w-full items-center justify-center p-2 sm:p-6"
+          >
+            <motion.div
+              animate={{
+                scale,
+                x: position.x + swipeOffset,
+                y: position.y,
+              }}
+              transition={{ type: "spring", damping: 28, stiffness: 350 }}
+              className="flex max-h-full max-w-full items-center justify-center"
+            >
+              {isVideo ? (
+                <video
+                  src={src}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl pointer-events-auto"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={src}
+                  alt={info.title || ""}
+                  className="max-h-[85vh] max-w-full object-contain select-none shadow-2xl pointer-events-auto rounded-lg"
+                  draggable={false}
+                />
+              )}
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
+      {/* ── BOTTOM INFO SHEET (Author, Title, Caption) ── */}
       <AnimatePresence>
         {showInfo && (
-          <motion.div 
+          <motion.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="z-[110] border-t border-white/10 bg-black/70 backdrop-blur-md" 
+            transition={{ type: "spring", damping: 26, stiffness: 220 }}
+            className="z-[120] border-t border-white/10 bg-black/80 backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex w-full items-center justify-between px-5 py-3.5 text-left">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="material-symbols-rounded shrink-0 text-slate-400">person</span>
-                <span className="truncate text-sm font-semibold text-white">{info.author}</span>
+            {/* Author bar */}
+            <div className="flex w-full items-center justify-between px-5 py-3 text-left">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/20 border border-blue-400/30 text-xs font-bold text-blue-300">
+                  {getInitial(info.author)}
+                </div>
+                <span className="truncate text-sm font-semibold text-white">
+                  {info.author || "Thành viên NCT"}
+                </span>
                 {info.role && (
                   <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-300">
                     {info.role}
                   </span>
                 )}
               </div>
+              {info.year ? (
+                <span className="shrink-0 rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-slate-200">
+                  {info.year}
+                </span>
+              ) : null}
             </div>
-            <div className="border-t border-white/10 px-5 pb-6 pt-3 text-sm text-slate-300 space-y-1">
-              {info.title && <p className="font-extrabold text-white text-base">{info.title}</p>}
+
+            {/* Title & Caption */}
+            <div className="border-t border-white/10 px-5 pb-6 pt-3 text-sm text-slate-300 space-y-1.5">
+              {info.title && (
+                <p className="font-extrabold text-white text-base leading-snug">
+                  {info.title}
+                </p>
+              )}
               {info.caption && info.caption !== info.title && (
-                <p className="leading-relaxed max-h-32 overflow-y-auto hide-scrollbar">{info.caption}</p>
+                <p className="leading-relaxed text-xs sm:text-sm text-slate-300 max-h-28 overflow-y-auto hide-scrollbar">
+                  {info.caption}
+                </p>
               )}
               {info.slug && (
-                <Link
-                  href={`/cau-chuyen/${info.slug}`}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-[#1d4ed8] px-4 py-2 text-xs font-extrabold text-white hover:bg-blue-600 transition-colors"
-                  onClick={() => onClose()}
-                >
-                  Đọc bài đầy đủ
-                  <span className="material-symbols-rounded text-[1em]">arrow_forward</span>
-                </Link>
+                <div className="pt-2">
+                  <Link
+                    href={`/cau-chuyen/${info.slug}`}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#1d4ed8] px-4 py-2 text-xs font-extrabold text-white hover:bg-blue-600 transition-colors shadow-md"
+                    onClick={() => onClose()}
+                  >
+                    Đọc bài đầy đủ
+                    <span className="material-symbols-rounded text-sm">arrow_forward</span>
+                  </Link>
+                </div>
               )}
             </div>
           </motion.div>

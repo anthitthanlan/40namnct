@@ -610,21 +610,23 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-slate-950 via-slate-950/60 to-transparent pointer-events-none" />
       {/* Bottom blur edge cho mobile để fade phần rìa dưới của ảnh vào nền đen */}
       <div className="absolute inset-x-0 top-[20vh] h-[26vh] bg-gradient-to-t from-slate-950 from-5% to-transparent md:hidden pointer-events-none" />
-      {/* Gradient nhẹ bên trái để text đọc được trên desktop/tablet */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent hidden md:block pointer-events-none" />
+
+      {/* Gradient tối ở đáy & bên trái cho desktop để text ở góc dưới bên trái đọc cực rõ và không che mặt người ở giữa */}
+      <div className="absolute inset-x-0 bottom-0 h-72 md:h-80 bg-gradient-to-t from-slate-950 via-slate-950/70 to-transparent pointer-events-none" />
+      <div className="absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-slate-950/60 via-slate-950/20 to-transparent hidden md:block pointer-events-none" />
 
       {/* Ánh sáng glow mờ dưới đáy cho mobile bớt đơn điệu */}
       <div className="absolute inset-x-0 bottom-0 h-[50vh] bg-[radial-gradient(ellipse_at_bottom,rgba(30,58,138,0.3),transparent_70%)] md:hidden pointer-events-none" />
 
-      {/* Nội dung (Bố cục như trang chủ: căn dưới trên mobile, căn trái trên desktop) */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-end pb-[16vh] px-6 text-center text-white md:items-start md:justify-center md:pb-0 md:text-left md:max-w-[60%] md:pl-16 xl:pl-24 pointer-events-none">
-        <div className="mb-4 floaty btn-lightship-soft inline-block max-w-full rounded-full bg-white px-5 py-2 font-bold tracking-wide text-[#1d4ed8] text-center whitespace-nowrap text-[clamp(0.6rem,3.5vw,0.875rem)] shadow-lg pointer-events-auto">
+      {/* Nội dung (Bottom-Left Align: Căn góc dưới bên trái) */}
+      <div className="relative z-10 flex h-full flex-col items-start justify-end pb-20 sm:pb-24 md:pb-24 lg:pb-28 px-6 sm:px-10 md:pl-16 xl:pl-24 md:max-w-[65%] text-left text-white pointer-events-none">
+        <div className="mb-3.5 floaty btn-lightship-soft inline-block max-w-full rounded-full bg-white px-4 py-1.5 font-bold tracking-wide text-[#1d4ed8] text-left whitespace-nowrap text-[clamp(0.65rem,3.5vw,0.85rem)] shadow-lg pointer-events-auto">
           {slide.year ? `1986 - 2026 · KỶ NIỆM NĂM ${slide.year}` : "1986 - 2026 · 40 NĂM TRỒNG NGƯỜI"}
         </div>
-        <h1 className="line-clamp-2 max-w-4xl font-extrabold leading-tight text-white drop-shadow-lg text-[clamp(1.4rem,6vw,3.25rem)] pointer-events-auto">
+        <h1 className="line-clamp-2 max-w-4xl font-extrabold leading-tight text-white drop-shadow-lg text-[clamp(1.4rem,5.5vw,3.25rem)] pointer-events-auto">
           {slide.title}
         </h1>
-        <p className="mt-3.5 flex items-center justify-center md:justify-start gap-2 text-sm sm:text-base md:text-lg font-medium text-slate-200/90 drop-shadow pointer-events-auto">
+        <p className="mt-3 flex items-center gap-2 text-sm sm:text-base md:text-lg font-medium text-slate-200/90 drop-shadow pointer-events-auto">
           <span className="material-symbols-rounded text-[1.1em] text-blue-400">person</span>
           <span>{slide.author || "Thành viên NCT"}</span>
           {slide.slug && (
@@ -701,7 +703,7 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
             window.scrollBy({ top: window.innerHeight - 80, behavior: "smooth" });
           }
         }}
-        className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 flex flex-col items-center gap-1 text-white/80 transition-all hover:text-white hover:scale-105 active:scale-95 md:bottom-6 pointer-events-auto"
+        className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 flex md:hidden flex-col items-center gap-1 text-white/80 transition-all hover:text-white hover:scale-105 active:scale-95 pointer-events-auto"
         style={{ animation: "scrollPulse 2.5s ease-in-out infinite" }}
         aria-label="Cuộn xuống xem nội dung"
       >

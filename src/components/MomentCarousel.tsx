@@ -36,6 +36,7 @@ export default function MomentCarousel({ moments }: { moments: WallMemory[] }) {
                 role={m.isCommunity ? m.role : ""}
                 year={m.year}
                 kind={cover ? "image" : "video"}
+                aspect="fixed"
                 href={`/khoanh-khac?moment=${m.id}#moment-${m.id}`}
               />
             </div>

@@ -80,6 +80,7 @@ export default function MemoryGallery() {
               role={m.authorRole}
               year={m.year}
               kind={m.kind}
+              aspect="fixed"
               href={`/khoanh-khac?moment=${m.id}#moment-${m.id}`}
             />
           </div>

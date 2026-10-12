@@ -197,24 +197,27 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
       <HeroCarousel slides={carouselSlides} />
 
       {/* ═══════════ FILTER BUTTON ═══════════ */}
-      <div id="timeline-feed-start" className="sticky top-[84px] z-40 mx-auto mb-8 w-max rounded-full border border-white/60 bg-white/90 px-4 py-2 shadow-lg shadow-slate-950/10 backdrop-blur-xl transition-all">
+      <div id="timeline-feed-start" className="sticky top-[84px] z-40 mx-auto mb-8 w-max transition-all">
         <button
           onClick={() => setShowFilterModal(true)}
-          className="flex items-center gap-2 text-sm font-extrabold text-slate-700 hover:text-[#1d4ed8]"
+          className="flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/95 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-md shadow-slate-900/5 backdrop-blur-xl transition-all hover:border-[#1d4ed8]/40 hover:text-[#1d4ed8] hover:shadow-lg active:scale-95"
         >
-          <span className="material-symbols-rounded text-lg">filter_list</span>
-          {activeYear === "all" ? "Tất cả các năm" : `Năm ${activeYear}`}
+          <span className="material-symbols-rounded text-base sm:text-lg text-[#1d4ed8]">calendar_month</span>
+          <span>{activeYear === "all" ? "Tất cả các năm" : `Năm ${activeYear}`}</span>
+          <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+            {activeYear === "all" ? "1986–2026" : `${itemsByYear.get(activeYear)?.length || 0}`}
+          </span>
         </button>
       </div>
 
       {/* ═══════════ FEED ═══════════ */}
-      <div className="mx-auto max-w-7xl px-4 pb-24 md:px-8">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 pb-36 sm:pb-44 md:px-8">
         <div className="mb-5 flex items-baseline gap-3">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
             {activeYear === "all" ? "Tất cả khoảnh khắc" : activeYear}
           </h2>
           {currentItems.length > 0 && (
-            <span className="text-sm font-medium text-slate-400">
+            <span className="text-xs sm:text-sm font-medium text-slate-400">
               {currentItems.length} mục
             </span>
           )}
@@ -235,7 +238,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
           </div>
         ) : (
           <>
-            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+            <div className="columns-2 md:columns-3 gap-3 sm:gap-4 lg:gap-5">
               {visibleItems.map((item, idx) => {
                 if (item.type === "memory") {
                   const m = item.data;
@@ -246,7 +249,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                     <div
                       key={`${m.id}-${item.imageIndex}`}
                       id={item.imageIndex === 0 ? `moment-${m.id}` : undefined}
-                      className={`break-inside-avoid scroll-mt-32 rounded-3xl transition-all duration-500 ${
+                      className={`break-inside-avoid mb-3 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
                         isTarget
                           ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.03] shadow-2xl relative z-10"
                           : ""
@@ -272,7 +275,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                     <div
                       key={`post-${p.id}`}
                       id={`moment-${p.id}`}
-                      className={`break-inside-avoid scroll-mt-32 rounded-3xl transition-all duration-500 ${
+                      className={`break-inside-avoid mb-3 sm:mb-4 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
                         isTarget
                           ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.03] shadow-2xl relative z-10"
                           : ""

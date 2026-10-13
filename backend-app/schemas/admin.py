@@ -54,3 +54,14 @@ class ActionLogCreate(BaseModel):
 
     class Config:
         populate_by_name = True
+
+class ActionLogPaginationResponse(BaseModel):
+    items: List[ActionLogResponse]
+    total: int
+    page: int
+    limit: int
+    totalPages: int
+
+    class Config:
+        populate_by_name = True
+

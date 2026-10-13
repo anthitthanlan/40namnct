@@ -32,6 +32,8 @@ class InvitationUpdate(BaseModel):
     checkedIn: Optional[bool] = Field(None, alias="checkedIn")
     shirtReceived: Optional[bool] = Field(None, alias="shirtReceived")
     memberEmail: Optional[str] = Field(None, alias="memberEmail")
+    emailSent: Optional[bool] = Field(None, alias="emailSent")
+    emailSentAt: Optional[str] = Field(None, alias="emailSentAt")
 
     class Config:
         populate_by_name = True
@@ -48,6 +50,8 @@ class InvitationResponse(InvitationBase):
     checkedInAt: Optional[str] = Field(None, alias="checkedInAt")
     shirtReceived: bool = Field(False, alias="shirtReceived")
     shirtReceivedAt: Optional[str] = Field(None, alias="shirtReceivedAt")
+    emailSent: bool = Field(False, alias="emailSent")
+    emailSentAt: Optional[str] = Field(None, alias="emailSentAt")
     createdAt: str = Field(alias="createdAt")
     updatedAt: str = Field(alias="updatedAt")
 

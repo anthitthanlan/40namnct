@@ -1,4 +1,4 @@
-import { getMemberById, findInvitationById } from "./members";
+import { getMemberById, findInvitationById, updateInvitationDetails } from "./members";
 import { render } from "@react-email/render";
 import InvitationEmail from "@/emails/InvitationEmail";
 
@@ -39,9 +39,19 @@ export async function sendInvitationEmail(invitationId: string) {
       }),
     });
 
+    if (res.ok) {
+      try {
+        await updateInvitationDetails(inv.id, {
+          emailSent: true,
+          emailSentAt: new Date().toISOString(),
+        });
+      } catch {}
+    }
+
     return res.ok;
   } catch (err) {
     console.error("Failed to send invitation email:", err);
     return false;
   }
 }
+

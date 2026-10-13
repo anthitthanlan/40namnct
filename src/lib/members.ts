@@ -55,6 +55,8 @@ export type Invitation = {
   checkedInAt?: string | null;
   shirtReceived?: boolean;
   shirtReceivedAt?: string | null;
+  emailSent?: boolean;
+  emailSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };

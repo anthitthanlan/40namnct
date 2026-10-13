@@ -38,6 +38,11 @@ class Invitation(Base):
     checked_in_at = Column(String(64), nullable=True)
     shirt_received = Column(Boolean, default=False)
     shirt_received_at = Column(String(64), nullable=True)
+
+    # Email notification
+    email_sent = Column(Boolean, default=False)
+    email_sent_at = Column(String(64), nullable=True)
     
     created_at = Column(String(64), default=utc_now_iso)
     updated_at = Column(String(64), default=utc_now_iso, onupdate=utc_now_iso)
+

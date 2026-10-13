@@ -41,3 +41,7 @@ poster*.html
 *.local.html
 /scratch/
 
+# python
+__pycache__/
+*.pyc
+

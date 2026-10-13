@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { Modal } from "@/components/modal";
 import {
   formatVnd,
   sizesLabel,
   invitationStatusInfo,
+  SIZES,
   type InvitationView,
 } from "@/lib/invitation-view";
 import type { ActionLog } from "@/lib/action-logs";
@@ -29,10 +31,10 @@ type InvitationRow = InvitationView & {
   memberCode: string;
 };
 
-type Banner = { ok: boolean; text: string } | null;
-
 function vi(iso: string): string {
+  if (!iso) return "-";
   const d = new Date(iso);
+  if (isNaN(d.getTime())) return "-";
   return (
     d.toLocaleDateString("vi-VN", {
       day: "2-digit",
@@ -55,7 +57,6 @@ export default function AdminRegistrations({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [members, setMembers] = useState<MemberRow[] | null>(null);
   const [invitations, setInvitations] = useState<InvitationRow[] | null>(null);
-  const [banner, setBanner] = useState<Banner>(null);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<
@@ -73,12 +74,17 @@ export default function AdminRegistrations({
   const [inviIdInput, setInviIdInput] = useState("");
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [viewingLogsFor, setViewingLogsFor] = useState<InvitationRow | null>(null);
+  const [entityLogs, setEntityLogs] = useState<ActionLog[]>([]);
+  const [loadingEntityLogs, setLoadingEntityLogs] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [exportingExcel, setExportingExcel] = useState(false);
 
   const flash = useCallback((ok: boolean, text: string) => {
-    setBanner({ ok, text });
-    setTimeout(() => setBanner(null), 4000);
+    if (ok) {
+      toast.success(text);
+    } else {
+      toast.error(text);
+    }
   }, []);
 
   const [page, setPage] = useState(1);
@@ -112,6 +118,35 @@ export default function AdminRegistrations({
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!viewingLogsFor) {
+      setEntityLogs([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingEntityLogs(true);
+    fetch(`/api/admin/accounts/logs?entityId=${encodeURIComponent(viewingLogsFor.id)}`, { cache: "no-store" })
+      .then((res) => {
+        if (res.status === 401) onAuthError?.();
+        return res.json();
+      })
+      .then((data) => {
+        if (!cancelled && data && data.ok) {
+          setEntityLogs(data.logs || []);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load entity logs:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEntityLogs(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [viewingLogsFor, onAuthError]);
 
   const duplicateInvitations = useMemo(() => {
     if (!rejectingInvitation) return [];
@@ -381,6 +416,7 @@ export default function AdminRegistrations({
           attendeeName: editingInvitation.attendeeName,
           nienKhoa: editingInvitation.nienKhoa,
           size: editingInvitation.size,
+          sizes: editingInvitation.sizes,
           note: editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "",
           memberEmail: editingInvitation.memberEmail,
         }),
@@ -402,6 +438,7 @@ export default function AdminRegistrations({
           memberName: editingInvitation.attendeeName,
           nienKhoa: editingInvitation.nienKhoa, 
           size: editingInvitation.size, 
+          sizes: editingInvitation.sizes,
           note: finalNote,
           memberEmail: editingInvitation.memberEmail,
         } : t)) : prev
@@ -470,7 +507,7 @@ export default function AdminRegistrations({
       }
 
       if (statusFilter === "confirmed" && emailFilter !== "all") {
-        const isSent = logs.some((l) => l.entityId === t.id && l.details.includes("Gửi email"));
+        const isSent = Boolean(t.emailSent) || (logs || []).some((l) => l.entityId === t.id && l.details?.includes("Gửi email"));
         if (emailFilter === "sent" && !isSent) return false;
         if (emailFilter === "not_sent" && isSent) return false;
       }
@@ -523,11 +560,11 @@ export default function AdminRegistrations({
   // =========================================================================
   const confirmedInvitations = invitations.filter((t) => t.status === "confirmed");
   const totalConfirmedRevenue = confirmedInvitations.reduce(
-    (sum, t) => sum + (t.amount || 0),
+    (sum, t) => sum + (Number(t.amount) || 0),
     0,
   );
   const totalConfirmedPeople = confirmedInvitations.reduce(
-    (sum, t) => sum + (t.type === "group" ? (t.quantity || 1) : 1),
+    (sum, t) => sum + (t.type === "group" ? (Number(t.quantity) || 1) : 1),
     0,
   );
   const pendingApprovalInvitations = invitations.filter(
@@ -535,20 +572,10 @@ export default function AdminRegistrations({
   );
   const totalCheckedIn = invitations.filter((t) => t.checkedIn).length;
   const totalShirtInvs = invitations.filter((t) => t.shirtReceived).length;
-  const totalShirtsReceived = invitations.filter((t) => t.shirtReceived).reduce((sum, t) => sum + (t.snacks || 0), 0);
+  const totalShirtsReceived = invitations.filter((t) => t.shirtReceived).reduce((sum, t) => sum + (Number(t.snacks) || 0), 0);
 
   return (
     <div className="mt-4 space-y-6 sm:mt-8 sm:space-y-10">
-      {banner && (
-        <div
-          className={`rounded-2xl px-5 py-3 text-sm font-bold ${banner.ok
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-rose-100 text-rose-600"
-            }`}
-        >
-          {banner.text}
-        </div>
-      )}
 
       {/* Main Tabs */}
       <div className="mb-6">
@@ -848,7 +875,7 @@ export default function AdminRegistrations({
                             <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
                               {isGroup ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">group</span> Tập thể ({t.quantity} suất)</> : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">person</span> Cá nhân</>}
                             </span>
-                            {logs.some((l) => l.entityId === t.id && l.details.includes("Gửi email")) && (
+                            {(Boolean(t.emailSent) || (logs || []).some((l) => l.entityId === t.id && l.details?.includes("Gửi email"))) && (
                               <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-extrabold text-indigo-700">
                                 <span className="material-symbols-rounded inline-block align-middle text-[1em]">mail</span> Đã gửi mail
                               </span>
@@ -924,7 +951,7 @@ export default function AdminRegistrations({
                             {/* Thumbnail ảnh */}
                             <div className="flex flex-wrap gap-3">
                               {Array.from(new Set([
-                                ...(t.receiptAttempts?.map(a => a.url) || []),
+                                ...((t.receiptAttempts || []).map(a => typeof a === "string" ? a : a?.url).filter(Boolean)),
                                 t.receiptUrl
                               ].filter(Boolean))).map((imgUrl, i) => (
                                 <button
@@ -969,7 +996,7 @@ export default function AdminRegistrations({
                                     <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
                                       <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Số tiền đọc được</span>
                                       <span className={`font-mono font-bold ${t.ocrResult.amount === t.amount ? "text-emerald-600" : "text-rose-600"}`}>
-                                        {t.ocrResult.amount !== null ? formatVnd(t.ocrResult.amount) : "Không đọc được"}
+                                        {t.ocrResult.amount != null ? formatVnd(t.ocrResult.amount) : "Không đọc được"}
                                       </span>
                                     </p>
                                     <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
@@ -1073,7 +1100,7 @@ export default function AdminRegistrations({
                                   const link = `${domain}/xac-nhan-dong-gop?id=${t.id}`;
                                   const msg = `Xin chào, BTC xin gửi lại link xác nhận đóng góp cho cựu học sinh ${t.attendeeName || t.memberName}. Lưu ý: BTC không yêu cầu bạn chuyển khoản lại hay đưa ra thông báo hoàn trả.\n\nLink: ${link}`;
                                   navigator.clipboard.writeText(msg).then(() => {
-                                    alert("Đã copy tin nhắn nhắc nhở!");
+                                    toast.success("Đã sao chép tin nhắn nhắc nhở!");
                                   });
                                 }}
                                 className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 flex items-center gap-1"
@@ -1165,7 +1192,7 @@ export default function AdminRegistrations({
                                   const msg = `Kính gửi Cựu học sinh ${name},\n\nNhằm ôn lại truyền thống 40 năm xây dựng và phát triển, tri ân các thế hệ Thầy Cô và tạo dịp hội ngộ, kết nối các thế hệ, Trường THPT Nguyễn Công Trứ trân trọng kính mời bạn về tham dự Ngày hội truyền thống 40 năm của Nhà trường.\n\nBan Tổ chức xin chân thành cảm ơn bạn đã đóng góp ${amountStr}đ để góp phần tạo nên một ngày hội thật ý nghĩa.\n* Lưu ý: Khoản đóng góp tham dự là 500.000đ/người. Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện (nếu có dư sẽ được đưa vào Quỹ Khuyến học của Trường).\n\nRất mong được đón tiếp bạn trở lại dưới mái trường xưa vào ngày 08/11/2026!\n\nVé điện tử của bạn được cung cấp tại liên kết dưới đây. Vui lòng mở ra, lưu lại hình ảnh vé và xuất trình mã QR khi check-in.\n\nHoặc mở liên kết:\n🔗 ${link}\n\n✓ Chi tiết đăng ký\nLoại đăng ký: ${typeStr}\nThành tiền: ${amountStr}đ`;
                                   
                                   navigator.clipboard.writeText(msg).then(() => {
-                                    alert("Đã copy template thư mời!");
+                                    toast.success("Đã sao chép nội dung thư mời!");
                                   });
                                 }}
                                 className="rounded-xl bg-sky-50 px-3 py-1.5 text-[11px] font-bold text-sky-600 hover:bg-sky-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
@@ -1254,16 +1281,19 @@ export default function AdminRegistrations({
                   confirmedInvitations.reduce((acc, t) => {
                     if (t.type === "individual" && t.size) {
                       acc[t.size] = (acc[t.size] || 0) + 1;
-                    } else if (t.type === "group" && t.sizes) {
+                    } else if (t.type === "group" && t.sizes && typeof t.sizes === "object") {
                       Object.entries(t.sizes).forEach(([size, qty]) => {
-                        acc[size] = (acc[size] || 0) + qty;
+                        const count = Number(qty) || 0;
+                        if (count > 0) {
+                          acc[size] = (acc[size] || 0) + count;
+                        }
                       });
                     }
                     return acc;
                   }, {} as Record<string, number>)
                 ).sort((a, b) => {
-                  const order = { S: 1, M: 2, L: 3, XL: 4, "2XL": 5, "3XL": 6 };
-                  return (order[a[0] as keyof typeof order] || 99) - (order[b[0] as keyof typeof order] || 99);
+                  const order: Record<string, number> = { S: 1, M: 2, L: 3, XL: 4, "2XL": 5, "3XL": 6 };
+                  return (order[a[0]] || 99) - (order[b[0]] || 99);
                 }).map(([size, count]) => (
                   <tr key={size}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">{size}</td>
@@ -1282,7 +1312,7 @@ export default function AdminRegistrations({
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl bg-slate-100 p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-600">Tổng thu dự kiến</p>
-              <p className="mt-2 text-2xl font-black text-slate-900">{formatVnd(invitations.reduce((sum, t) => sum + (t.status !== "rejected" && t.status !== "cancelled" ? t.amount : 0), 0))}</p>
+              <p className="mt-2 text-2xl font-black text-slate-900">{formatVnd(invitations.reduce((sum, t) => sum + (t.status !== "rejected" && t.status !== "cancelled" ? (Number(t.amount) || 0) : 0), 0))}</p>
             </div>
             <div className="rounded-2xl bg-emerald-100 p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Đã thu (Khớp OCR/Duyệt tay)</p>
@@ -1291,7 +1321,7 @@ export default function AdminRegistrations({
             <div className="rounded-2xl bg-amber-100 p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Chờ duyệt</p>
               <p className="mt-2 text-2xl font-black text-amber-800">
-                {formatVnd(invitations.filter(t => t.status === "pending" || t.status === "pending_payment").reduce((sum, t) => sum + t.amount, 0))}
+                {formatVnd(invitations.filter(t => t.status === "pending" || t.status === "pending_payment").reduce((sum, t) => sum + (Number(t.amount) || 0), 0))}
               </p>
             </div>
           </div>
@@ -1435,41 +1465,66 @@ export default function AdminRegistrations({
         title={viewingLogsFor ? `Lịch sử: ${viewingLogsFor.code}` : "Lịch sử thao tác"}
         subtitle={viewingLogsFor ? viewingLogsFor.attendeeName || viewingLogsFor.memberName : undefined}
         icon="history"
-        bodyClassName="space-y-4 max-h-[65vh]"
+        bodyClassName="p-5 max-h-[70vh] flex flex-col"
       >
-        {viewingLogsFor && (() => {
-          const myLogs = logs.filter((l) => l.entityId === viewingLogsFor.id);
-          if (myLogs.length === 0) {
-            return (
-              <p className="text-sm text-slate-500 italic">
-                Chưa có lịch sử nào cho thư mời này.
-              </p>
-            );
-          }
-          return (
-            <div className="space-y-3">
-              {myLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="bg-slate-50 rounded-xl p-4 border border-slate-100"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="font-bold text-sm text-slate-800">
-                      {log.adminName}{" "}
-                      <span className="text-xs font-normal text-slate-500">
-                        ({log.adminUsername})
+        {viewingLogsFor && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-xs">
+              <span className="font-semibold text-slate-500">
+                Toàn bộ lịch sử can thiệp & tương tác
+              </span>
+              <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
+                {loadingEntityLogs ? "Đang tải..." : `${entityLogs.length} thao tác`}
+              </span>
+            </div>
+
+            {loadingEntityLogs ? (
+              <div className="text-center py-10 text-slate-400 text-sm flex flex-col items-center gap-2">
+                <span className="material-symbols-rounded animate-spin text-2xl text-blue-600">
+                  progress_activity
+                </span>
+                <span>Đang tải lịch sử thao tác từ máy chủ...</span>
+              </div>
+            ) : entityLogs.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 text-sm italic">
+                Chưa có lịch sử thao tác nào cho thư mời này.
+              </div>
+            ) : (
+              <div className="space-y-3 overflow-y-auto max-h-[50vh] pr-1">
+                {entityLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="bg-slate-50 hover:bg-slate-100/80 transition-colors rounded-xl p-4 border border-slate-100"
+                  >
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                      <div>
+                        <span className="font-bold text-sm text-slate-900">
+                          {log.adminName || "Quản trị viên"}
+                        </span>
+                        {log.adminUsername && (
+                          <span className="text-xs text-slate-500 ml-1.5 font-mono">
+                            (@{log.adminUsername})
+                          </span>
+                        )}
+                        {log.adminRole && (
+                          <span className="ml-2 inline-block px-2 py-0.5 text-[10px] font-bold rounded-md bg-blue-100 text-blue-700">
+                            {log.adminRole}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium text-slate-400 whitespace-nowrap">
+                        {new Date(log.createdAt).toLocaleString("vi-VN")}
                       </span>
                     </div>
-                    <div className="text-[11px] font-semibold text-slate-500">
-                      {new Date(log.createdAt).toLocaleString("vi-VN")}
-                    </div>
+                    <p className="text-xs text-slate-700 leading-relaxed break-words font-medium">
+                      {log.details}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-700 leading-relaxed">{log.details}</p>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
       {/* Edit Registration Modal */}
@@ -1588,22 +1643,155 @@ export default function AdminRegistrations({
                   </div>
                 );
               })()}
-              {editingInvitation.type === "group" && (
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">
-                    Phân bổ size (Tập thể)
-                  </label>
-                  <textarea
-                    disabled
-                    rows={3}
-                    value={JSON.stringify(editingInvitation.sizes, null, 2)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-mono text-xs"
-                  />
-                  <p className="text-xs text-slate-500 mt-1">
-                    *Để sửa phân bổ size tập thể vui lòng thao tác trực tiếp vào CSDL.
-                  </p>
-                </div>
-              )}
+              {editingInvitation.type === "group" && (() => {
+                const requiredQty = editingInvitation.quantity || 1;
+                const currentSizes = editingInvitation.sizes || {};
+                const currentTotal = Object.values(currentSizes).reduce(
+                  (sum, count) => sum + (Math.max(0, Number(count) || 0)),
+                  0
+                );
+                const isMatch = currentTotal === requiredQty;
+                const diff = currentTotal - requiredQty;
+
+                const updateCount = (key: string, delta: number) => {
+                  const oldVal = Number(currentSizes[key]) || 0;
+                  const newVal = Math.max(0, oldVal + delta);
+                  const nextSizes = { ...currentSizes, [key]: newVal };
+                  if (newVal === 0) {
+                    delete nextSizes[key];
+                  }
+                  setEditingInvitation({
+                    ...editingInvitation,
+                    sizes: nextSizes,
+                  });
+                };
+
+                const setCount = (key: string, val: number) => {
+                  const newVal = Math.max(0, val);
+                  const nextSizes = { ...currentSizes, [key]: newVal };
+                  if (newVal === 0) {
+                    delete nextSizes[key];
+                  }
+                  setEditingInvitation({
+                    ...editingInvitation,
+                    sizes: nextSizes,
+                  });
+                };
+
+                return (
+                  <div>
+                    {/* Tiêu đề & Trạng thái khớp số lượng */}
+                    <div className="flex flex-wrap justify-between items-center gap-2 mb-2">
+                      <label className="block text-sm font-bold text-slate-700">
+                        Phân bổ Size áo
+                      </label>
+                      <span
+                        className={`text-sm font-bold ${
+                          isMatch ? "text-green-600" : "text-amber-600"
+                        }`}
+                      >
+                        Đã chọn: {currentTotal} / {requiredQty}
+                      </span>
+                    </div>
+
+                    {!isMatch && (
+                      <p className="text-xs text-amber-600 font-semibold mb-3">
+                        ⚠ Tổng số áo ({currentTotal}) chưa khớp với số lượng đăng ký ({requiredQty} áo). Chênh lệch: {diff > 0 ? `+${diff}` : diff} áo.
+                      </p>
+                    )}
+
+                    {/* Danh sách phân bổ theo Áo Nam & Áo Nữ giống hệt trang Đăng ký */}
+                    <div className="space-y-4">
+                      {([
+                        {
+                          g: "Nam",
+                          title: "Áo Nam",
+                          color: "text-blue-700",
+                          bar: "bg-blue-50 border-blue-100",
+                        },
+                        {
+                          g: "Nữ",
+                          title: "Áo Nữ",
+                          color: "text-pink-700",
+                          bar: "bg-pink-50 border-pink-100",
+                        },
+                      ] as const).map(({ g, title, color, bar }) => {
+                        const groupTotal = SIZES.reduce(
+                          (sum, s) => sum + (Number(currentSizes[`${g}-${s}`]) || 0),
+                          0
+                        );
+                        return (
+                          <div key={g}>
+                            <div
+                              className={`flex items-center justify-between rounded-lg border px-3 py-2 mb-2 ${bar}`}
+                            >
+                              <span className={`text-sm font-bold ${color}`}>
+                                {title}
+                              </span>
+                              <span className={`text-xs font-semibold ${color}`}>
+                                {groupTotal} áo
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2.5">
+                              {SIZES.map((s) => {
+                                const key = `${g}-${s}`;
+                                const val = Number(currentSizes[key]) || 0;
+                                return (
+                                  <div
+                                    key={key}
+                                    className="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-2xs"
+                                  >
+                                    <span className="font-medium text-gray-700 w-8 shrink-0 text-sm">
+                                      {s}
+                                    </span>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={val === 0}
+                                        onClick={() => updateCount(key, -1)}
+                                        className="w-6 h-6 flex items-center justify-center bg-gray-50 rounded text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0 text-sm font-bold disabled:opacity-30 disabled:hover:bg-gray-50"
+                                      >
+                                        -
+                                      </button>
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        value={val}
+                                        onWheel={(e) =>
+                                          (e.target as HTMLElement).blur()
+                                        }
+                                        onChange={(e) =>
+                                          setCount(
+                                            key,
+                                            Math.max(
+                                              0,
+                                              parseInt(e.target.value) || 0
+                                            )
+                                          )
+                                        }
+                                        className="w-8 text-center text-sm font-bold bg-transparent border-none outline-none appearance-none p-0 focus:ring-0 text-slate-900"
+                                        style={{ MozAppearance: "textfield" }}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => updateCount(key, 1)}
+                                        className="w-6 h-6 flex items-center justify-center bg-gray-50 rounded text-gray-600 hover:bg-gray-100 border border-gray-200 shrink-0 text-sm font-bold"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">
                   Lớp
@@ -1628,8 +1816,15 @@ export default function AdminRegistrations({
               </button>
               <button
                 type="submit"
-                disabled={busy}
-                className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2 shadow-2xs"
+                disabled={
+                  busy ||
+                  (editingInvitation.type === "group" &&
+                    Object.values(editingInvitation.sizes || {}).reduce(
+                      (sum, c) => sum + (Math.max(0, Number(c) || 0)),
+                      0
+                    ) !== (editingInvitation.quantity || 1))
+                }
+                className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-2xs"
               >
                 {busy ? "Đang lưu..." : "Lưu thay đổi"}
               </button>

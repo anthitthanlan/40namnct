@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import MediaUploader from "@/components/MediaUploader";
 import { useConfirm } from "@/components/useConfirm";
 import { Modal } from "@/components/modal";
@@ -89,14 +90,16 @@ export default function AdminMedia({
   const [activeTab, setActiveTab] = useState<"all" | "approved" | "pending" | "rejected">("all");
   const [selectedItem, setSelectedItem] = useState<MediaRow | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [banner, setBanner] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
   const { confirm, ConfirmElement } = useConfirm();
 
   const flash = useCallback((ok: boolean, text: string) => {
-    setBanner({ ok, text });
-    setTimeout(() => setBanner(null), 4000);
+    if (ok) {
+      toast.success(text);
+    } else {
+      toast.error(text);
+    }
   }, []);
 
   const load = useCallback(async () => {
@@ -333,18 +336,6 @@ export default function AdminMedia({
             }}
             onCancel={() => setShowUploader(false)}
           />
-        </div>
-      )}
-
-      {!showUploader && banner && (
-        <div
-          className={`rounded-2xl px-5 py-3 text-sm font-bold ${
-            banner.ok
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-rose-100 text-rose-600"
-          }`}
-        >
-          {banner.text}
         </div>
       )}
 

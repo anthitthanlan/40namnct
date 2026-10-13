@@ -50,13 +50,16 @@ export type InvitationView = {
   checkedInAt?: string | null;
   shirtReceived?: boolean;
   shirtReceivedAt?: string | null;
+  emailSent?: boolean;
+  emailSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
   receiptAttempts?: any[];
 };
 
-export function formatVnd(amount: number): string {
-  return `${amount.toLocaleString("vi-VN")}đ`;
+export function formatVnd(amount?: number | null): string {
+  const num = typeof amount === "number" && !isNaN(amount) ? amount : (Number(amount) || 0);
+  return `${num.toLocaleString("vi-VN")}đ`;
 }
 
 export function invitationStatusInfo(status: InvitationStatus | string): {
@@ -106,20 +109,21 @@ export const genderSizeKey = (g: Gender, s: string) => `${g}-${s}`;
 /** "Size L" hoặc "Nam-M×2 · Nữ-L×3" */
 export function sizesLabel(
   type: InvitationView["type"],
-  size: string | null,
-  sizes: Record<string, number>,
+  size: string | null | undefined,
+  sizes?: Record<string, number> | null,
 ): string {
   if (type === "individual") {
     if (!size) return "";
     const parts = size.split("-");
     return parts.length === 2 ? `Size ${parts[1]} (${parts[0]})` : `Size ${size}`;
   }
+  if (!sizes || typeof sizes !== "object") return "";
   const keys: string[] = [
     ...SIZES,
     ...GENDERS.flatMap((g) => SIZES.map((s) => genderSizeKey(g, s))),
   ];
   const parts = keys
-    .filter((k) => (sizes[k] ?? 0) > 0)
+    .filter((k) => (Number(sizes[k]) || 0) > 0)
     .map((k) => `${k.replace("-", " ")}×${sizes[k]}`);
   return parts.join(" · ");
 }

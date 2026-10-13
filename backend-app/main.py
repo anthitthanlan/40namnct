@@ -23,8 +23,36 @@ from app.models.email_template import EmailTemplate
 # 1. Initialize Database Tables
 Base.metadata.create_all(bind=engine)
 
+def ensure_database_schema(engine_obj):
+    from sqlalchemy import inspect, text
+    try:
+        with engine_obj.begin() as conn:
+            inspector = inspect(conn)
+            tables = inspector.get_table_names()
+            if "invitations" in tables:
+                columns = [c["name"] for c in inspector.get_columns("invitations")]
+                if "email_sent" not in columns:
+                    conn.execute(text("ALTER TABLE invitations ADD COLUMN email_sent BOOLEAN DEFAULT 0"))
+                if "email_sent_at" not in columns:
+                    conn.execute(text("ALTER TABLE invitations ADD COLUMN email_sent_at VARCHAR(64)"))
+                
+                if "action_logs" in tables:
+                    conn.execute(text("""
+                        UPDATE invitations
+                        SET email_sent = 1
+                        WHERE id IN (
+                            SELECT DISTINCT entity_id FROM action_logs
+                            WHERE entity_id IS NOT NULL AND details LIKE '%Gửi email%'
+                        ) AND (email_sent IS NULL OR email_sent = 0)
+                    """))
+    except Exception as e:
+        print(f"Warning: ensure_database_schema encountered an issue: {e}")
+
+ensure_database_schema(engine)
+
 # 2. Ensure Upload Folders on Disk
 upload_dir = ensure_upload_dirs()
+
 
 # 3. Create FastAPI App
 app = FastAPI(

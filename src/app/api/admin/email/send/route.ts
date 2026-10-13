@@ -176,12 +176,25 @@ export async function POST(req: NextRequest) {
     for (const recipient of validRecipients) {
       if (recipient.invi_id) {
         const success = await sendInvitationEmail(recipient.invi_id);
-        if (success) sentCount++;
-        else failedCount++;
+        if (success) {
+          sentCount++;
+          await logAction(
+            "send_email",
+            "registrations",
+            recipient.invi_id,
+            admin.fullName || admin.username,
+            admin.username,
+            admin.role,
+            `Gửi email "Thư mời chính thức" qua chiến dịch gửi hàng loạt`
+          );
+        } else {
+          failedCount++;
+        }
       } else {
         failedCount++;
       }
     }
+
     
     await logAction(
       "send_email",

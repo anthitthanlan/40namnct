@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FormEvent } from "react";
 import type { Post, PostStatus } from "@/lib/posts";
@@ -16,6 +17,7 @@ import AdminCategories from "./AdminCategories";
 import AdminEmail from "./AdminEmail";
 import AdminCameraScanner from "@/components/AdminCameraScanner";
 import { useConfirm } from "@/components/useConfirm";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 declare global {
   interface Window {
@@ -121,9 +123,6 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
   const [draft, setDraft] = useState<Draft | null>(null);
   const [loginError, setLoginError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [banner, setBanner] = useState<{ ok: boolean; text: string } | null>(
-    null,
-  );
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSource, setFilterSource] = useState<"all" | "admin" | "community">("all");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
@@ -139,8 +138,11 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
   } | null>(null);
 
   const flash = useCallback((ok: boolean, text: string) => {
-    setBanner({ ok, text });
-    setTimeout(() => setBanner(null), 4000);
+    if (ok) {
+      toast.success(text);
+    } else {
+      toast.error(text);
+    }
   }, []);
 
   const loadPosts = useCallback(async () => {
@@ -626,16 +628,6 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
 
         {/* MAIN CONTENT */}
         <div className="flex-1 min-w-0">
-          {banner && (
-            <div
-              className={`mb-8 rounded-3xl px-6 py-4 text-sm font-bold ${banner.ok
-                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                : "bg-rose-100 text-rose-800 border border-rose-200"
-                }`}
-            >
-              {banner.text}
-            </div>
-          )}
 
 
 
@@ -1011,7 +1003,9 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                   data-active={isActive ? "true" : "false"}
                   style={{ "--t-page-from-x": fromX } as React.CSSProperties}
                 >
-                  {content}
+                  <ErrorBoundary fallbackTitle={`Đã xảy ra lỗi khi tải tab này`}>
+                    {content}
+                  </ErrorBoundary>
                 </div>
               );
             })}

@@ -1,18 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import List, Dict, Any
+from sqlalchemy import func, or_
+from typing import List, Dict, Any, Optional
 from app.database import get_db
 from app.models.invitation import Invitation
 from app.models.member import Member
 from app.models.admin import Admin, ActionLog
 from app.models.post import Post
-from app.schemas.admin import AdminCreate, AdminResponse, ActionLogResponse, ActionLogCreate
+from app.schemas.admin import (
+    AdminCreate,
+    AdminResponse,
+    ActionLogResponse,
+    ActionLogCreate,
+    ActionLogPaginationResponse
+)
 from app.services.auth_service import (
     get_current_admin,
     require_super_admin,
     hash_password
 )
+
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
 
@@ -116,14 +123,51 @@ def delete_admin(id: str, db: Session = Depends(get_db), super_admin = Depends(r
     db.commit()
     return {"success": True, "message": "Đã xóa tài khoản"}
 
-@router.get("/logs", response_model=List[ActionLogResponse])
+@router.get("/logs")
 def get_action_logs(
-    limit: int = 100,
+    limit: int = 50,
+    page: int = 1,
+    offset: Optional[int] = None,
+    entity_id: Optional[str] = None,
+    action: Optional[str] = None,
+    search: Optional[str] = None,
+    all: bool = False,
+    raw: bool = False,
     db: Session = Depends(get_db),
     admin = Depends(get_current_admin)
 ):
-    logs = db.query(ActionLog).order_by(ActionLog.created_at.desc()).limit(limit).all()
-    return [
+    query = db.query(ActionLog)
+
+    if entity_id:
+        query = query.filter(ActionLog.entity_id == entity_id)
+
+    if action:
+        query = query.filter(ActionLog.action == action)
+
+    if search and search.strip():
+        search_pattern = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                ActionLog.details.ilike(search_pattern),
+                ActionLog.admin_name.ilike(search_pattern),
+                ActionLog.entity_id.ilike(search_pattern),
+                ActionLog.action.ilike(search_pattern)
+            )
+        )
+
+    total = query.count()
+    query = query.order_by(ActionLog.created_at.desc())
+
+    if not all:
+        actual_offset = offset if offset is not None else (page - 1) * limit
+        logs = query.offset(actual_offset).limit(limit).all()
+    else:
+        logs = query.all()
+        limit = total if total > 0 else 1
+
+    total_pages = (total + limit - 1) // limit if limit > 0 else 1
+
+    items = [
         ActionLogResponse(
             id=l.id,
             action=l.action,
@@ -134,6 +178,18 @@ def get_action_logs(
             createdAt=l.created_at
         ) for l in logs
     ]
+
+    if raw:
+        return items
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "totalPages": total_pages
+    }
+
 
 @router.post("/logs", response_model=ActionLogResponse)
 def create_action_log(

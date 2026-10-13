@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
-import { updateInvitationDetails } from "@/lib/members";
+import { findInvitationById, updateInvitationDetails } from "@/lib/members";
 import { logAction } from "@/lib/action-logs";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +26,38 @@ export async function PATCH(
     return NextResponse.json({ ok: false, message: "Invalid JSON" }, { status: 400 });
   }
 
+  const existing = await findInvitationById(id);
+  if (!existing) {
+    return NextResponse.json({ ok: false, message: "Không tìm thấy thư mời." }, { status: 404 });
+  }
+
+  // Nếu là đơn tập thể và có cập nhật sizes: bắt buộc tổng số lượng các size phải khớp số lượng đã đăng ký ban đầu
+  let isSizeChanged = false;
+  if (body.sizes && typeof body.sizes === "object") {
+    const totalSizes = Object.values(body.sizes as Record<string, number>).reduce(
+      (sum, count) => sum + (Math.max(0, Number(count) || 0)),
+      0
+    );
+    const expectedQty = existing.quantity || 1;
+    if (totalSizes !== expectedQty) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: `Tổng số lượng áo đã chọn (${totalSizes}) không khớp với tổng số lượng ban đầu của đơn (${expectedQty} áo). Vui lòng cân đối lại số lượng.`,
+        },
+        { status: 400 }
+      );
+    }
+    isSizeChanged = true;
+  }
+
   const result = await updateInvitationDetails(id, body, token);
   
   if (result) {
+    const details = isSizeChanged
+      ? `Cập nhật thông tin thư mời: điều chỉnh phân bổ size áo (Tổng: ${existing.quantity} áo)`
+      : "Cập nhật thông tin thư mời";
+
     await logAction(
       "update",
       "registrations",
@@ -36,7 +65,7 @@ export async function PATCH(
       admin.fullName || admin.username,
       admin.username,
       admin.role,
-      "Cập nhật thông tin thư mời"
+      details
     );
     return NextResponse.json({ ok: true, data: result });
   } else {

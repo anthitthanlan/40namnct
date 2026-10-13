@@ -53,6 +53,8 @@ def to_response(inv: Invitation) -> InvitationResponse:
         checkedInAt=inv.checked_in_at,
         shirtReceived=inv.shirt_received,
         shirtReceivedAt=inv.shirt_received_at,
+        emailSent=bool(getattr(inv, "email_sent", False)),
+        emailSentAt=getattr(inv, "email_sent_at", None),
         createdAt=inv.created_at,
         updatedAt=inv.updated_at
     )
@@ -179,6 +181,9 @@ def update_invitation(
     if "size" in changes and changes["size"] is not None:
         inv.size = changes["size"]
 
+    if "sizes" in changes and changes["sizes"] is not None:
+        inv.sizes = changes["sizes"]
+
     if "attendeeName" in changes and changes["attendeeName"] is not None:
         inv.attendee_name = changes["attendeeName"]
         member = db.query(Member).filter(Member.id == inv.member_id).first()
@@ -192,6 +197,14 @@ def update_invitation(
         member = db.query(Member).filter(Member.id == inv.member_id).first()
         if member:
             member.email = changes["memberEmail"]
+
+    if "emailSent" in changes and changes["emailSent"] is not None:
+        inv.email_sent = changes["emailSent"]
+        if changes["emailSent"] and not inv.email_sent_at:
+            inv.email_sent_at = now_iso
+
+    if "emailSentAt" in changes and changes["emailSentAt"] is not None:
+        inv.email_sent_at = changes["emailSentAt"]
 
     # Log action
     log = ActionLog(

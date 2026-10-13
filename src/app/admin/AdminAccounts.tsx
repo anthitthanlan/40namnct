@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import type { SafeAdminAccount } from "@/lib/admin";
 import type { ActionLog } from "@/lib/action-logs";
-
-type Banner = { ok: boolean; text: string } | null;
 
 export default function AdminAccounts({
   adminInfo,
@@ -15,7 +14,6 @@ export default function AdminAccounts({
 }) {
   const isSuperAdmin = adminInfo.role === "super_admin";
   const [accounts, setAccounts] = useState<SafeAdminAccount[] | null>(null);
-  const [banner, setBanner] = useState<Banner>(null);
   const [busy, setBusy] = useState(false);
 
   // For Super Admin viewing other users' logs
@@ -35,8 +33,11 @@ export default function AdminAccounts({
   const [newPassword, setNewPassword] = useState("");
 
   const flash = useCallback((ok: boolean, text: string) => {
-    setBanner({ ok, text });
-    setTimeout(() => setBanner(null), 4000);
+    if (ok) {
+      toast.success(text);
+    } else {
+      toast.error(text);
+    }
   }, []);
 
   const loadAccounts = useCallback(async () => {
@@ -146,11 +147,6 @@ export default function AdminAccounts({
 
   return (
     <div className="space-y-8">
-      {banner && (
-        <div className={`rounded-3xl px-6 py-4 text-sm font-bold shadow-sm ${banner.ok ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>
-          {banner.text}
-        </div>
-      )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-6">

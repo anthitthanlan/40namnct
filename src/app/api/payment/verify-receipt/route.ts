@@ -20,19 +20,23 @@ export async function POST(req: NextRequest) {
     const invitationId = formData.get("invitationId") as string;
 
     // Xử lý các case rớt dòng hoặc ngân hàng cắt dấu '-'
-    if (backendData.ok && backendData.confidence !== "high" && backendData.content && invitationId) {
+    const ocrContent = backendData.ocrResult?.content || backendData.content || "";
+    if (backendData.ok && backendData.confidence !== "high" && ocrContent && invitationId) {
       try {
         const { findInvitationById, updateInvitationDetails } = await import("@/lib/members");
         const invitation = await findInvitationById(invitationId);
         if (invitation) {
           const expectedCode = invitation.code.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-          const actualContent = backendData.content.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+          const actualContent = ocrContent.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 
           if (actualContent.includes(expectedCode)) {
             backendData.confidence = "high";
             backendData.transactionStatus = "success";
-            // Ghi đè cập nhật lại status thành confirmed trên backend
-            await updateInvitationDetails(invitationId, { status: "confirmed", ocrResult: backendData });
+            
+            const { getSystemAdminToken } = await import("@/lib/system-auth");
+            const systemToken = (await getSystemAdminToken()) || undefined;
+            // Ghi đè cập nhật lại status thành confirmed trên backend bằng systemToken
+            await updateInvitationDetails(invitationId, { status: "confirmed", ocrResult: backendData }, systemToken);
           }
         }
       } catch (err) {
@@ -41,11 +45,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (backendData.ok && backendData.confidence === "high") {
-      // Send email asynchronously without blocking the response
       if (invitationId) {
-        sendInvitationEmail(invitationId).catch(err =>
-          console.error("Async email send failed:", err)
-        );
+        try {
+          await sendInvitationEmail(invitationId, {
+            adminName: "Hệ thống (AI OCR)",
+            logDetail: "Tự động gửi email thư mời khi duyệt qua OCR",
+          });
+        } catch (err) {
+          console.error("[verify-receipt] Lỗi gửi email thư mời tự động:", err);
+        }
       }
     }
 

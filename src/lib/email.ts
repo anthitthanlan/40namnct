@@ -4,7 +4,19 @@ import InvitationEmail from "@/emails/InvitationEmail";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
 
-export async function sendInvitationEmail(invitationId: string) {
+export type SendInvitationOptions = {
+  token?: string;
+  adminName?: string;
+  adminUsername?: string;
+  adminRole?: string;
+  logDetail?: string;
+  skipLog?: boolean;
+};
+
+export async function sendInvitationEmail(
+  invitationId: string,
+  options?: SendInvitationOptions
+): Promise<boolean> {
   try {
     const inv = await findInvitationById(invitationId);
     if (!inv) return false;
@@ -40,12 +52,44 @@ export async function sendInvitationEmail(invitationId: string) {
     });
 
     if (res.ok) {
-      try {
-        await updateInvitationDetails(inv.id, {
-          emailSent: true,
-          emailSentAt: new Date().toISOString(),
-        });
-      } catch {}
+      let token = options?.token;
+      if (!token) {
+        const { getSystemAdminToken } = await import("./system-auth");
+        token = (await getSystemAdminToken()) || undefined;
+      }
+
+      if (token) {
+        try {
+          await updateInvitationDetails(
+            inv.id,
+            {
+              emailSent: true,
+              emailSentAt: new Date().toISOString(),
+            },
+            token
+          );
+        } catch (err) {
+          console.error("[sendInvitationEmail] Lỗi cập nhật trạng thái vé:", err);
+        }
+      }
+
+      if (!options?.skipLog) {
+        try {
+          const { logAction } = await import("./action-logs");
+          await logAction(
+            "send_email",
+            "registrations",
+            inv.id,
+            options?.adminName || "Hệ thống (AI OCR)",
+            options?.adminUsername || "system",
+            options?.adminRole || "system",
+            options?.logDetail || "Tự động gửi email thư mời khi duyệt qua OCR",
+            token
+          );
+        } catch (err) {
+          console.error("[sendInvitationEmail] Lỗi ghi log gửi email:", err);
+        }
+      }
     }
 
     return res.ok;
@@ -54,4 +98,3 @@ export async function sendInvitationEmail(invitationId: string) {
     return false;
   }
 }
-

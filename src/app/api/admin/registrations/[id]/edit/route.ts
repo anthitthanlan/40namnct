@@ -33,22 +33,29 @@ export async function PATCH(
 
   // Nếu là đơn tập thể và có cập nhật sizes: bắt buộc tổng số lượng các size phải khớp số lượng đã đăng ký ban đầu
   let isSizeChanged = false;
-  if (body.sizes && typeof body.sizes === "object") {
-    const totalSizes = Object.values(body.sizes as Record<string, number>).reduce(
-      (sum, count) => sum + (Math.max(0, Number(count) || 0)),
-      0
-    );
-    const expectedQty = existing.quantity || 1;
-    if (totalSizes !== expectedQty) {
-      return NextResponse.json(
-        {
-          ok: false,
-          message: `Tổng số lượng áo đã chọn (${totalSizes}) không khớp với tổng số lượng ban đầu của đơn (${expectedQty} áo). Vui lòng cân đối lại số lượng.`,
-        },
-        { status: 400 }
+  const isGroup = existing.type === "group";
+
+  if (isGroup) {
+    if (body.sizes && typeof body.sizes === "object") {
+      const totalSizes = Object.values(body.sizes as Record<string, number>).reduce(
+        (sum, count) => sum + (Math.max(0, Number(count) || 0)),
+        0
       );
+      const expectedQty = existing.quantity || 1;
+      if (totalSizes !== expectedQty) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: `Tổng số lượng áo đã chọn (${totalSizes}) không khớp với tổng số lượng ban đầu của đơn (${expectedQty} áo). Vui lòng cân đối lại số lượng.`,
+          },
+          { status: 400 }
+        );
+      }
+      isSizeChanged = true;
     }
-    isSizeChanged = true;
+  } else {
+    // Đơn cá nhân chỉ dùng trường `size`, bỏ qua `sizes`
+    delete body.sizes;
   }
 
   const result = await updateInvitationDetails(id, body, token);

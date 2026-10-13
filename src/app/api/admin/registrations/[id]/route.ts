@@ -61,18 +61,16 @@ export async function POST(
     );
   }
 
-  const success = await sendInvitationEmail(id);
+  const token = req.cookies.get("nct_admin")?.value;
+  const success = await sendInvitationEmail(id, {
+    token,
+    adminName: admin.fullName || admin.username,
+    adminUsername: admin.username,
+    adminRole: admin.role,
+    logDetail: "Gửi email thư mời thủ công",
+  });
   
   if (success) {
-    await logAction(
-      "update_status",
-      "registrations",
-      id,
-      admin.fullName || admin.username,
-      admin.username,
-      admin.role,
-      "Gửi email thư mời thủ công"
-    );
     return NextResponse.json({ ok: true });
   } else {
     return NextResponse.json(

@@ -130,6 +130,8 @@ export async function POST(req: NextRequest) {
   const admin = getAdminFromRequest(req);
   if (!admin || admin.role === "editor") return unauthorized();
 
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+
   let body: SendEmailPayload;
   try {
     body = (await req.json()) as SendEmailPayload;
@@ -175,7 +177,10 @@ export async function POST(req: NextRequest) {
     let failedCount = 0;
     for (const recipient of validRecipients) {
       if (recipient.invi_id) {
-        const success = await sendInvitationEmail(recipient.invi_id);
+        const success = await sendInvitationEmail(recipient.invi_id, {
+          token,
+          skipLog: true,
+        });
         if (success) {
           sentCount++;
           await logAction(
@@ -230,7 +235,6 @@ export async function POST(req: NextRequest) {
   // If RESEND_API_KEY is not configured in Next.js environment, check if FastAPI backend has it configured
   if (!resendApiKey) {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
-    const token = req.cookies.get(COOKIE_NAME)?.value;
 
     try {
       // Try sending via backend proxy
@@ -249,6 +253,27 @@ export async function POST(req: NextRequest) {
       });
 
       if (backendRes.ok) {
+        const { updateInvitationDetails } = await import("@/lib/members");
+        for (const r of validRecipients) {
+          if (r.invi_id) {
+            await logAction(
+              "send_email",
+              "registrations",
+              r.invi_id,
+              admin.fullName || admin.username,
+              admin.username,
+              admin.role,
+              `Gửi email "${subject}"`
+            );
+            try {
+              await updateInvitationDetails(r.invi_id, {
+                emailSent: true,
+                emailSentAt: new Date().toISOString(),
+              });
+            } catch {}
+          }
+        }
+
         await logAction(
           "send_email",
           "registrations",
@@ -328,6 +353,29 @@ export async function POST(req: NextRequest) {
     } catch (err: any) {
       failedCount += chunk.length;
       errors.push(err?.message || "Lỗi mạng hoặc kết nối Resend");
+    }
+  }
+
+  if (sentCount > 0) {
+    const { updateInvitationDetails } = await import("@/lib/members");
+    for (const r of validRecipients) {
+      if (r.invi_id) {
+        await logAction(
+          "send_email",
+          "registrations",
+          r.invi_id,
+          admin.fullName || admin.username,
+          admin.username,
+          admin.role,
+          `Gửi email "${subject}"`
+        );
+        try {
+          await updateInvitationDetails(r.invi_id, {
+            emailSent: true,
+            emailSentAt: new Date().toISOString(),
+          });
+        } catch {}
+      }
     }
   }
 

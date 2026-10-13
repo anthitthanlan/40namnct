@@ -78,6 +78,23 @@ export default function AdminRegistrations({
   const [loadingEntityLogs, setLoadingEntityLogs] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [exportingExcel, setExportingExcel] = useState(false);
+  const [expandedOcrIds, setExpandedOcrIds] = useState<Record<string, boolean>>({});
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  const toggleOcrExpand = (id: string) => {
+    setExpandedOcrIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-action-menu]")) {
+        setActiveMenuId(null);
+      }
+    };
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, []);
 
   const flash = useCallback((ok: boolean, text: string) => {
     if (ok) {
@@ -416,7 +433,7 @@ export default function AdminRegistrations({
           attendeeName: editingInvitation.attendeeName,
           nienKhoa: editingInvitation.nienKhoa,
           size: editingInvitation.size,
-          sizes: editingInvitation.sizes,
+          sizes: editingInvitation.type === "group" ? editingInvitation.sizes : undefined,
           note: editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "",
           memberEmail: editingInvitation.memberEmail,
         }),
@@ -507,7 +524,19 @@ export default function AdminRegistrations({
       }
 
       if (statusFilter === "confirmed" && emailFilter !== "all") {
-        const isSent = Boolean(t.emailSent) || (logs || []).some((l) => l.entityId === t.id && l.details?.includes("Gửi email"));
+        const emailCount =
+          typeof t.emailSentCount === "number" && t.emailSentCount > 0
+            ? t.emailSentCount
+            : Boolean(t.emailSent) ||
+              (logs || []).some(
+                (l) =>
+                  l.entityId === t.id &&
+                  (l.action === "send_email" ||
+                    l.details?.toLowerCase().includes("gửi email"))
+              )
+            ? 1
+            : 0;
+        const isSent = emailCount > 0;
         if (emailFilter === "sent" && !isSent) return false;
         if (emailFilter === "not_sent" && isSent) return false;
       }
@@ -852,19 +881,40 @@ export default function AdminRegistrations({
                     const isGroup = t.type === "group";
                     const isConfirmed = t.status === "confirmed";
 
+                    const receiptImages = Array.from(
+                      new Set([
+                        ...((t.receiptAttempts || [])
+                          .map((a) => (typeof a === "string" ? a : a?.url))
+                          .filter(Boolean)),
+                        t.receiptUrl,
+                      ].filter(Boolean))
+                    ) as string[];
+
+                    const hasReceipt = receiptImages.length > 0;
+                    const isOcrAutoApproved =
+                      isConfirmed &&
+                      t.ocrResult?.confidence === "high";
+
+                    const isOcrExpanded =
+                      expandedOcrIds[t.id] !== undefined
+                        ? expandedOcrIds[t.id]
+                        : !isOcrAutoApproved;
+
                     return (
                       <div
                         key={t.id}
-                        className={`rounded-2xl border p-5 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${t.status === "pending_approval"
+                        className={`rounded-2xl border p-4 sm:p-5 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] shadow-2xs ${
+                          t.status === "pending_approval"
                             ? "border-blue-300 bg-blue-50/40"
                             : isConfirmed
                               ? "border-emerald-200 bg-white"
                               : "border-slate-200 bg-slate-50/50"
-                          }`}
+                        }`}
                       >
+                        {/* Header: Mã vé, Badges & Số tiền */}
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="font-mono font-black text-slate-900">
+                          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                            <span className="font-mono font-black text-slate-900 tracking-tight">
                               {t.code}
                             </span>
                             <span
@@ -872,184 +922,335 @@ export default function AdminRegistrations({
                             >
                               {status.label}
                             </span>
-                            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">
-                              {isGroup ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">group</span> Tập thể ({t.quantity} suất)</> : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">person</span> Cá nhân</>}
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600 inline-flex items-center gap-1">
+                              {isGroup ? (
+                                <>
+                                  <span className="material-symbols-rounded text-[13px]">group</span>
+                                  Tập thể ({t.quantity} suất)
+                                </>
+                              ) : (
+                                <>
+                                  <span className="material-symbols-rounded text-[13px]">person</span>
+                                  Cá nhân
+                                </>
+                              )}
                             </span>
-                            {(Boolean(t.emailSent) || (logs || []).some((l) => l.entityId === t.id && l.details?.includes("Gửi email"))) && (
-                              <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-extrabold text-indigo-700">
-                                <span className="material-symbols-rounded inline-block align-middle text-[1em]">mail</span> Đã gửi mail
-                              </span>
-                            )}
+                            {(() => {
+                              const emailCount =
+                                typeof t.emailSentCount === "number" && t.emailSentCount > 0
+                                  ? t.emailSentCount
+                                  : Boolean(t.emailSent) ||
+                                    (logs || []).some(
+                                      (l) =>
+                                        l.entityId === t.id &&
+                                        (l.action === "send_email" ||
+                                          l.details?.toLowerCase().includes("gửi email"))
+                                    )
+                                  ? 1
+                                  : 0;
+                              if (emailCount <= 0) return null;
+                              return (
+                                <span className="rounded-full bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-[11px] font-extrabold text-indigo-700 inline-flex items-center gap-1">
+                                  <span className="material-symbols-rounded text-[13px]">mail</span>
+                                  Đã gửi mail ({emailCount})
+                                </span>
+                              );
+                            })()}
                             {t.checkedIn && (
-                              <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-extrabold text-purple-700">
-                                <span className="material-symbols-rounded inline-block align-middle text-[1em]">gps_fixed</span> Đã vào cổng
+                              <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-extrabold text-purple-700 inline-flex items-center gap-1">
+                                <span className="material-symbols-rounded text-[13px]">gps_fixed</span>
+                                Đã vào cổng
                               </span>
                             )}
                           </div>
 
-                          <div className="flex flex-col items-end gap-1 text-right">
-                            <span className="text-base font-black text-slate-900">
-                              {formatVnd(t.amount)}
-                            </span>
-                            {t.amount === 0 && (
-                              <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-extrabold text-rose-700">
-                                <span className="material-symbols-rounded inline-block align-middle text-[1em]">card_giftcard</span> Miễn phí
+                          <div className="flex items-center gap-1 text-right">
+                            {t.amount === 0 ? (
+                              <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-extrabold text-rose-700 inline-flex items-center gap-1">
+                                <span className="material-symbols-rounded text-[13px]">card_giftcard</span>
+                                Miễn phí
+                              </span>
+                            ) : (
+                              <span className="text-base font-black text-slate-900 tracking-tight">
+                                {formatVnd(t.amount)}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="mt-3 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3 text-slate-600">
+                        {/* Thông tin người đăng ký */}
+                        <div className="mt-3 grid gap-2.5 text-xs text-slate-600 sm:grid-cols-2 lg:grid-cols-3">
                           <div>
-                            <p>
-                              <strong className="text-slate-500">Người đăng ký:</strong>{" "}
-                              <span className="font-bold text-slate-900">{t.attendeeName || t.memberName}</span>{" "}
-                              <span className="whitespace-nowrap">({t.memberPhone})</span>
-                            </p>
-                            {t.nienKhoa && (
-                              <p className="mt-0.5">
-                                <strong className="text-slate-500">Niên khóa:</strong> {t.nienKhoa}
-                              </p>
-                            )}
-                            {t.memberEmail && (
-                              <p className="mt-0.5">
-                                <strong className="text-slate-500">Email:</strong>{" "}
-                                <span className="break-all">{t.memberEmail}</span>
-                              </p>
-                            )}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-slate-900 text-[13px]">
+                                {t.attendeeName || t.memberName}
+                              </span>
+                              <span className="text-slate-500 font-medium">
+                                ({t.memberPhone})
+                              </span>
+                            </div>
+                            <div className="mt-1 flex items-center gap-2 flex-wrap text-[11px] text-slate-500">
+                              {t.nienKhoa && (
+                                <span className="inline-flex items-center gap-1">
+                                  <span className="material-symbols-rounded text-[13px] text-slate-400">school</span>
+                                  Niên khóa: <strong className="text-slate-700">{t.nienKhoa}</strong>
+                                </span>
+                              )}
+                              {t.memberEmail && (
+                                <span className="inline-flex items-center gap-1 truncate max-w-[200px]" title={t.memberEmail}>
+                                  <span className="material-symbols-rounded text-[13px] text-slate-400">alternate_email</span>
+                                  {t.memberEmail}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <div>
-                            <p>
-                              <strong className="text-slate-500">Đăng ký Áo &amp; F&B:</strong>{" "}
-                              <span className="font-bold text-slate-900">{t.snacks} suất</span>{" "}
-                              <span className="text-[11px]">({sizesLabel(t.type, t.size, t.sizes) || "-"})</span>
-                            </p>
+                            <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 border border-slate-200/80 px-2.5 py-1 text-[11px]">
+                              <span className="material-symbols-rounded text-[15px] text-indigo-600">checkroom</span>
+                              <span className="font-bold text-slate-800">{t.snacks} suất</span>
+                              <span className="text-slate-500">({sizesLabel(t.type, t.size, t.sizes) || "-"})</span>
+                            </div>
                             {t.lastSessionId && (
-                              <p className="mt-0.5 font-mono text-indigo-600 font-extrabold break-all">
+                              <p className="mt-1 font-mono text-[11px] text-indigo-600 font-bold truncate" title={t.lastSessionId}>
                                 Session CK: {t.lastSessionId}
                               </p>
                             )}
                           </div>
 
                           <div>
-                            <p>
-                              <strong className="text-slate-500">Ngày tạo:</strong>{" "}
-                              {vi(t.createdAt)}
-                            </p>
+                            <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                              <span className="material-symbols-rounded text-[13px] text-slate-400">schedule</span>
+                              <span>Ngày tạo: {vi(t.createdAt)}</span>
+                            </div>
                             {t.note && (
-                              <p className="mt-0.5 italic text-slate-500">
+                              <p className="mt-1 text-[11px] italic text-slate-600 line-clamp-2 bg-slate-50/70 rounded px-2 py-0.5 border border-slate-100" title={t.note}>
                                 &ldquo;{t.note}&rdquo;
                               </p>
                             )}
                           </div>
                         </div>
 
-                        {/* Ảnh biên lai & Kết quả OCR */}
-                        {(t.receiptUrl || (t.receiptAttempts && t.receiptAttempts.length > 0)) && (
-                          <div className="mt-4 flex flex-col sm:flex-row gap-4 border-t border-slate-100 pt-4">
-                            {/* Thumbnail ảnh */}
-                            <div className="flex flex-wrap gap-3">
-                              {Array.from(new Set([
-                                ...((t.receiptAttempts || []).map(a => typeof a === "string" ? a : a?.url).filter(Boolean)),
-                                t.receiptUrl
-                              ].filter(Boolean))).map((imgUrl, i) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  onClick={(e) => { e.preventDefault(); setLightboxImage(imgUrl); }}
-                                  className="shrink-0 group relative block h-24 w-16 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:h-32 sm:w-24 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  title="Bấm để xem ảnh lớn"
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={imgUrl}
-                                    alt={`Biên lai ${i + 1}`}
-                                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                                    loading="lazy"
-                                  />
-                                  <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10 flex items-center justify-center">
-                                    <span className="opacity-0 group-hover:opacity-100 text-xl drop-shadow-md"><span className="material-symbols-rounded inline-block align-middle text-[1em] text-white">search</span></span>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
+                        {/* Ảnh biên lai & Kết quả OCR (Thu gọn thông minh) */}
+                        {hasReceipt && (
+                          <div className="mt-3 border-t border-slate-100 pt-3">
+                            {!isOcrExpanded ? (
+                              /* Dòng OCR tóm tắt thông minh khi thu gọn */
+                              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50/90 border border-slate-200/80 px-3 py-2 text-xs">
+                                <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+                                  {receiptImages[0] && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setLightboxImage(receiptImages[0]);
+                                      }}
+                                      className="group relative h-8 w-8 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xs hover:ring-2 hover:ring-blue-500"
+                                      title="Bấm để xem ảnh biên lai"
+                                    >
+                                      <img
+                                        src={receiptImages[0]}
+                                        alt="Biên lai"
+                                        className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                                        loading="lazy"
+                                      />
+                                      <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20 flex items-center justify-center">
+                                        <span className="material-symbols-rounded text-[12px] text-white opacity-0 group-hover:opacity-100">zoom_in</span>
+                                      </div>
+                                    </button>
+                                  )}
 
-                            {/* Thông tin OCR */}
-                            <div className="flex-1 space-y-2 text-xs">
-                              {t.ocrResult ? (
-                                <>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-700 uppercase tracking-wide">Trạng thái AI OCR:</span>
+                                  <div className="flex items-center gap-1.5 flex-wrap text-[11px]">
                                     <span
-                                      className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${t.ocrResult.confidence === "high"
+                                      className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                        t.ocrResult?.confidence === "high"
                                           ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                                          : t.ocrResult.confidence === "low"
+                                          : t.ocrResult?.confidence === "low"
                                             ? "bg-amber-100 text-amber-700 border border-amber-200"
                                             : "bg-rose-100 text-rose-700 border border-rose-200"
-                                        }`}
+                                      }`}
                                     >
-                                      {t.ocrResult.confidence === "high" ? "Khớp hoàn toàn" : t.ocrResult.confidence === "low" ? "Khớp 1 phần (Cần xem lại)" : "Không khớp"}
+                                      {t.ocrResult?.confidence === "high"
+                                        ? "AI khớp hoàn toàn"
+                                        : t.ocrResult?.confidence === "low"
+                                          ? "Khớp 1 phần"
+                                          : "Không khớp"}
+                                    </span>
+
+                                    {t.ocrResult?.amount != null && (
+                                      <span className="font-mono font-bold text-slate-800">
+                                        {formatVnd(t.ocrResult.amount)}
+                                      </span>
+                                    )}
+
+
+
+                                    {(t.ocrResult as any)?.transactionId && (
+                                      <span className="text-slate-500 hidden sm:inline">
+                                        • Mã GD:{" "}
+                                        <strong className="font-mono text-slate-700">
+                                          {(t.ocrResult as any).transactionId}
+                                        </strong>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleOcrExpand(t.id)}
+                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 transition-colors shrink-0 ml-auto"
+                                >
+                                  <span>Chi tiết OCR</span>
+                                  <span className="material-symbols-rounded text-[16px]">expand_more</span>
+                                </button>
+                              </div>
+                            ) : (
+                              /* Chi tiết đầy đủ khi bung ra */
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-slate-700 uppercase tracking-wide text-xs">
+                                      Trạng thái AI OCR:
+                                    </span>
+                                    <span
+                                      className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                                        t.ocrResult?.confidence === "high"
+                                          ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                          : t.ocrResult?.confidence === "low"
+                                            ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                            : "bg-rose-100 text-rose-700 border border-rose-200"
+                                      }`}
+                                    >
+                                      {t.ocrResult?.confidence === "high"
+                                        ? "Khớp hoàn toàn"
+                                        : t.ocrResult?.confidence === "low"
+                                          ? "Khớp 1 phần (Cần xem lại)"
+                                          : "Không khớp"}
                                     </span>
                                   </div>
-                                  <div className="grid gap-2 sm:grid-cols-2">
-                                    <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
-                                      <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Số tiền đọc được</span>
-                                      <span className={`font-mono font-bold ${t.ocrResult.amount === t.amount ? "text-emerald-600" : "text-rose-600"}`}>
-                                        {t.ocrResult.amount != null ? formatVnd(t.ocrResult.amount) : "Không đọc được"}
-                                      </span>
-                                    </p>
-                                    <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
-                                      <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Thời gian CK</span>
-                                      <span className="font-mono text-slate-700 font-semibold">{t.ocrResult.time || "Không rõ"}</span>
-                                    </p>
-                                    <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100 sm:col-span-2">
-                                      <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Nội dung CK</span>
-                                      <span className="font-mono text-slate-800 break-all font-semibold">
-                                        {t.ocrResult.content || "Không đọc được"}
-                                      </span>
-                                    </p>
-                                    {(t.ocrResult as any).transactionId && (
-                                      <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
-                                        <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Mã GD / Số tham chiếu</span>
-                                        <span className="font-mono text-slate-800 font-bold">{(t.ocrResult as any).transactionId}</span>
-                                      </p>
-                                    )}
-                                    {(t.ocrResult as any).trustScore !== undefined && (
-                                      <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
-                                        <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Độ tin cậy của ảnh</span>
-                                        <span className={`font-mono font-bold ${(t.ocrResult as any).trustScore >= 60 ? "text-emerald-600" : "text-rose-600"}`}>
-                                          {(t.ocrResult as any).trustScore}% {(t.ocrResult as any).trustScore < 60 && "(Cảnh báo: Có thể làm giả)"}
-                                        </span>
-                                      </p>
+
+                                  {isOcrAutoApproved && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleOcrExpand(t.id)}
+                                      className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                                    >
+                                      <span>Thu gọn</span>
+                                      <span className="material-symbols-rounded text-[16px]">expand_less</span>
+                                    </button>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                  {/* Thumbnail ảnh */}
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {receiptImages.map((imgUrl, i) => (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          setLightboxImage(imgUrl);
+                                        }}
+                                        className="shrink-0 group relative block h-24 w-16 sm:h-28 sm:w-20 overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        title="Bấm để xem ảnh lớn"
+                                      >
+                                        <img
+                                          src={imgUrl}
+                                          alt={`Biên lai ${i + 1}`}
+                                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                          loading="lazy"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10 flex items-center justify-center">
+                                          <span className="material-symbols-rounded text-white opacity-0 group-hover:opacity-100 text-lg drop-shadow-md">search</span>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+
+                                  {/* Chi tiết các ô OCR */}
+                                  <div className="flex-1 space-y-2 text-xs">
+                                    {t.ocrResult ? (
+                                      <>
+                                        <div className="grid gap-2 sm:grid-cols-2">
+                                          <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
+                                            <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Số tiền đọc được</span>
+                                            <span className={`font-mono font-bold ${t.ocrResult.amount === t.amount ? "text-emerald-600" : "text-rose-600"}`}>
+                                              {t.ocrResult.amount != null ? formatVnd(t.ocrResult.amount) : "Không đọc được"}
+                                            </span>
+                                          </p>
+                                          <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
+                                            <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Thời gian CK</span>
+                                            <span className="font-mono text-slate-700 font-semibold">{t.ocrResult.time || "Không rõ"}</span>
+                                          </p>
+                                          <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100 sm:col-span-2">
+                                            <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Nội dung CK</span>
+                                            <span className="font-mono text-slate-800 break-all font-semibold">
+                                              {t.ocrResult.content || "Không đọc được"}
+                                            </span>
+                                          </p>
+                                          {(t.ocrResult as any).transactionId && (
+                                            <p className="rounded-md bg-slate-50 px-2.5 py-1.5 border border-slate-100">
+                                              <span className="text-slate-500 block text-[10px] uppercase mb-0.5">Mã GD / Số tham chiếu</span>
+                                              <span className="font-mono text-slate-800 font-bold">{(t.ocrResult as any).transactionId}</span>
+                                            </p>
+                                          )}
+
+                                        </div>
+                                        {t.ocrResult.note && (
+                                          <p className="text-[11px] text-slate-500 italic mt-1 leading-relaxed">
+                                            {t.ocrResult.note}
+                                          </p>
+                                        )}
+                                      </>
+                                    ) : (
+                                      <div className="flex h-full items-center text-slate-400 italic">
+                                        Biên lai chưa được phân tích OCR
+                                      </div>
                                     )}
                                   </div>
-                                  <p className="text-[11px] text-slate-500 italic mt-1 leading-relaxed">
-                                    {t.ocrResult.note}
-                                  </p>
-                                </>
-                              ) : (
-                                <div className="flex h-full items-center text-slate-400 italic">
-                                  Biên lai chưa được phân tích OCR
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
-                        {/* Thanh nút hành động duyệt thư mời */}
-                        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-                          <span className="text-[11px] font-medium text-slate-500">
-                            {isConfirmed
-                              ? (t.ocrResult?.confidence === "high"
-                                ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> AI đã phê duyệt tự động. Thư mời đã vào sao kê.</>
-                                : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">check_circle</span> Thư mời đã được admin duyệt thủ công.</>)
-                              : t.status === "pending_approval"
-                                ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">warning</span> Chờ duyệt thủ công do AI phát hiện rủi ro (lệch tiền/nội dung).</>
-                                : (t.receiptAttempts?.length ? <><span className="material-symbols-rounded inline-block align-middle text-[1em]">error</span> AI báo lỗi, đang chờ thành viên thử tải lại biên lai.</> : <><span className="material-symbols-rounded inline-block align-middle text-[1em]">schedule</span> Đang chờ thành viên thực hiện chuyển khoản.</>)}
+                        {/* Thanh nút hành động tinh gọn & Menu Thao tác khác */}
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                          <span className="text-[11px] font-medium text-slate-500 inline-flex items-center gap-1.5">
+                            {isConfirmed ? (
+                              t.ocrResult?.confidence === "high" ? (
+                                <>
+                                  <span className="material-symbols-rounded text-emerald-600 text-[15px]">check_circle</span>
+                                  AI đã phê duyệt tự động. Thư mời đã vào sao kê.
+                                </>
+                              ) : (
+                                <>
+                                  <span className="material-symbols-rounded text-emerald-600 text-[15px]">verified</span>
+                                  Thư mời đã được admin duyệt thủ công.
+                                </>
+                              )
+                            ) : t.status === "pending_approval" ? (
+                              <>
+                                <span className="material-symbols-rounded text-amber-500 text-[15px]">warning</span>
+                                Chờ duyệt thủ công do AI phát hiện rủi ro (lệch tiền/nội dung).
+                              </>
+                            ) : t.receiptAttempts?.length ? (
+                              <>
+                                <span className="material-symbols-rounded text-rose-500 text-[15px]">error</span>
+                                AI báo lỗi, đang chờ thành viên thử tải lại biên lai.
+                              </>
+                            ) : (
+                              <>
+                                <span className="material-symbols-rounded text-slate-400 text-[15px]">schedule</span>
+                                Đang chờ thành viên thực hiện chuyển khoản.
+                              </>
+                            )}
                           </span>
 
-                          <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Nút hành động chính khi CHƯA DUYỆT */}
                             {!isConfirmed && (
                               <button
                                 type="button"
@@ -1058,12 +1259,13 @@ export default function AdminRegistrations({
                                   act(
                                     t,
                                     "confirmed",
-                                    `Đã duyệt & phát hành thư mời ${t.code}`,
+                                    `Đã duyệt & phát hành thư mời ${t.code}`
                                   )
                                 }
-                                className="rounded-xl bg-[#16a34a] px-5 py-2.5 text-xs font-black text-white shadow-xs hover:bg-emerald-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50"
+                                className="rounded-xl bg-[#16a34a] px-4 py-2 text-xs font-black text-white shadow-2xs hover:bg-emerald-700 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 inline-flex items-center gap-1"
                               >
-                                Duyệt thủ công &amp; Cấp thư mời
+                                <span className="material-symbols-rounded text-[16px]">check_circle</span>
+                                Duyệt &amp; Cấp vé
                               </button>
                             )}
 
@@ -1074,7 +1276,7 @@ export default function AdminRegistrations({
                                 onClick={() => openRejectModal(t)}
                                 className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 flex items-center gap-1"
                               >
-                                <span className="material-symbols-rounded text-sm text-rose-500">cancel</span>
+                                <span className="material-symbols-rounded text-[15px] text-rose-500">cancel</span>
                                 Từ chối
                               </button>
                             )}
@@ -1086,158 +1288,217 @@ export default function AdminRegistrations({
                                 onClick={() => openRejectModal(t)}
                                 className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 flex items-center gap-1"
                               >
-                                <span className="material-symbols-rounded text-sm">edit_note</span>
+                                <span className="material-symbols-rounded text-[15px]">edit_note</span>
                                 Sửa lý do từ chối
                               </button>
                             )}
 
-                            {!isConfirmed && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => {
-                                  const domain = typeof window !== "undefined" ? window.location.origin : "https://nctitc.io.vn";
-                                  const link = `${domain}/xac-nhan-dong-gop?id=${t.id}`;
-                                  const msg = `Xin chào, BTC xin gửi lại link xác nhận đóng góp cho cựu học sinh ${t.attendeeName || t.memberName}. Lưu ý: BTC không yêu cầu bạn chuyển khoản lại hay đưa ra thông báo hoàn trả.\n\nLink: ${link}`;
-                                  navigator.clipboard.writeText(msg).then(() => {
-                                    toast.success("Đã sao chép tin nhắn nhắc nhở!");
-                                  });
-                                }}
-                                className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] disabled:opacity-50 flex items-center gap-1"
-                              >
-                                <span className="material-symbols-rounded text-[14px]">content_copy</span>
-                                Copy nhắc nhở
-                              </button>
-                            )}
-
+                            {/* Nút hành động chính khi ĐÃ DUYỆT */}
                             {isConfirmed && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => toggleShirt(t)}
-                                className={`rounded-xl px-3 py-1.5 text-[11px] font-bold transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1 ${t.shirtReceived
-                                    ? "bg-pink-100 text-pink-700 hover:bg-pink-200"
-                                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => toggleShirt(t)}
+                                  className={`rounded-xl px-3 py-1.5 text-[11px] font-bold transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1.5 ${
+                                    t.shirtReceived
+                                      ? "bg-pink-100 text-pink-700 hover:bg-pink-200 border border-pink-200"
+                                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200/80"
                                   }`}
-                              >
-                                <span className="material-symbols-rounded text-[14px]">
-                                  {t.shirtReceived ? "check_box" : "check_box_outline_blank"}
-                                </span>
-                                {t.shirtReceived ? "Đã trao áo" : "Chưa trao áo"}
-                              </button>
+                                  title="Đánh dấu trạng thái nhận áo"
+                                >
+                                  <span className="material-symbols-rounded text-[14px]">
+                                    {t.shirtReceived ? "check_box" : "check_box_outline_blank"}
+                                  </span>
+                                  {t.shirtReceived ? "Đã trao áo" : "Chưa trao áo"}
+                                </button>
+
+                                <a
+                                  href={`/thu-moi?id=${t.id}`}
+                                  target="_blank"
+                                  className="rounded-xl bg-blue-50 border border-blue-200 px-3 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                                >
+                                  <span className="material-symbols-rounded text-[14px]">visibility</span>
+                                  Thẻ thư mời
+                                </a>
+
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => sendEmail(t)}
+                                  className="rounded-xl bg-purple-50 border border-purple-200 px-3 py-1.5 text-[11px] font-bold text-purple-700 hover:bg-purple-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                                >
+                                  <span className="material-symbols-rounded text-[14px]">mail</span>
+                                  {(t.emailSentCount ?? 0) > 0 || Boolean(t.emailSent) ? "Gửi lại Mail" : "Gửi Mail"}
+                                </button>
+                              </>
                             )}
 
-                            {isConfirmed && (
+                            {/* Menu Thao tác khác (Dropdown `···`) */}
+                            <div className="relative" data-action-menu>
                               <button
                                 type="button"
-                                disabled={busy}
-                                onClick={() =>
-                                  act(
-                                    t,
-                                    "pending_approval",
-                                    `Đã hoàn tác duyệt thư mời ${t.code}`,
-                                  )
-                                }
-                                className="rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-500 hover:bg-slate-200 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)]"
-                              >
-                                Hoàn tác
-                              </button>
-                            )}
-
-                            {t.receiptUrl && (
-                              <a
-                                href={t.receiptUrl}
-                                target="_blank"
-                                download
-                                className="rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
-                              >
-                                <span className="material-symbols-rounded text-[14px]">download</span> Biên lai
-                              </a>
-                            )}
-
-
-
-                            {isConfirmed && (
-                              <a
-                                href={`/thu-moi?id=${t.id}`}
-                                target="_blank"
-                                className="rounded-xl bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-600 hover:bg-blue-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
-                              >
-                                <span className="material-symbols-rounded text-[14px]">visibility</span> Thẻ thư mời
-                              </a>
-                            )}
-
-                            {isConfirmed && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => sendEmail(t)}
-                                className="rounded-xl bg-purple-50 px-3 py-1.5 text-[11px] font-bold text-purple-600 hover:bg-purple-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
-                              >
-                                <span className="material-symbols-rounded text-[14px]">mail</span> Gửi Mail
-                              </button>
-                            )}
-
-                            {isConfirmed && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => {
-                                  const domain = typeof window !== "undefined" ? window.location.origin : "https://40namnctru.nctitc.io.vn";
-                                  const link = `${domain}/thu-moi?id=${t.id}`;
-                                  const name = t.attendeeName || t.memberName || "";
-                                  const amountStr = new Intl.NumberFormat('vi-VN').format(t.amount || 0);
-                                  const typeStr = t.type === "group" ? "Tập thể" : "Cá nhân";
-                                  
-                                  const msg = `Kính gửi Cựu học sinh ${name},\n\nNhằm ôn lại truyền thống 40 năm xây dựng và phát triển, tri ân các thế hệ Thầy Cô và tạo dịp hội ngộ, kết nối các thế hệ, Trường THPT Nguyễn Công Trứ trân trọng kính mời bạn về tham dự Ngày hội truyền thống 40 năm của Nhà trường.\n\nBan Tổ chức xin chân thành cảm ơn bạn đã đóng góp ${amountStr}đ để góp phần tạo nên một ngày hội thật ý nghĩa.\n* Lưu ý: Khoản đóng góp tham dự là 500.000đ/người. Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện (nếu có dư sẽ được đưa vào Quỹ Khuyến học của Trường).\n\nRất mong được đón tiếp bạn trở lại dưới mái trường xưa vào ngày 08/11/2026!\n\nVé điện tử của bạn được cung cấp tại liên kết dưới đây. Vui lòng mở ra, lưu lại hình ảnh vé và xuất trình mã QR khi check-in.\n\nHoặc mở liên kết:\n🔗 ${link}\n\n✓ Chi tiết đăng ký\nLoại đăng ký: ${typeStr}\nThành tiền: ${amountStr}đ`;
-                                  
-                                  navigator.clipboard.writeText(msg).then(() => {
-                                    toast.success("Đã sao chép nội dung thư mời!");
-                                  });
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuId(activeMenuId === t.id ? null : t.id);
                                 }}
-                                className="rounded-xl bg-sky-50 px-3 py-1.5 text-[11px] font-bold text-sky-600 hover:bg-sky-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
+                                className={`rounded-xl border px-2.5 py-1.5 text-[11px] font-bold transition-all inline-flex items-center gap-1 shadow-2xs ${
+                                  activeMenuId === t.id
+                                    ? "bg-slate-800 text-white border-slate-800"
+                                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                                }`}
+                                title="Thao tác khác"
                               >
-                                <span className="material-symbols-rounded text-[14px]">content_copy</span> Copy Thư mời
+                                <span className="material-symbols-rounded text-[16px]">more_horiz</span>
+                                <span className="hidden sm:inline">Khác</span>
                               </button>
-                            )}
 
-                            <button
-                              type="button"
-                              onClick={() => setViewingLogsFor(t)}
-                              className="rounded-xl bg-orange-50 px-3 py-1.5 text-[11px] font-bold text-orange-600 hover:bg-orange-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
-                            >
-                              <span className="material-symbols-rounded text-[14px]">history</span> Lịch sử
-                            </button>
+                              {activeMenuId === t.id && (
+                                <div
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="absolute right-0 bottom-full mb-1.5 z-30 w-52 rounded-xl border border-slate-200 bg-white py-1 shadow-xl text-xs divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100"
+                                >
+                                  <div className="py-1">
+                                    {isConfirmed && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setActiveMenuId(null);
+                                          const domain =
+                                            typeof window !== "undefined"
+                                              ? window.location.origin
+                                              : "https://40namnctru.nctitc.io.vn";
+                                          const link = `${domain}/thu-moi?id=${t.id}`;
+                                          const name = t.attendeeName || t.memberName || "";
+                                          const amountStr = new Intl.NumberFormat("vi-VN").format(t.amount || 0);
+                                          const typeStr = t.type === "group" ? "Tập thể" : "Cá nhân";
 
-                            <button
-                              type="button"
-                              onClick={() => setEditingInvitation({
-                                ...t,
-                                note: t.note ? t.note.replace(/^Lớp:\s*/, "").split(" | ")[0] : ""
-                              })}
-                              className="rounded-xl bg-indigo-50 px-3 py-1.5 text-[11px] font-bold text-indigo-600 hover:bg-indigo-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
-                            >
-                              <span className="material-symbols-rounded text-[14px]">edit</span> Sửa
-                            </button>
+                                          const msg = `Kính gửi Cựu học sinh ${name},\n\nNhằm ôn lại truyền thống 40 năm xây dựng và phát triển, tri ân các thế hệ Thầy Cô và tạo dịp hội ngộ, kết nối các thế hệ, Trường THPT Nguyễn Công Trứ trân trọng kính mời bạn về tham dự Ngày hội truyền thống 40 năm của Nhà trường.\n\nBan Tổ chức xin chân thành cảm ơn bạn đã đóng góp ${amountStr}đ để góp phần tạo nên một ngày hội thật ý nghĩa.\n* Lưu ý: Khoản đóng góp tham dự là 500.000đ/người. Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện (nếu có dư sẽ được đưa vào Quỹ Khuyến học của Trường).\n\nRất mong được đón tiếp bạn trở lại dưới mái trường xưa vào ngày 08/11/2026!\n\nVé điện tử của bạn được cung cấp tại liên kết dưới đây. Vui lòng mở ra, lưu lại hình ảnh vé và xuất trình mã QR khi check-in.\n\nHoặc mở liên kết:\n🔗 ${link}\n\n✓ Chi tiết đăng ký\nLoại đăng ký: ${typeStr}\nThành tiền: ${amountStr}đ`;
 
-                            {(t.status === "pending_payment" || t.status === "pending") && (
-                              <a
-                                href={`/xac-nhan-dong-gop?id=${t.id}`}
-                                target="_blank"
-                                className="rounded-xl bg-amber-100 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
-                              >
-                                <span className="material-symbols-rounded text-[16px]">payments</span> Mở trang thanh toán
-                              </a>
-                            )}
+                                          navigator.clipboard.writeText(msg).then(() => {
+                                            toast.success("Đã sao chép nội dung thư mời!");
+                                          });
+                                        }}
+                                        className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium"
+                                      >
+                                        <span className="material-symbols-rounded text-[16px] text-sky-600">content_copy</span>
+                                        Sao chép thư mời
+                                      </button>
+                                    )}
 
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => handleDeleteInvitation(t)}
-                              className="rounded-xl bg-rose-50 px-3 py-1.5 text-[11px] font-bold text-rose-600 hover:bg-rose-100 transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] inline-flex items-center gap-1"
-                            >
-                              <span className="material-symbols-rounded text-[14px]">delete</span> Xóa thư mời
-                            </button>
+                                    {!isConfirmed && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setActiveMenuId(null);
+                                          const domain =
+                                            typeof window !== "undefined"
+                                              ? window.location.origin
+                                              : "https://nctitc.io.vn";
+                                          const link = `${domain}/xac-nhan-dong-gop?id=${t.id}`;
+                                          const msg = `Xin chào, BTC xin gửi lại link xác nhận đóng góp cho cựu học sinh ${t.attendeeName || t.memberName}. Lưu ý: BTC không yêu cầu bạn chuyển khoản lại hay đưa ra thông báo hoàn trả.\n\nLink: ${link}`;
+                                          navigator.clipboard.writeText(msg).then(() => {
+                                            toast.success("Đã sao chép tin nhắn nhắc nhở!");
+                                          });
+                                        }}
+                                        className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium"
+                                      >
+                                        <span className="material-symbols-rounded text-[16px] text-blue-600">content_copy</span>
+                                        Copy tin nhắn nhắc nhở
+                                      </button>
+                                    )}
+
+                                    {t.receiptUrl && (
+                                      <a
+                                        href={t.receiptUrl}
+                                        target="_blank"
+                                        download
+                                        onClick={() => setActiveMenuId(null)}
+                                        className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium"
+                                      >
+                                        <span className="material-symbols-rounded text-[16px] text-slate-500">download</span>
+                                        Tải ảnh biên lai
+                                      </a>
+                                    )}
+
+                                    {(t.status === "pending_payment" || t.status === "pending") && (
+                                      <a
+                                        href={`/xac-nhan-dong-gop?id=${t.id}`}
+                                        target="_blank"
+                                        onClick={() => setActiveMenuId(null)}
+                                        className="w-full text-left px-3.5 py-1.5 hover:bg-amber-50 flex items-center gap-2 text-amber-700 font-medium"
+                                      >
+                                        <span className="material-symbols-rounded text-[16px]">payments</span>
+                                        Mở trang thanh toán
+                                      </a>
+                                    )}
+                                  </div>
+
+                                  <div className="py-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveMenuId(null);
+                                        setEditingInvitation({
+                                          ...t,
+                                          note: t.note ? t.note.replace(/^Lớp:\s*/, "").split(" | ")[0] : "",
+                                        });
+                                      }}
+                                      className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium"
+                                    >
+                                      <span className="material-symbols-rounded text-[16px] text-indigo-600">edit</span>
+                                      Sửa thông tin
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActiveMenuId(null);
+                                        setViewingLogsFor(t);
+                                      }}
+                                      className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium"
+                                    >
+                                      <span className="material-symbols-rounded text-[16px] text-orange-500">history</span>
+                                      Xem lịch sử
+                                    </button>
+
+                                    {isConfirmed && (
+                                      <button
+                                        type="button"
+                                        disabled={busy}
+                                        onClick={() => {
+                                          setActiveMenuId(null);
+                                          act(
+                                            t,
+                                            "pending_approval",
+                                            `Đã hoàn tác duyệt thư mời ${t.code}`
+                                          );
+                                        }}
+                                        className="w-full text-left px-3.5 py-1.5 hover:bg-amber-50 flex items-center gap-2 text-amber-700 font-medium"
+                                      >
+                                        <span className="material-symbols-rounded text-[16px]">undo</span>
+                                        Hoàn tác duyệt
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div className="py-1">
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => {
+                                        setActiveMenuId(null);
+                                        handleDeleteInvitation(t);
+                                      }}
+                                      className="w-full text-left px-3.5 py-1.5 hover:bg-rose-50 flex items-center gap-2 text-rose-600 font-medium"
+                                    >
+                                      <span className="material-symbols-rounded text-[16px]">delete</span>
+                                      Xóa thư mời
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -98,16 +98,27 @@ export async function logAction(
   adminName: string,
   adminUsername: string,
   adminRole: string,
-  details: string
+  details: string,
+  customToken?: string
 ): Promise<ActionLog | null> {
   if (entityId === "sample" || entityId === "sample-group") {
     return null;
   }
 
   try {
-    const { cookies } = await import("next/headers");
-    const cookieStore = await cookies();
-    const token = cookieStore.get(process.env.COOKIE_NAME || "nct_admin")?.value;
+    let token = customToken;
+    if (!token) {
+      try {
+        const { cookies } = await import("next/headers");
+        const cookieStore = await cookies();
+        token = cookieStore.get(process.env.COOKIE_NAME || "nct_admin")?.value;
+      } catch {}
+    }
+
+    if (!token) {
+      const { getSystemAdminToken } = await import("./system-auth");
+      token = (await getSystemAdminToken()) || undefined;
+    }
 
     const res = await fetch(`${API_URL}/api/admin/logs`, {
       method: "POST",

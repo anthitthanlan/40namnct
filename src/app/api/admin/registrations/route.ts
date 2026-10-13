@@ -23,18 +23,37 @@ export async function GET(req: NextRequest) {
   const [members, invitations] = await Promise.all([listMembers(token), listInvitations(token)]);
   const byId = new Map(members.map((m) => [m.id, m]));
 
+  const logs = await listActionLogs(token, { all: true });
+
+  const emailLogsByEntity = new Map<string, number>();
+  for (const l of logs) {
+    if (
+      l.entityId &&
+      (l.action === "send_email" ||
+        l.details?.toLowerCase().includes("gửi email") ||
+        l.details?.toLowerCase().includes("email thư mời") ||
+        l.details?.toLowerCase().includes("thư mời qua email"))
+    ) {
+      emailLogsByEntity.set(l.entityId, (emailLogsByEntity.get(l.entityId) || 0) + 1);
+    }
+  }
+
   const invitationViews = invitations
     .slice()
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((t) => {
       const m = byId.get(t.memberId);
       const unifiedName = t.attendeeName || m?.name || "(đã xoá)";
+      const countFromLogs = emailLogsByEntity.get(t.id) || 0;
+      const finalEmailCount = Math.max(countFromLogs, t.emailSent ? 1 : 0);
       return {
         ...t,
         attendeeName: unifiedName,
         memberName: unifiedName,
         memberPhone: m?.phone ?? "",
         memberEmail: m?.email ?? "",
+        emailSent: finalEmailCount > 0,
+        emailSentCount: finalEmailCount,
       };
     });
 
@@ -58,8 +77,6 @@ export async function GET(req: NextRequest) {
         .reduce((sum, t) => sum + (t.amount || 0), 0),
     };
   });
-
-  const logs = admin.role === "super_admin" ? await listActionLogs(token) : [];
 
   return NextResponse.json({ 
     ok: true, 
@@ -158,7 +175,13 @@ export async function PATCH(req: NextRequest) {
   );
 
   if (status === "confirmed") {
-    sendInvitationEmail(id).catch(err => 
+    sendInvitationEmail(id, {
+      token,
+      adminName: admin.fullName || admin.username,
+      adminUsername: admin.username,
+      adminRole: admin.role,
+      logDetail: "Tự động gửi email thư mời khi duyệt vé",
+    }).catch((err) =>
       console.error("Async admin email send failed:", err)
     );
   }

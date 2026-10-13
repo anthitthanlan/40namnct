@@ -6,17 +6,16 @@ import httpx
 from app.config import settings
 
 SYSTEM_PROMPT = """Bạn là hệ thống OCR chuyên trích xuất thông tin từ ảnh biên lai chuyển khoản ngân hàng Việt Nam.
-Nhiệm vụ: Đọc ảnh và trả về JSON với đúng 4 trường bên dưới.
+Nhiệm vụ: Đọc ảnh và trả về JSON với đúng 5 trường bên dưới.
 Quy tắc bắt buộc:
 1. "amount": Số tiền VND (chỉ ghi số nguyên, ví dụ 500000). Nếu không thấy ghi null.
 2. "content": Nội dung/lời nhắn chuyển khoản (giữ nguyên chính xác, không viết hoa/thường lại).
 3. "time": Thời gian giao dịch (VD: "14:30 20/09/2026").
 4. "transactionId": Mã giao dịch / số tham chiếu (nếu có).
 5. "transactionStatus": Trạng thái giao dịch ("success", "pending", "failed", "unknown").
-6. "trustScore": Điểm tin cậy ảnh thật (0-100).
 
 Chỉ trả về JSON thuần túy, không kèm giải thích hay markdown:
-{"amount": 500000, "content": "NCT12345", "time": "20/09/2026 14:30", "transactionId": "FT123", "transactionStatus": "success", "trustScore": 95}
+{"amount": 500000, "content": "NCT12345", "time": "20/09/2026 14:30", "transactionId": "FT123", "transactionStatus": "success"}
 """
 
 async def extract_receipt_info(image_bytes: bytes, mime_type: str = "image/jpeg") -> Dict[str, Any]:
@@ -118,7 +117,6 @@ async def extract_receipt_info(image_bytes: bytes, mime_type: str = "image/jpeg"
         "time": None,
         "transactionId": None,
         "transactionStatus": "unknown",
-        "trustScore": 50,
         "rawText": "AI OCR offline/unconfigured",
         "provider": "mock"
     }
@@ -135,7 +133,6 @@ def parse_ocr_json(raw: str) -> Dict[str, Any]:
                 "time": str(data["time"]).strip() if data.get("time") else None,
                 "transactionId": str(data["transactionId"]).strip() if data.get("transactionId") else None,
                 "transactionStatus": data.get("transactionStatus", "unknown"),
-                "trustScore": data.get("trustScore", 80),
                 "rawText": raw
             }
     except Exception:
@@ -146,7 +143,6 @@ def parse_ocr_json(raw: str) -> Dict[str, Any]:
         "time": None,
         "transactionId": None,
         "transactionStatus": "unknown",
-        "trustScore": None,
         "rawText": raw
     }
 

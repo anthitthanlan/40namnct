@@ -52,6 +52,7 @@ export type InvitationView = {
   shirtReceivedAt?: string | null;
   emailSent?: boolean;
   emailSentAt?: string | null;
+  emailSentCount?: number;
   createdAt: string;
   updatedAt: string;
   receiptAttempts?: any[];

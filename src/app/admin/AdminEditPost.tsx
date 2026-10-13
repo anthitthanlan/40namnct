@@ -19,6 +19,7 @@ type Draft = {
   pinned: boolean;
   categoryId: string | null;
   status: PostStatus;
+  crossDisplay: boolean;
 };
 
 const EMPTY_DRAFT: Draft = {
@@ -32,6 +33,7 @@ const EMPTY_DRAFT: Draft = {
   pinned: false,
   categoryId: null,
   status: "published",
+  crossDisplay: false,
 };
 
 const aInput =
@@ -104,6 +106,7 @@ export default function AdminEditPost({
             pinned: post.pinned,
             categoryId: post.categoryId || null,
             status: post.status,
+            crossDisplay: post.crossDisplay === true,
           };
           setDraft(loadedDraft);
           setOriginalDraft(loadedDraft);
@@ -178,6 +181,7 @@ export default function AdminEditPost({
         pinned: draft.pinned,
         status: draft.status,
         categoryId: draft.categoryId || null,
+        crossDisplay: draft.crossDisplay,
       };
       const url = isNew ? "/api/admin/posts" : `/api/admin/posts/${postId}`;
       const res = await fetch(
@@ -364,6 +368,24 @@ export default function AdminEditPost({
             className="h-5 w-5 accent-[#1d4ed8] rounded-md"
           />
           Ghim bài này lên đầu
+        </label>
+        <label
+          className={`flex items-center gap-2 text-sm font-bold ${
+            !draft.cover ? "text-slate-400 cursor-not-allowed" : "text-slate-700 cursor-pointer"
+          }`}
+          title={!draft.cover ? "Cần có ảnh bìa để hiển thị trên trang Khoảnh khắc" : ""}
+        >
+          <input
+            type="checkbox"
+            checked={draft.crossDisplay}
+            disabled={!draft.cover}
+            onChange={(e) => setDraft({ ...draft, crossDisplay: e.target.checked })}
+            className="h-5 w-5 accent-[#1d4ed8] rounded-md disabled:opacity-40"
+          />
+          <span>Hiển thị chéo lên trang Khoảnh khắc</span>
+          {!draft.cover && (
+            <span className="text-xs text-amber-600 font-normal">(Cần có ảnh bìa)</span>
+          )}
         </label>
         <label className="flex items-center gap-3 text-sm font-bold text-slate-700">
           Trạng thái:

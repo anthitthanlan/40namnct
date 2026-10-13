@@ -56,6 +56,7 @@ def get_posts(
             pinned=p.pinned,
             cover=p.cover,
             categoryId=p.category_id,
+            crossDisplay=p.cross_display if hasattr(p, "cross_display") else False,
             createdAt=p.created_at,
             updatedAt=p.updated_at
         ))
@@ -79,6 +80,7 @@ def get_post(slug_or_id: str, db: Session = Depends(get_db)):
         pinned=post.pinned,
         cover=post.cover,
         categoryId=post.category_id,
+        crossDisplay=post.cross_display if hasattr(post, "cross_display") else False,
         createdAt=post.created_at,
         updatedAt=post.updated_at
     )
@@ -107,6 +109,7 @@ def create_post(
         pinned=post_in.pinned,
         cover=post_in.cover,
         category_id=post_in.categoryId,
+        cross_display=post_in.crossDisplay or False,
     )
     db.add(new_post)
     db.commit()
@@ -125,6 +128,7 @@ def create_post(
         pinned=new_post.pinned,
         cover=new_post.cover,
         categoryId=new_post.category_id,
+        crossDisplay=new_post.cross_display if hasattr(new_post, "cross_display") else False,
         createdAt=new_post.created_at,
         updatedAt=new_post.updated_at
     )
@@ -145,6 +149,8 @@ def update_post(
         post.author_role = update_data.pop("authorRole")
     if "categoryId" in update_data:
         post.category_id = update_data.pop("categoryId")
+    if "crossDisplay" in update_data:
+        post.cross_display = update_data.pop("crossDisplay")
     
     for key, value in update_data.items():
         if hasattr(post, key) and value is not None:

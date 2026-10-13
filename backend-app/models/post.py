@@ -24,5 +24,6 @@ class Post(Base):
     pinned = Column(Boolean, default=False)
     cover = Column(String(500), nullable=True)
     category_id = Column(String(64), nullable=True)
+    cross_display = Column(Boolean, default=False)
     created_at = Column(String(64), default=utc_now_iso)
     updated_at = Column(String(64), default=utc_now_iso, onupdate=utc_now_iso)

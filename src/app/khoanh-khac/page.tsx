@@ -44,7 +44,9 @@ async function readMemories(): Promise<WallMemory[]> {
 
 export default async function KhoangKhacPage() {
   const memories = await readMemories();
-  const posts = await listPublished();
+  const allPosts = await listPublished();
+  // Chỉ hiển thị chéo những bài viết có ảnh bìa và được Admin bật cờ crossDisplay
+  const posts = allPosts.filter((p) => p.cover && p.crossDisplay === true);
 
   return (
     <main className="min-h-screen bg-[#f8fafc]">

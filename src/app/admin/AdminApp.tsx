@@ -804,6 +804,20 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                                         Ghim
                                       </span>
                                     )}
+                                    {post.status === "published" && (
+                                      <span
+                                        className={`rounded-full px-3 py-1 text-[11px] font-extrabold inline-flex items-center gap-1 ${
+                                          post.crossDisplay
+                                            ? "bg-blue-100 text-[#1d4ed8]"
+                                            : "bg-slate-100 text-slate-500"
+                                        }`}
+                                      >
+                                        <span className="material-symbols-rounded text-[13px]">
+                                          {post.crossDisplay ? "sync_alt" : "sync_disabled"}
+                                        </span>
+                                        {post.crossDisplay ? "Hiện Khoảnh khắc" : "Ẩn Khoảnh khắc"}
+                                      </span>
+                                    )}
                                   </div>
                                   <h3 className="mt-2.5 truncate text-lg font-extrabold text-slate-900">
                                     {post.title}
@@ -868,6 +882,38 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
                                         className="rounded-xl bg-amber-100 px-3.5 py-2 text-xs font-bold text-amber-700 hover:bg-amber-200 disabled:opacity-50"
                                       >
                                         {post.pinned ? "Bỏ ghim" : "Ghim"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={busy || !post.cover}
+                                        onClick={() =>
+                                          act(
+                                            post,
+                                            { crossDisplay: !post.crossDisplay },
+                                            post.crossDisplay
+                                              ? "Đã tắt hiển thị bài viết trên trang Khoảnh khắc."
+                                              : "Đã bật hiển thị bài viết trên trang Khoảnh khắc.",
+                                          )
+                                        }
+                                        title={
+                                          !post.cover
+                                            ? "Bài viết chưa có ảnh bìa nên không thể hiển thị trên trang Khoảnh khắc"
+                                            : post.crossDisplay
+                                              ? "Đang hiển thị trên trang Khoảnh khắc. Bấm để tắt."
+                                              : "Đang ẩn trên trang Khoảnh khắc. Bấm để bật."
+                                        }
+                                        className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                          !post.cover
+                                            ? "bg-slate-100 text-slate-400 cursor-not-allowed opacity-60"
+                                            : post.crossDisplay
+                                              ? "bg-blue-50 text-[#1d4ed8] border border-blue-200 hover:bg-blue-100"
+                                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                        }`}
+                                      >
+                                        <span className="material-symbols-rounded text-sm">
+                                          {post.crossDisplay ? "visibility" : "visibility_off"}
+                                        </span>
+                                        <span>Khoảnh khắc: {post.crossDisplay ? "BẬT" : "TẮT"}</span>
                                       </button>
                                       <button
                                         type="button"

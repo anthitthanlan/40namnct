@@ -63,6 +63,12 @@ export async function POST(req: NextRequest) {
       categoryId: typeof body.categoryId === "string" ? body.categoryId : null,
     }, token);
 
+    if (typeof body.crossDisplay === "boolean") {
+      const { setPostCrossDisplay } = await import("@/lib/cross-display");
+      await setPostCrossDisplay(post.id, body.crossDisplay, token);
+      post.crossDisplay = body.crossDisplay;
+    }
+
     await logAction(
       "create_post",
       "posts",

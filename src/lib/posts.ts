@@ -14,6 +14,7 @@ export type Post = {
   pinned: boolean;
   cover: string | null;
   categoryId?: string | null;
+  crossDisplay?: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -29,6 +30,7 @@ export type PostInput = {
   pinned?: boolean;
   cover?: string | null;
   categoryId?: string | null;
+  crossDisplay?: boolean;
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
@@ -81,7 +83,9 @@ export async function listPublished(): Promise<Post[]> {
     });
     if (!res.ok) return [];
     const posts = await res.json();
-    return sortPublic(posts);
+    const sorted = sortPublic(posts);
+    const { attachCrossDisplayToPosts } = await import("./cross-display");
+    return await attachCrossDisplayToPosts(sorted);
   } catch {
     return [];
   }
@@ -95,7 +99,9 @@ export async function listAll(token?: string): Promise<Post[]> {
     });
     if (!res.ok) return [];
     const posts = await res.json();
-    return sortAdmin(posts);
+    const sorted = sortAdmin(posts);
+    const { attachCrossDisplayToPosts } = await import("./cross-display");
+    return await attachCrossDisplayToPosts(sorted, token);
   } catch {
     return [];
   }

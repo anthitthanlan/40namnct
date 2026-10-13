@@ -16,6 +16,7 @@ class PostBase(BaseModel):
     pinned: bool = False
     cover: Optional[str] = None
     categoryId: Optional[str] = Field(None, alias="categoryId")
+    crossDisplay: Optional[bool] = Field(False, alias="crossDisplay")
 
     class Config:
         populate_by_name = True
@@ -35,6 +36,7 @@ class PostUpdate(BaseModel):
     pinned: Optional[bool] = None
     cover: Optional[str] = None
     categoryId: Optional[str] = Field(None, alias="categoryId")
+    crossDisplay: Optional[bool] = Field(None, alias="crossDisplay")
 
     class Config:
         populate_by_name = True

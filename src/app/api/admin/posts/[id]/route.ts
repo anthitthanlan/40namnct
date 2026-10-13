@@ -75,6 +75,13 @@ export async function PATCH(
   }
 
   const token = req.cookies.get("nct_admin")?.value;
+
+  if (typeof body.crossDisplay === "boolean") {
+    const { setPostCrossDisplay } = await import("@/lib/cross-display");
+    await setPostCrossDisplay(id, body.crossDisplay, token);
+    patch.crossDisplay = body.crossDisplay;
+  }
+
   const post = await updatePost(id, patch, token);
   if (!post) {
     return NextResponse.json(
@@ -83,6 +90,11 @@ export async function PATCH(
     );
   }
 
+  const actionDetails =
+    typeof body.crossDisplay === "boolean" && Object.keys(body).length <= 2
+      ? `Cập nhật hiển thị chéo Khoảnh khắc: ${body.crossDisplay ? "BẬT" : "TẮT"} (${post.title})`
+      : `Cập nhật bài viết: ${post.title}`;
+
   await logAction(
     "update_post",
     "posts",
@@ -90,10 +102,16 @@ export async function PATCH(
     admin.fullName || admin.username,
     admin.username,
     admin.role,
-    `Cập nhật bài viết: ${post.title}`,
+    actionDetails,
   );
 
-  return NextResponse.json({ ok: true, post });
+  return NextResponse.json({
+    ok: true,
+    post: {
+      ...post,
+      crossDisplay: typeof patch.crossDisplay === "boolean" ? patch.crossDisplay : post.crossDisplay,
+    },
+  });
 }
 
 /** Xóa bài viết theo id */

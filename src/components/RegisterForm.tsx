@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Modal } from "./modal";
+import { getRegistrationStatus } from "@/lib/registration-config";
 
 const SIZES = ["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"] as const;
 type Size = (typeof SIZES)[number];
@@ -643,23 +644,40 @@ export default function RegisterForm() {
   const modalEase = [0.22, 1, 0.36, 1] as [number, number, number, number];
   const boxTransition = { duration: 0.4, ease: modalEase };
 
-  const isClosed = new Date() > new Date("2026-10-11T23:00:00+07:00");
-  if (isClosed) {
+  const regStatus = getRegistrationStatus();
+  if (!regStatus.canRegister) {
+    const isPreOpen = regStatus.status === "NOT_OPEN_YET";
+    const isSlotFull = regStatus.status === "SLOT_FULL";
+
     return (
       <div className="bg-white rounded-3xl p-8 md:p-12 text-center shadow-sm border border-slate-100 max-w-2xl mx-auto">
-        <span className="material-symbols-rounded text-6xl text-rose-500 mb-4 block">event_busy</span>
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">Đã Đóng Đăng Ký</h2>
-        <p className="text-slate-600 mb-8 leading-relaxed text-lg">
-          Rất tiếc, thời gian đăng ký đợt 1 cho Ngày Trở Về đã kết thúc vào lúc 23h ngày 11/10/2026.
-          Xin cảm ơn sự quan tâm của quý vị.
-        </p>
-        <Link
-          href="/"
-          className="inline-flex items-center justify-center gap-2 bg-[#1d4ed8] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+        <span
+          className={`material-symbols-rounded text-6xl mb-4 block ${
+            isPreOpen ? "text-blue-600" : isSlotFull ? "text-amber-500" : "text-rose-500"
+          }`}
         >
-          <span className="material-symbols-rounded">arrow_back</span>
-          Về trang chủ
-        </Link>
+          {isPreOpen ? "event_upcoming" : isSlotFull ? "group_off" : "event_busy"}
+        </span>
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">{regStatus.title}</h2>
+        <p className="text-slate-600 mb-8 leading-relaxed text-lg whitespace-pre-line">
+          {regStatus.message}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 bg-[#1d4ed8] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+          >
+            <span className="material-symbols-rounded">arrow_back</span>
+            Về trang chủ
+          </Link>
+          <Link
+            href="/tra-cuu"
+            className="inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors border border-slate-200"
+          >
+            <span className="material-symbols-rounded">search</span>
+            Tra cứu thông tin đã đăng ký
+          </Link>
+        </div>
       </div>
     );
   }

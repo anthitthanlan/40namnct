@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-
-const EVENT_DATE = new Date("2026-10-11T23:00:00+07:00");
+import { getRegistrationStatus, type RegStatusResult } from "@/lib/registration-config";
 
 interface TimeLeft {
   days: number;
@@ -11,8 +10,9 @@ interface TimeLeft {
   seconds: number;
 }
 
-function calculateTimeLeft(): TimeLeft {
-  const difference = EVENT_DATE.getTime() - new Date().getTime();
+function calculateTimeLeft(targetDate?: Date): TimeLeft {
+  if (!targetDate) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  const difference = targetDate.getTime() - new Date().getTime();
   let timeLeft: TimeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
   if (difference > 0) {
@@ -53,20 +53,29 @@ function AnimatedDigits({ value, className = "" }: { value: number; className?: 
 }
 
 export default function CountdownBadge() {
+  const [statusInfo, setStatusInfo] = useState<RegStatusResult>(() => getRegistrationStatus());
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
-    setTimeLeft(calculateTimeLeft());
+    const initialStatus = getRegistrationStatus();
+    setStatusInfo(initialStatus);
+    setTimeLeft(calculateTimeLeft(initialStatus.targetDate));
 
     let timer: NodeJS.Timeout;
+
+    const updateTimer = () => {
+      const currentStatus = getRegistrationStatus();
+      setStatusInfo(currentStatus);
+      setTimeLeft(calculateTimeLeft(currentStatus.targetDate));
+    };
 
     const startTimer = () => {
       clearInterval(timer);
       timer = setInterval(() => {
         if (!document.hidden) {
-          setTimeLeft(calculateTimeLeft());
+          updateTimer();
         }
       }, 1000);
     };
@@ -75,7 +84,7 @@ export default function CountdownBadge() {
       if (document.hidden) {
         clearInterval(timer);
       } else {
-        setTimeLeft(calculateTimeLeft());
+        updateTimer();
         startTimer();
       }
     };
@@ -90,13 +99,37 @@ export default function CountdownBadge() {
   }, []);
 
   if (!isClient) return null;
-  if (timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0) return null;
+
+  const isCountdownActive =
+    statusInfo.targetDate &&
+    (timeLeft.days > 0 || timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0);
+
+  // Nếu không còn đếm ngược (đã hết hạn hoặc hết slot)
+  if (!isCountdownActive) {
+    return (
+      <div className="flex flex-col items-start justify-center space-y-3">
+        <div className="flex items-center space-x-2 text-rose-600 font-bold tracking-wide">
+          <span className="material-symbols-rounded text-xl">event_busy</span>
+          <span>{statusInfo.title.toUpperCase()}</span>
+        </div>
+        <div className="text-[13px] sm:text-sm font-medium text-slate-600 bg-slate-100/90 px-4 py-2.5 rounded-xl border border-slate-200 leading-relaxed">
+          {statusInfo.badgeText}
+        </div>
+      </div>
+    );
+  }
+
+  const isPreOpen = statusInfo.status === "NOT_OPEN_YET";
+  const themeColorClass = isPreOpen ? "text-blue-600" : "text-emerald-600";
+  const subColorClass = isPreOpen ? "text-blue-600/70" : "text-emerald-600/70";
 
   return (
     <div className="flex flex-col items-start justify-center space-y-4">
-      <div className="flex items-center space-x-2 text-emerald-600 font-bold tracking-wide mb-2">
-        <span className="material-symbols-rounded text-xl">schedule</span>
-        <span>KẾT THÚC ĐĂNG KÝ ĐỢT 1 SAU</span>
+      <div className={`flex items-center space-x-2 ${themeColorClass} font-bold tracking-wide mb-2`}>
+        <span className="material-symbols-rounded text-xl">
+          {isPreOpen ? "hourglass_top" : "schedule"}
+        </span>
+        <span>{statusInfo.countdownLabel || "ĐẾM NGƯỢC"}</span>
       </div>
       <div className="flex gap-2 sm:gap-6 text-center">
         <div className="flex flex-col items-center">
@@ -115,13 +148,14 @@ export default function CountdownBadge() {
         </div>
         <div className="text-3xl sm:text-4xl font-black text-slate-300 mt-1">:</div>
         <div className="flex flex-col items-center">
-          <AnimatedDigits value={timeLeft.seconds} className="text-4xl sm:text-5xl font-black text-emerald-600" />
-          <div className="text-xs sm:text-sm font-semibold uppercase text-emerald-600/70 mt-1">Giây</div>
+          <AnimatedDigits value={timeLeft.seconds} className={`text-4xl sm:text-5xl font-black ${themeColorClass}`} />
+          <div className={`text-xs sm:text-sm font-semibold uppercase ${subColorClass} mt-1`}>Giây</div>
         </div>
       </div>
-      <div className="mt-4 text-[13px] sm:text-sm font-medium text-slate-500 bg-slate-100/80 px-4 py-2 rounded-xl border border-slate-200">
-        Đăng ký đợt 1 sẽ kết thúc vào 23:00 ngày 11/10/2026
+      <div className="mt-4 text-[13px] sm:text-sm font-medium text-slate-600 bg-slate-100/80 px-4 py-2.5 rounded-xl border border-slate-200">
+        {statusInfo.badgeText}
       </div>
     </div>
   );
 }
+

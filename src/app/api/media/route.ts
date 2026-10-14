@@ -26,15 +26,19 @@ function str(v: FormDataEntryValue | null, max: number): string {
 
 /** Danh sách media: công khai chỉ thấy mục đã duyệt, admin thấy tất cả kèm logs */
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const statusParam = searchParams.get("status");
   const admin = getAdminFromRequest(req);
   const token = req.cookies.get(process.env.COOKIE_NAME || "nct_admin")?.value;
+
+  // Nếu client yêu cầu status=approved hoặc không phải admin: chỉ lấy mục đã duyệt
   const items =
-    admin && admin.role !== "editor"
-      ? await listAllMedia(token)
-      : await listApprovedMedia();
+    statusParam === "approved" || !admin || admin.role === "editor"
+      ? await listApprovedMedia()
+      : await listAllMedia(token);
 
   let logs: any[] = [];
-  if (admin) {
+  if (admin && statusParam !== "approved") {
     try {
       const allLogs = await listActionLogs(token);
       logs = allLogs.filter((l) => l.group === "media");
@@ -43,9 +47,15 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Đảm bảo lọc sạch nếu yêu cầu status=approved
+  const finalItems =
+    statusParam === "approved"
+      ? items.filter((m) => m.status === "approved")
+      : items;
+
   return NextResponse.json({
     ok: true,
-    media: items.map((m) => ({ ...m, url: mediaFileUrl(m.file) })),
+    media: finalItems.map((m) => ({ ...m, url: mediaFileUrl(m.file) })),
     logs,
   });
 }

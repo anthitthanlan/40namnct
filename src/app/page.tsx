@@ -1,7 +1,7 @@
 import HeroSlideshow from "@/components/HeroSlideshow";
 import Link from "next/link";
 import MemoryGallery from "@/components/MemoryGallery";
-import PostCard from "@/components/PostCard";
+import PostCarousel from "@/components/PostCarousel";
 import Reveal from "@/components/Reveal";
 import CountdownBadge from "@/components/CountdownBadge";
 import ContributionCounter from "@/components/ContributionCounter";
@@ -20,7 +20,7 @@ export default async function Home() {
   const allPosts = await listPublished();
   const categories = await listCategories();
   const pinnedPosts = allPosts.filter((p) => p.pinned);
-  const nonPinnedPosts = allPosts.filter((p) => !p.pinned).slice(0, 4);
+  const nonPinnedPosts = allPosts.filter((p) => !p.pinned).slice(0, 6);
   const homePosts = [...pinnedPosts, ...nonPinnedPosts];
 
   // Sổ sao kê đóng góp: chỉ tính các đơn vé ĐÃ DUYỆT (giống AdminRegistrations)
@@ -133,8 +133,8 @@ export default async function Home() {
           </Reveal>
 
           {/* Secondary Bento Box 1 - Removed box styling */}
-          <Reveal delay={180} className="md:col-span-5 md:row-span-1 flex flex-col justify-center">
-            <div className="flex h-full flex-col justify-center p-4 md:pl-0">
+          <Reveal delay={180} className="md:col-span-5 md:row-span-1 flex flex-col justify-center text-left">
+            <div className="flex h-full flex-col justify-center p-4 text-left md:pl-0">
               <CountdownBadge />
             </div>
           </Reveal>
@@ -256,14 +256,10 @@ export default async function Home() {
           </Reveal>
         </div>
 
-        {/* Danh sách bài viết: bài ghim + 4 bài mới nhất */}
+        {/* Danh sách bài viết dạng băng chuyền */}
         {homePosts.length > 0 && (
-          <div className="mt-16 grid gap-8 text-left sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {homePosts.map((post, i) => (
-              <Reveal key={post.id} delay={(i % 4) * 80} className="h-full">
-                <PostCard post={post} categoryName={categories.find(c => c.id === post.categoryId)?.name} />
-              </Reveal>
-            ))}
+          <div className="mt-12 sm:mt-16 text-left">
+            <PostCarousel posts={homePosts} categories={categories} />
           </div>
         )}
       </section>

@@ -107,12 +107,12 @@ export default function CountdownBadge() {
   // Nếu không còn đếm ngược (đã hết hạn hoặc hết slot)
   if (!isCountdownActive) {
     return (
-      <div className="flex flex-col items-start justify-center space-y-3">
-        <div className="flex items-center space-x-2 text-rose-600 font-bold tracking-wide">
-          <span className="material-symbols-rounded text-xl">event_busy</span>
-          <span>{statusInfo.title.toUpperCase()}</span>
+      <div className="flex flex-col items-start justify-center space-y-3 text-left">
+        <div className="flex items-start space-x-2 text-rose-600 font-bold tracking-wide text-left">
+          <span className="material-symbols-rounded text-xl shrink-0 mt-0.5">event_busy</span>
+          <span className="text-left leading-snug">{statusInfo.title.toUpperCase()}</span>
         </div>
-        <div className="text-[13px] sm:text-sm font-medium text-slate-600 bg-slate-100/90 px-4 py-2.5 rounded-xl border border-slate-200 leading-relaxed">
+        <div className="text-[13px] sm:text-sm font-medium text-slate-600 bg-slate-100/90 px-4 py-2.5 rounded-xl border border-slate-200 leading-relaxed text-left">
           {statusInfo.badgeText}
         </div>
       </div>
@@ -124,12 +124,12 @@ export default function CountdownBadge() {
   const subColorClass = isPreOpen ? "text-blue-600/70" : "text-emerald-600/70";
 
   return (
-    <div className="flex flex-col items-start justify-center space-y-4">
-      <div className={`flex items-center space-x-2 ${themeColorClass} font-bold tracking-wide mb-2`}>
-        <span className="material-symbols-rounded text-xl">
+    <div className="flex flex-col items-start justify-center space-y-4 text-left">
+      <div className={`flex items-start space-x-2 ${themeColorClass} font-bold tracking-wide mb-2 text-left`}>
+        <span className="material-symbols-rounded text-xl shrink-0 mt-0.5">
           {isPreOpen ? "hourglass_top" : "schedule"}
         </span>
-        <span>{statusInfo.countdownLabel || "ĐẾM NGƯỢC"}</span>
+        <span className="text-left leading-snug">{statusInfo.countdownLabel || "ĐẾM NGƯỢC"}</span>
       </div>
       <div className="flex gap-2 sm:gap-6 text-center">
         <div className="flex flex-col items-center">
@@ -152,7 +152,7 @@ export default function CountdownBadge() {
           <div className={`text-xs sm:text-sm font-semibold uppercase ${subColorClass} mt-1`}>Giây</div>
         </div>
       </div>
-      <div className="mt-4 text-[13px] sm:text-sm font-medium text-slate-600 bg-slate-100/80 px-4 py-2.5 rounded-xl border border-slate-200">
+      <div className="mt-4 text-[13px] sm:text-sm font-medium text-slate-600 bg-slate-100/80 px-4 py-2.5 rounded-xl border border-slate-200 text-left">
         {statusInfo.badgeText}
       </div>
     </div>

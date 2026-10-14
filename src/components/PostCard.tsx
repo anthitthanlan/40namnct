@@ -1,6 +1,20 @@
+"use client";
+
 import Link from "next/link";
-import { formatDate, type Post } from "@/lib/posts";
-import ClientPostCover from "@/components/ClientPostCover";
+import type { Post } from "@/lib/posts";
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      timeZone: "Asia/Ho_Chi_Minh",
+    });
+  } catch {
+    return iso;
+  }
+}
 
 /** Huy hiệu nguồn bài: ✦ Ban Biên tập (admin) hay 🗣 Câu chuyện cộng đồng (user) */
 export function PostBadges({ post, categoryName }: { post: Post; categoryName?: string }) {
@@ -45,8 +59,25 @@ export function PostCover({ post, className = "" }: { post: Post; className?: st
   }
   
   if (post.cover) {
-    // Delegate to Client Component to handle onLoad (skeleton cross-fade)
-    return <ClientPostCover src={post.cover} alt={post.title} className={className} />;
+    return (
+      <div className="skeleton-reveal w-full h-full">
+        <div
+          className={`skeleton-pulse skeleton-reveal__placeholder rounded-none ${className}`}
+          aria-hidden="true"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={post.cover}
+          alt={post.title}
+          className={`skeleton-reveal__content ${className}`}
+          onLoad={(e) => {
+            const img = e.currentTarget;
+            img.classList.add("is-loaded");
+            img.previousElementSibling?.classList.add("is-loaded");
+          }}
+        />
+      </div>
+    );
   }
   return (
     <span

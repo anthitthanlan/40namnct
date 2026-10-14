@@ -83,8 +83,8 @@ export default async function Home() {
               {/* Hình nền không có lớp phủ xám toàn bộ */}
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${quoteBg}')` }}></div>
               
-              {/* Lớp phủ blur-gradient-dimmer ở dưới */}
-              <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none backdrop-blur-sm [mask-image:linear-gradient(to_top,black_20%,transparent)]"></div>
+              {/* Lớp phủ gradient-dimmer ở dưới */}
+              <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none"></div>
 
               {/* Nội dung icon và text */}
               <span className="material-symbols-rounded relative z-10 mb-3 text-5xl sm:text-6xl text-emerald-400 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">forest</span>

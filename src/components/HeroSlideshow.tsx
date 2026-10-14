@@ -16,6 +16,7 @@ const DURATION = 6000;
 export default function HeroSlideshow() {
   const [slides, setSlides] = useState<Slide[]>(FALLBACK);
   const [current, setCurrent] = useState(0);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null);
   // Skeleton: ảnh chưa load xong thì hiện shimmer
   const [loaded, setLoaded] = useState<boolean[]>(() => FALLBACK.map(() => false));
 
@@ -38,7 +39,17 @@ export default function HeroSlideshow() {
 
   useEffect(() => {
     setCurrent(0);
+    setPrevIndex(null);
   }, [slides]);
+
+  // Dọn dẹp prevIndex sau khi CSS transition (1.4s) hoàn tất
+  useEffect(() => {
+    if (prevIndex === null) return;
+    const t = setTimeout(() => {
+      setPrevIndex(null);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [prevIndex]);
 
   const headerRef = useRef<HTMLElement | null>(null);
   const [isInView, setIsInView] = useState(true);
@@ -56,12 +67,29 @@ export default function HeroSlideshow() {
     return () => observer.disconnect();
   }, []);
 
+  const goToSlide = useCallback((newIdx: number) => {
+    setCurrent((c) => {
+      if (c !== newIdx) {
+        setPrevIndex(c);
+      }
+      return newIdx;
+    });
+  }, []);
+
   const next = useCallback(() => {
-    setCurrent((c) => (c + 1) % slides.length);
+    setCurrent((c) => {
+      const nextIdx = (c + 1) % slides.length;
+      setPrevIndex(c);
+      return nextIdx;
+    });
   }, [slides.length]);
 
   const prev = useCallback(() => {
-    setCurrent((c) => (c - 1 + slides.length) % slides.length);
+    setCurrent((c) => {
+      const prevIdx = (c - 1 + slides.length) % slides.length;
+      setPrevIndex(c);
+      return prevIdx;
+    });
   }, [slides.length]);
 
   // Auto-play timer with reset capability
@@ -72,10 +100,10 @@ export default function HeroSlideshow() {
     if (!isInView || slides.length <= 1) return;
     timerRef.current = setInterval(() => {
       if (!document.hidden) {
-        setCurrent((c) => (c + 1) % slides.length);
+        next();
       }
     }, DURATION);
-  }, [isInView, slides.length]);
+  }, [isInView, next, slides.length]);
 
   useEffect(() => {
     resetTimer();
@@ -145,32 +173,50 @@ export default function HeroSlideshow() {
       style={{ touchAction: "pan-y" }}
     >
       {/* Slideshow - top 52vh on mobile with feather mask, full width/height on desktop/tablet */}
-      {slides.map((slide, i) => (
-        <div key={slide.src} className={`hero-slide hero-slide-mobile-feather overflow-hidden !bottom-auto !top-0 !h-[52vh] md:!top-0 md:!bottom-0 md:!h-full ${i === current ? "active" : ""}`}>
+      {/* Chỉ render slide đang chiếu, slide vừa chiếu (để fade out), và slide liền kề (để preload) */}
+      {slides.map((slide, i) => {
+        const isCurrent = i === current;
+        const isPrev = i === prevIndex;
+        const isNext = i === (current + 1) % slides.length;
+        const isBefore = i === (current - 1 + slides.length) % slides.length;
+        
+        // Chỉ giữ tối đa 3-4 slides trong DOM thay vì cả 17 slides
+        if (slides.length > 3 && !isCurrent && !isPrev && !isNext && !isBefore) {
+          return null;
+        }
+
+        return (
           <div
-            className={`skeleton-pulse absolute inset-0 rounded-none transition-opacity duration-[var(--duration-very-slow)] ${
-              loaded[i] ? "opacity-0" : "opacity-100"
+            key={slide.src}
+            className={`hero-slide hero-slide-mobile-feather overflow-hidden !bottom-auto !top-0 !h-[52vh] md:!top-0 md:!bottom-0 md:!h-full ${
+              isCurrent ? "active" : ""
             }`}
-          />
-          <Image
-            src={slide.src}
-            alt={slide.alt}
-            fill
-            priority={i === 0}
-            onLoad={() =>
-              setLoaded((arr) => {
-                if (arr[i]) return arr;
-                const next = [...arr];
-                next[i] = true;
-                return next;
-              })
-            }
-            className="object-cover select-none pointer-events-none"
-            sizes="100vw"
-            draggable={false}
-          />
-        </div>
-      ))}
+          >
+            <div
+              className={`skeleton-pulse absolute inset-0 rounded-none transition-opacity duration-[var(--duration-very-slow)] ${
+                loaded[i] ? "opacity-0" : "opacity-100"
+              }`}
+            />
+            <Image
+              src={slide.src}
+              alt={slide.alt}
+              fill
+              priority={i === 0 || isCurrent}
+              onLoad={() =>
+                setLoaded((arr) => {
+                  if (arr[i]) return arr;
+                  const next = [...arr];
+                  next[i] = true;
+                  return next;
+                })
+              }
+              className="object-cover select-none pointer-events-none"
+              sizes="100vw"
+              draggable={false}
+            />
+          </div>
+        );
+      })}
 
       {/* Top blur edge (overlay nhẹ tinh tế cho navbar không lấn át ảnh) */}
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/80 via-slate-950/30 to-transparent pointer-events-none z-[3]" />
@@ -241,7 +287,7 @@ export default function HeroSlideshow() {
             aria-label={`Ảnh ${i + 1}`}
             onClick={(e) => {
               e.stopPropagation();
-              setCurrent(i);
+              goToSlide(i);
               resetTimer();
             }}
             className={`h-2.5 rounded-full transition-all duration-[var(--duration-slow)] ${

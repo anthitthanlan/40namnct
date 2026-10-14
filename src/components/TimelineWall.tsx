@@ -495,15 +495,41 @@ function FilterModal({ currentYear, onSelect, onClose }: { currentYear: number |
 ══════════════════════════════════════════ */
 function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
   const [current, setCurrent] = useState(0);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (prevIndex === null) return;
+    const t = setTimeout(() => {
+      setPrevIndex(null);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [prevIndex]);
+
+  const goToSlide = useCallback((newIdx: number) => {
+    setCurrent((c) => {
+      if (c !== newIdx) {
+        setPrevIndex(c);
+      }
+      return newIdx;
+    });
+  }, []);
 
   const next = useCallback(() => {
     if (slides.length <= 1) return;
-    setCurrent((c) => (c + 1) % slides.length);
+    setCurrent((c) => {
+      const nextIdx = (c + 1) % slides.length;
+      setPrevIndex(c);
+      return nextIdx;
+    });
   }, [slides.length]);
 
   const prev = useCallback(() => {
     if (slides.length <= 1) return;
-    setCurrent((c) => (c - 1 + slides.length) % slides.length);
+    setCurrent((c) => {
+      const prevIdx = (c - 1 + slides.length) % slides.length;
+      setPrevIndex(c);
+      return prevIdx;
+    });
   }, [slides.length]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -513,10 +539,10 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
     if (slides.length <= 1) return;
     timerRef.current = setInterval(() => {
       if (!document.hidden) {
-        setCurrent((c) => (c + 1) % slides.length);
+        next();
       }
     }, 5500);
-  }, [slides.length]);
+  }, [next, slides.length]);
 
   useEffect(() => {
     resetTimer();
@@ -589,22 +615,36 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
       style={{ touchAction: "pan-y" }}
     >
       {/* Slideshow - top 52vh on mobile with feather mask, full width/height on desktop/tablet */}
-      {slides.map((s, i) => (
-        <div
-          key={i}
-          className={`hero-slide hero-slide-mobile-feather overflow-hidden !bottom-auto !top-0 !h-[52vh] md:!top-0 md:!bottom-0 md:!h-full ${i === current ? "active" : ""}`}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={s.src}
-            alt={s.title}
-            decoding="async"
-            draggable={false}
-            {...(i === 0 ? { fetchPriority: "high" } : { loading: "lazy" })}
-            className="h-full w-full object-cover select-none pointer-events-none"
-          />
-        </div>
-      ))}
+      {slides.map((s, i) => {
+        const isCurrent = i === current;
+        const isPrev = i === prevIndex;
+        const isNext = i === (current + 1) % slides.length;
+        const isBefore = i === (current - 1 + slides.length) % slides.length;
+
+        // Chỉ giữ tối đa 3-4 slides trong DOM thay vì toàn bộ slides
+        if (slides.length > 3 && !isCurrent && !isPrev && !isNext && !isBefore) {
+          return null;
+        }
+
+        return (
+          <div
+            key={i}
+            className={`hero-slide hero-slide-mobile-feather overflow-hidden !bottom-auto !top-0 !h-[52vh] md:!top-0 md:!bottom-0 md:!h-full ${
+              isCurrent ? "active" : ""
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={s.src}
+              alt={s.title}
+              decoding="async"
+              draggable={false}
+              {...(i === 0 || isCurrent ? { fetchPriority: "high" } : { loading: "lazy" })}
+              className="h-full w-full object-cover select-none pointer-events-none"
+            />
+          </div>
+        );
+      })}
 
       {/* Top blur edge (overlay nhẹ tinh tế cho navbar không lấn át ảnh) */}
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/80 via-slate-950/30 to-transparent pointer-events-none z-[3]" />
@@ -681,7 +721,7 @@ function HeroCarousel({ slides }: { slides: CarouselSlide[] }) {
             aria-label={`Slide ${i + 1}`}
             onClick={(e) => {
               e.stopPropagation();
-              setCurrent(i);
+              goToSlide(i);
               resetTimer();
             }}
             className={`h-2.5 rounded-full transition-all duration-300 ${

@@ -44,4 +44,5 @@ poster*.html
 # python
 __pycache__/
 *.pyc
-
+# backups
+/public/hero_images_backup/

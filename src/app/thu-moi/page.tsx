@@ -20,17 +20,9 @@ function InvitationContent() {
   const [invitationQrUrl, setInvitationQrUrl] = useState("");
   const [downloading, setDownloading] = useState(false);
   const [scale, setScale] = useState(1);
-  const [isIosSafari, setIsIosSafari] = useState(false);
   const invitationRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Detect iOS Safari
-    const ua = window.navigator.userAgent;
-    const isIOS = !!ua.match(/iPad/i) || !!ua.match(/iPhone/i);
-    const isWebKit = !!ua.match(/WebKit/i) && !ua.match(/CriOS/i) && !ua.match(/FxiOS/i) && !ua.match(/EdgiOS/i) && !ua.match(/OPiOS/i);
-    if (isIOS && isWebKit) {
-      setIsIosSafari(true);
-    }
 
     const handleResize = () => {
       const width = window.innerWidth;
@@ -379,13 +371,13 @@ function InvitationContent() {
                   <div
                     className="fixed inset-x-0 bottom-0 pointer-events-none z-[99] lg:hidden"
                     style={{
-                      height: isIosSafari ? "180px" : "140px", // Cao hơn trên iOS để che hết dải an toàn
+                      height: "140px",
                       background: "linear-gradient(to top, rgba(249,250,251,1) 0%, rgba(249,250,251,0) 100%)",
                       backdropFilter: "blur(2px)",
                       WebkitMaskImage: "linear-gradient(to top, black 0%, transparent 100%)",
                     }}
                   />
-                  <div className={`fixed inset-x-0 bottom-0 z-[100] px-4 flex justify-center pointer-events-none lg:hidden ${isIosSafari ? "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]" : "pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"}`}>
+                  <div className="fixed inset-x-0 bottom-0 z-[100] px-4 flex justify-center pointer-events-none lg:hidden pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
                     <button
                       onClick={handleDownload}
                       disabled={downloading || !invitationQrUrl}

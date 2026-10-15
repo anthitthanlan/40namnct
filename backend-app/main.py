@@ -45,6 +45,30 @@ def ensure_database_schema(engine_obj):
                             WHERE entity_id IS NOT NULL AND details LIKE '%Gửi email%'
                         ) AND (email_sent IS NULL OR email_sent = 0)
                     """))
+
+            if "media" in tables:
+                media_columns = [c["name"] for c in inspector.get_columns("media")]
+                if "title" not in media_columns:
+                    conn.execute(text("ALTER TABLE media ADD COLUMN title VARCHAR(255)"))
+
+                # Backfill tên album cho 10 nhóm feed cũ dựa trên thư mục lưu trữ
+                backfill_mappings = [
+                    ("%/12A2_1995/%", "Lớp 12A2 (1995)"),
+                    ("%/Le_Ra_Truong/%", "Lễ Ra Trường"),
+                    ("%/Tiet_hoc_cuoi/%", "Tiết Học Cuối"),
+                    ("%/an_con_tho_12A5_va_ma_ao_ang_y/%", "Đàn Con Thơ 12A5 - Kỷ Yếu & Đà Lạt"),
+                    ("%/12A8__2000-2003__mot_thoi_e_nh/%", "12A8 (2000 - 2003) - Một Thời Để Nhớ"),
+                    ("%/Truoc_ky_thi_tot_nghiep_cua_kh/%", "Trước Kỳ Thi Tốt Nghiệp"),
+                    ("%/Hinh_ngay_oi_ten_truong/%", "Hình Ngày Đổi Tên Trường"),
+                    ("%/Anh_ki_niem_nien_hoc_khoa_1992/%", "Ảnh Kỷ Niệm Niên Khóa 1992"),
+                    ("%/Lien_hoan_nam_cuoi_cap_1995/%", "Liên Hoan Năm Cuối Cấp 1995"),
+                    ("%/untitled/%", "Kỷ Niệm 20/11 Lớp 12A4"),
+                ]
+                for pattern, title_val in backfill_mappings:
+                    conn.execute(
+                        text("UPDATE media SET title = :t WHERE (title IS NULL OR title = '') AND file LIKE :p"),
+                        {"t": title_val, "p": pattern}
+                    )
     except Exception as e:
         print(f"Warning: ensure_database_schema encountered an issue: {e}")
 

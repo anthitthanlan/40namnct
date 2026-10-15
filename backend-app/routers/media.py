@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
 from app.models.media import MediaItem
-from app.schemas.media import MediaResponse
+from app.schemas.media import MediaResponse, MediaUpdate
 from app.services.storage import save_uploaded_file, delete_uploaded_file
 from app.services.auth_service import get_current_admin, require_super_admin
 
@@ -33,6 +33,7 @@ def get_media(
             author=m.author or "",
             authorRole=m.author_role or "",
             caption=m.caption or "",
+            title=m.title or "",
             mediaType=m.media_type or "media",
             status=m.status,
             createdAt=m.created_at
@@ -109,6 +110,7 @@ async def upload_media(
         author=author,
         author_role=authorRole,
         caption=caption,
+        title=title.strip() if title else "",
         media_type=mediaType,
         status=status
     )
@@ -136,6 +138,48 @@ def update_media_status(
     item.status = status
     db.commit()
     return {"success": True, "status": item.status}
+
+@router.patch("/{id}")
+def update_media_details(
+    id: str,
+    payload: MediaUpdate,
+    db: Session = Depends(get_db),
+    admin = Depends(get_current_admin)
+):
+    item = db.query(MediaItem).filter(MediaItem.id == id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Không tìm thấy file media")
+    if payload.title is not None:
+        item.title = payload.title.strip()
+    if payload.caption is not None:
+        item.caption = payload.caption.strip()
+    if payload.status is not None:
+        item.status = payload.status
+    if payload.year is not None:
+        item.year = payload.year
+    if payload.month is not None:
+        item.month = payload.month
+    db.commit()
+    db.refresh(item)
+    return {
+        "success": True,
+        "media": MediaResponse(
+            id=item.id,
+            file=item.file,
+            url=item.url,
+            kind=item.kind,
+            size=item.size,
+            year=item.year,
+            month=item.month,
+            author=item.author or "",
+            authorRole=item.author_role or "",
+            caption=item.caption or "",
+            title=item.title or "",
+            mediaType=item.media_type or "media",
+            status=item.status,
+            createdAt=item.created_at
+        )
+    }
 
 @router.delete("/{id}")
 async def delete_media_item(

@@ -449,14 +449,15 @@ export default function AdminMedia({
                       )}
                     </div>
                     <div className="p-4">
-                      {m.title && (
-                        <div className="mb-1.5 flex items-center gap-1 text-xs font-extrabold text-[#1d4ed8]">
-                          <span className="material-symbols-rounded text-sm">photo_album</span>
-                          <span className="line-clamp-1">{m.title}</span>
-                        </div>
-                      )}
-                      <p className="line-clamp-2 text-sm font-bold text-slate-800">
-                        {m.caption || "(Không có chú thích)"}
+                      {/* 1. Tiêu đề / Tên Album (Headline chính) */}
+                      <h3 className="line-clamp-1 text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+                        <span className="material-symbols-rounded text-base text-[#1d4ed8] shrink-0">photo_album</span>
+                        <span>{m.title || <span className="font-normal italic text-slate-400">(Chưa có tiêu đề / album)</span>}</span>
+                      </h3>
+
+                      {/* 2. Lời nhắn / Chú thích (Dòng mô tả bên dưới) */}
+                      <p className="mt-1 line-clamp-2 text-xs text-slate-600 leading-relaxed font-medium">
+                        {m.caption || <span className="italic text-slate-400">(Không có chú thích đính kèm)</span>}
                       </p>
                       <p className="mt-1 text-xs text-slate-500 flex items-center gap-1">
                         <span className="material-symbols-rounded text-rose-500 text-sm">
@@ -644,46 +645,51 @@ export default function AdminMedia({
             </div>
 
             {/* 2. Chủ đề & Nội dung khoảnh khắc (Hỗ trợ chỉnh sửa nhanh) */}
-            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <span className="material-symbols-rounded text-base text-slate-500">
-                    photo_album
+                    tune
                   </span>
-                  Chủ đề &amp; Nội dung khoảnh khắc
+                  Nội dung khoảnh khắc
                 </h4>
                 {hasContentChanges && (
-                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 animate-pulse">
+                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 animate-pulse flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-600"></span>
                     Có thay đổi chưa lưu
                   </span>
                 )}
               </div>
 
-              <div>
-                <label className="text-xs text-slate-500 font-bold block mb-1" htmlFor="edit-title">
-                  Tên Chủ đề / Album:
+              {/* Box 1: Tên Chủ đề / Album */}
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 space-y-1.5 shadow-2xs">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5" htmlFor="edit-title">
+                  <span className="material-symbols-rounded text-base text-[#1d4ed8]">photo_album</span>
+                  <span>Tên Chủ đề / Album:</span>
                 </label>
                 <input
                   id="edit-title"
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  placeholder="Nhập tên chủ đề hoặc album..."
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-[#1d4ed8] focus:outline-none"
+                  placeholder="VD: Lễ Ra Trường niên khóa 2006 - 2009..."
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-bold text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:bg-white focus:border-[#1d4ed8] focus:outline-none transition-colors"
                 />
               </div>
 
-              <div>
-                <label className="text-xs text-slate-500 font-bold block mb-1" htmlFor="edit-caption">
-                  Lời nhắn / Chú thích khoảnh khắc:
+              {/* Box 2: Lời nhắn / Chú thích khoảnh khắc */}
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3.5 space-y-1.5 shadow-2xs">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5" htmlFor="edit-caption">
+                  <span className="material-symbols-rounded text-base text-emerald-600">chat</span>
+                  <span>Lời nhắn / Chú thích khoảnh khắc:</span>
                 </label>
                 <textarea
                   id="edit-caption"
-                  rows={3}
+                  rows={4}
                   value={editCaption}
                   onChange={(e) => setEditCaption(e.target.value)}
-                  placeholder="Nhập chú thích..."
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-800 focus:border-[#1d4ed8] focus:outline-none"
+                  placeholder="Nhập lời nhắn hoặc chú thích chi tiết cho khoảnh khắc..."
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-medium leading-relaxed text-slate-800 placeholder:font-normal placeholder:text-slate-400 focus:bg-white focus:border-[#1d4ed8] focus:outline-none transition-colors"
                 />
               </div>
 
@@ -693,10 +699,10 @@ export default function AdminMedia({
                     type="button"
                     disabled={savingEdit}
                     onClick={handleSaveDetails}
-                    className="rounded-xl bg-[#1d4ed8] px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                    className="rounded-xl bg-[#1d4ed8] px-4 py-2.5 text-xs font-extrabold text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
                   >
                     <span className="material-symbols-rounded text-base">save</span>
-                    {savingEdit ? "Đang lưu..." : "Lưu thay đổi Tên/Chú thích"}
+                    {savingEdit ? "Đang lưu..." : "Lưu thay đổi Tên & Chú thích"}
                   </button>
                 </div>
               )}

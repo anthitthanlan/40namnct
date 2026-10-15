@@ -11,6 +11,7 @@ export type MediaItem = {
   author: string;
   authorRole: string;
   caption: string;
+  title?: string;
   mediaType?: string;
   status: MediaStatus;
   createdAt: string;
@@ -230,6 +231,28 @@ export async function setMediaStatus(
 
   if (!res.ok) return null;
   return await res.json();
+}
+
+export async function updateMediaDetails(
+  id: string,
+  data: {
+    title?: string;
+    caption?: string;
+    status?: MediaStatus;
+    year?: number;
+    month?: number;
+  },
+  token?: string,
+): Promise<MediaItem | null> {
+  const res = await fetch(`${API_URL}/api/media/${id}`, {
+    method: "PATCH",
+    headers: getHeaders(token),
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.media || json;
 }
 
 export async function deleteMedia(id: string, token?: string): Promise<boolean> {

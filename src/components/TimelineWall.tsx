@@ -1200,12 +1200,15 @@ function Lightbox({ items, currentIndex, onIndexChange, onClose }: LightboxProps
             {/* Title & Caption */}
             <div className="border-t border-white/10 px-5 pb-6 pt-3 text-sm text-slate-300 space-y-1.5">
               {info.title && (
-                <p className="font-extrabold text-white text-base leading-snug">
-                  {info.title}
+                <p className="font-extrabold text-white text-base leading-snug flex items-center gap-1.5">
+                  {currentItem.type === "memory" && (
+                    <span className="material-symbols-rounded text-blue-400 text-lg shrink-0">photo_album</span>
+                  )}
+                  <span>{info.title}</span>
                 </p>
               )}
               {info.caption && info.caption !== info.title && (
-                <p className="leading-relaxed text-xs sm:text-sm text-slate-300 max-h-28 overflow-y-auto hide-scrollbar">
+                <p className="leading-relaxed text-xs sm:text-sm text-slate-300 max-h-28 overflow-y-auto hide-scrollbar whitespace-pre-wrap">
                   {info.caption}
                 </p>
               )}

@@ -179,6 +179,7 @@ export async function POST(req: NextRequest) {
         author,
         authorRole,
         caption,
+        title,
         status: targetStatus,
         createdAt: new Date().toISOString(),
       });

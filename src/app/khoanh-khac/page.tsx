@@ -45,11 +45,13 @@ async function readMemories(): Promise<WallMemory[]> {
 
   for (const m of list) {
     if (m.mediaType === "post") continue;
-    if (!m.caption && !m.author && m.mediaType !== "feed") continue; // Bỏ qua ảnh upload cho bài viết cũ
+    const title = m.title?.trim() || m.caption?.trim() || "Kỷ niệm dưới mái trường Trứ";
+    const caption = m.title?.trim() ? (m.caption?.trim() || "") : "";
+
     memories.push({
       id: m.id,
-      title: m.caption || "Kỷ niệm dưới mái trường Trứ",
-      caption: m.caption || "",
+      title,
+      caption,
       icon: "",
       author: m.author || "",
       role: m.authorRole || "",

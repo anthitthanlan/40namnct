@@ -81,8 +81,8 @@ export default async function BaiVietPage() {
   const shuffled = validMoments.sort(() => 0.5 - Math.random()).slice(0, 5);
   const carouselMoments: WallMemory[] = shuffled.map((m) => ({
     id: m.id,
-    title: m.caption || "Kỷ niệm dưới mái trường Trứ",
-    caption: m.caption || "",
+    title: m.title?.trim() || m.caption?.trim() || "Kỷ niệm dưới mái trường Trứ",
+    caption: m.title?.trim() ? (m.caption?.trim() || "") : "",
     icon: "",
     author: m.author || "",
     role: m.authorRole || "",

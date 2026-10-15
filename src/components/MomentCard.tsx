@@ -139,6 +139,11 @@ export default function MomentCard({
           <h3 className="line-clamp-2 text-xs sm:text-sm font-semibold leading-snug text-white drop-shadow-sm transition-colors group-hover:text-blue-100">
             {title}
           </h3>
+          {caption && caption !== title && (
+            <p className="mt-0.5 line-clamp-1 text-[11px] font-normal text-slate-300/90 drop-shadow-sm">
+              {caption}
+            </p>
+          )}
           {(author || role) && (
             <p className="mt-0.5 sm:mt-1 truncate text-[10px] sm:text-[11px] font-normal text-slate-200/90 drop-shadow-sm">
               {author}

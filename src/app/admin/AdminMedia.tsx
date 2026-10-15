@@ -17,6 +17,7 @@ type MediaRow = {
   author: string;
   authorRole: string;
   caption: string;
+  title?: string;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   url: string;
@@ -93,6 +94,25 @@ export default function AdminMedia({
   const [busy, setBusy] = useState(false);
   const [showUploader, setShowUploader] = useState(false);
   const { confirm, ConfirmElement } = useConfirm();
+
+  const [editTitle, setEditTitle] = useState("");
+  const [editCaption, setEditCaption] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  useEffect(() => {
+    if (selectedItem) {
+      setEditTitle(selectedItem.title || "");
+      setEditCaption(selectedItem.caption || "");
+    }
+  }, [selectedItem]);
+
+  const hasContentChanges = useMemo(() => {
+    if (!selectedItem) return false;
+    return (
+      editTitle.trim() !== (selectedItem.title || "").trim() ||
+      editCaption.trim() !== (selectedItem.caption || "").trim()
+    );
+  }, [selectedItem, editTitle, editCaption]);
 
   const flash = useCallback((ok: boolean, text: string) => {
     if (ok) {
@@ -200,6 +220,50 @@ export default function AdminMedia({
       flash(true, "Đã xoá tệp media.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleSaveDetails() {
+    if (!selectedItem) return;
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/admin/media/${selectedItem.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle.trim(),
+          caption: editCaption.trim(),
+        }),
+      });
+      if (res.status === 401) {
+        onAuthError?.();
+        return;
+      }
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        flash(false, data.message || "Không thể cập nhật thông tin.");
+        return;
+      }
+      flash(true, "Đã lưu thông tin khoảnh khắc.");
+      setItems((prev) =>
+        prev
+          ? prev.map((x) =>
+              x.id === selectedItem.id
+                ? { ...x, title: editTitle.trim(), caption: editCaption.trim() }
+                : x
+            )
+          : null
+      );
+      setSelectedItem((prev) =>
+        prev
+          ? { ...prev, title: editTitle.trim(), caption: editCaption.trim() }
+          : null
+      );
+      load();
+    } catch {
+      flash(false, "Đã có lỗi xảy ra.");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -385,6 +449,12 @@ export default function AdminMedia({
                       )}
                     </div>
                     <div className="p-4">
+                      {m.title && (
+                        <div className="mb-1.5 flex items-center gap-1 text-xs font-extrabold text-[#1d4ed8]">
+                          <span className="material-symbols-rounded text-sm">photo_album</span>
+                          <span className="line-clamp-1">{m.title}</span>
+                        </div>
+                      )}
                       <p className="line-clamp-2 text-sm font-bold text-slate-800">
                         {m.caption || "(Không có chú thích)"}
                       </p>
@@ -573,7 +643,66 @@ export default function AdminMedia({
               </div>
             </div>
 
-            {/* 2. Thông tin người gửi */}
+            {/* 2. Chủ đề & Nội dung khoảnh khắc (Hỗ trợ chỉnh sửa nhanh) */}
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <span className="material-symbols-rounded text-base text-slate-500">
+                    photo_album
+                  </span>
+                  Chủ đề &amp; Nội dung khoảnh khắc
+                </h4>
+                {hasContentChanges && (
+                  <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 animate-pulse">
+                    Có thay đổi chưa lưu
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500 font-bold block mb-1" htmlFor="edit-title">
+                  Tên Chủ đề / Album:
+                </label>
+                <input
+                  id="edit-title"
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Nhập tên chủ đề hoặc album..."
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-[#1d4ed8] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-500 font-bold block mb-1" htmlFor="edit-caption">
+                  Lời nhắn / Chú thích khoảnh khắc:
+                </label>
+                <textarea
+                  id="edit-caption"
+                  rows={3}
+                  value={editCaption}
+                  onChange={(e) => setEditCaption(e.target.value)}
+                  placeholder="Nhập chú thích..."
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-800 focus:border-[#1d4ed8] focus:outline-none"
+                />
+              </div>
+
+              {hasContentChanges && (
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    disabled={savingEdit}
+                    onClick={handleSaveDetails}
+                    className="rounded-xl bg-[#1d4ed8] px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+                  >
+                    <span className="material-symbols-rounded text-base">save</span>
+                    {savingEdit ? "Đang lưu..." : "Lưu thay đổi Tên/Chú thích"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Thông tin người gửi */}
             <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <span className="material-symbols-rounded text-base text-slate-500">
@@ -598,15 +727,6 @@ export default function AdminMedia({
                     {selectedItem.authorRole || "(Chưa cập nhật)"}
                   </span>
                 </div>
-              </div>
-
-              <div>
-                <span className="text-xs text-slate-500 font-medium block mb-1">
-                  Lời nhắn / Chú thích khoảnh khắc:
-                </span>
-                <p className="rounded-xl bg-white p-3 text-xs leading-relaxed text-slate-800 border border-slate-200/60 font-medium whitespace-pre-wrap">
-                  {selectedItem.caption || "(Không có chú thích đính kèm)"}
-                </p>
               </div>
             </div>
 

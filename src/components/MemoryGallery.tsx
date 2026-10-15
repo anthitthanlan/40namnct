@@ -12,6 +12,7 @@ type MediaRow = {
   author: string;
   authorRole: string;
   caption: string;
+  title?: string;
   url: string;
   createdAt: string;
   mediaType?: string;
@@ -288,7 +289,8 @@ export default function MemoryGallery() {
             <MomentCard
               size="sm"
               coverUrl={m.url}
-              title={m.caption || "Kỷ niệm dưới mái trường Trứ"}
+              title={m.title?.trim() || m.caption || "Kỷ niệm dưới mái trường Trứ"}
+              caption={m.title?.trim() ? m.caption : undefined}
               author={m.author}
               role={m.authorRole}
               year={m.year}

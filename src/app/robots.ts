@@ -6,8 +6,16 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // Block admin & API endpoints from indexing
-        disallow: ["/admin", "/admin/", "/api/"],
+        // Block admin, internal APIs and sensitive personal verification paths
+        disallow: [
+          "/admin",
+          "/admin/",
+          "/api/",
+          "/payment-legacy",
+          "/payment-legacy/",
+          "/xac-nhan-dong-gop",
+          "/xac-nhan-dong-gop/",
+        ],
       },
     ],
     sitemap: "https://40namnctru.nctitc.io.vn/sitemap.xml",

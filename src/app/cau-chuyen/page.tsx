@@ -7,15 +7,42 @@ import { listPublished } from "@/lib/posts";
 import { listCategories } from "@/lib/categories";
 import { listApprovedMediaChronological, mediaFileUrl } from "@/lib/media";
 import { WallMemory } from "@/components/TimelineWall";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Bài viết · Câu chuyện 40 năm THPT Nguyễn Công Trứ",
-  description:
-    "Tổng hợp bài viết, ký ức và câu chuyện của các thế hệ Thầy trò Nguyễn Công Trứ nhân kỷ niệm 40 năm thành lập trường (1986-2026).",
-};
+const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
+export const metadata: Metadata = {
+  title: "Câu chuyện & Ký ức 40 năm THPT Nguyễn Công Trứ",
+  description:
+    "Tổng hợp bài viết, ký ức và câu chuyện của các thế hệ Thầy và Trò Nguyễn Công Trứ nhân kỷ niệm 40 năm thành lập trường (1986 - 2026).",
+  alternates: {
+    canonical: `${SITE_URL}/cau-chuyen`,
+  },
+  openGraph: {
+    title: "Câu chuyện & Ký ức 40 năm THPT Nguyễn Công Trứ",
+    description:
+      "Tổng hợp bài viết, ký ức và câu chuyện của các thế hệ Thầy và Trò Nguyễn Công Trứ nhân kỷ niệm 40 năm thành lập trường (1986 - 2026).",
+    url: `${SITE_URL}/cau-chuyen`,
+    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    images: [
+      {
+        url: "/images/og-share.png",
+        width: 1200,
+        height: 630,
+        alt: "Câu chuyện & Ký ức 40 năm THPT Nguyễn Công Trứ",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Câu chuyện & Ký ức 40 năm THPT Nguyễn Công Trứ",
+    description:
+      "Tổng hợp bài viết, ký ức và câu chuyện của các thế hệ Thầy và Trò Nguyễn Công Trứ nhân kỷ niệm 40 năm thành lập trường (1986 - 2026).",
+    images: ["/images/og-share.png"],
+  },
+};
 
 export default async function BaiVietPage() {
   const posts = await listPublished();
@@ -68,6 +95,12 @@ export default async function BaiVietPage() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc]">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Trang chủ", url: "/" },
+          { name: "Câu chuyện", url: "/cau-chuyen" },
+        ]}
+      />
       {/* ══════════ PAGE HEADER ══════════ */}
       <section className="relative overflow-hidden pb-16 pt-32 text-white">
         <div

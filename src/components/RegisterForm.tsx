@@ -504,7 +504,7 @@ export default function RegisterForm() {
       try {
         data = await res.json();
       } catch (err) {
-        setError("Lỗi máy chủ (Không thể đọc phản hồi). Vui lòng thử lại.");
+        setError(`Lỗi máy chủ (HTTP ${res.status}). Hệ thống đang quá tải hoặc gặp sự cố, vui lòng thử lại sau ít phút.`);
         return;
       }
 

@@ -1,89 +1,53 @@
-"use client";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import GuiBaiClient from "./GuiBaiClient";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import Reveal from "@/components/Reveal";
-import MediaUploader from "@/components/MediaUploader";
-import StoryForm from "@/components/StoryForm";
+const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
-function GuiBaiContent() {
-  const searchParams = useSearchParams();
-  const [tab, setTab] = useState<"media" | "story">("media");
-
-  useEffect(() => {
-    const t = searchParams.get("tab");
-    if (t === "cau-chuyen") {
-      setTab("story");
-    }
-  }, [searchParams]);
-
-  return (
-    <main className="min-h-screen bg-[#f8fafc]">
-      <section className="relative overflow-hidden pb-16 pt-28 text-white">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/hero_images/hero_4.webp')" }}
-        />
-        <div className="absolute inset-0 bg-slate-950/80" />
-
-        <div className="relative mx-auto max-w-3xl px-6 text-center">
-          <Reveal>
-            <h1 className="text-3xl font-extrabold sm:text-5xl">
-              Gửi gắm kỷ niệm
-            </h1>
-            <p className="mx-auto mt-4 max-w-xl text-slate-200 sm:text-lg">
-              Bạn muốn chia sẻ điều gì về những tháng năm thanh xuân dưới mái trường Nguyễn Công Trứ?
-            </p>
-          </Reveal>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-3xl px-4 py-12 md:px-0">
-        <Reveal>
-          <div className="mb-10 flex justify-center">
-            <div className="inline-flex rounded-full bg-slate-200/50 p-1 backdrop-blur-md">
-              <button
-                onClick={() => setTab("media")}
-                className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-extrabold transition-all ${
-                  tab === "media"
-                    ? "bg-white text-[#1d4ed8] shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                <span className="material-symbols-rounded text-[1.2em]">photo_library</span>
-                Khoảnh khắc
-              </button>
-              <button
-                onClick={() => setTab("story")}
-                className={`flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-extrabold transition-all ${
-                  tab === "story"
-                    ? "bg-white text-[#1d4ed8] shadow-sm"
-                    : "text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                <span className="material-symbols-rounded text-[1.2em]">article</span>
-                Câu chuyện
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            {tab === "media" ? (
-              <MediaUploader />
-            ) : (
-              <StoryForm />
-            )}
-          </div>
-        </Reveal>
-      </section>
-    </main>
-  );
-}
+export const metadata: Metadata = {
+  title: "Gửi gắm kỷ niệm & Khoảnh khắc · 40 Năm THPT Nguyễn Công Trứ",
+  description:
+    "Chia sẻ bài viết, câu chuyện và những bức ảnh kỷ niệm thanh xuân của bạn dưới mái trường THPT Nguyễn Công Trứ nhân dịp Kỷ niệm 40 năm thành lập (1986 - 2026).",
+  alternates: {
+    canonical: `${SITE_URL}/gui-bai`,
+  },
+  openGraph: {
+    title: "Gửi gắm kỷ niệm & Khoảnh khắc · 40 Năm THPT Nguyễn Công Trứ",
+    description:
+      "Chia sẻ bài viết, câu chuyện và những bức ảnh kỷ niệm thanh xuân dưới mái trường THPT Nguyễn Công Trứ nhân dịp Kỷ niệm 40 năm.",
+    url: `${SITE_URL}/gui-bai`,
+    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    images: [
+      {
+        url: "/images/og-share.png",
+        width: 1200,
+        height: 630,
+        alt: "Gửi gắm kỷ niệm 40 năm THPT Nguyễn Công Trứ",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Gửi gắm kỷ niệm & Khoảnh khắc · 40 Năm THPT Nguyễn Công Trứ",
+    description:
+      "Chia sẻ bài viết và ảnh kỷ niệm nhân dịp 40 năm thành lập trường THPT Nguyễn Công Trứ.",
+    images: ["/images/og-share.png"],
+  },
+};
 
 export default function GuiBaiPage() {
   return (
-    <Suspense fallback={null}>
-      <GuiBaiContent />
-    </Suspense>
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Trang chủ", url: "/" },
+          { name: "Gửi kỷ niệm", url: "/gui-bai" },
+        ]}
+      />
+      <Suspense fallback={<div className="min-h-screen bg-[#f8fafc]" />}>
+        <GuiBaiClient />
+      </Suspense>
+    </>
   );
 }

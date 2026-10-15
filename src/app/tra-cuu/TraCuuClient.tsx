@@ -111,9 +111,9 @@ export default function TraCuuClient() {
             className="rounded-[2rem] border border-slate-200/60 bg-white p-6 sm:p-8 shadow-sm"
           >
           <div className="text-center sm:text-left">
-            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
               Tra cứu thư mời 08/11/2026
-            </h2>
+            </h1>
             <p className="mt-2 text-sm leading-relaxed text-slate-500">
               Nhập đúng họ tên và số điện thoại đã đăng ký để xem kết quả giao
               dịch và tải thư mời điện tử.

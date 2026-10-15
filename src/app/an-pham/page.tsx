@@ -1,15 +1,49 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
+
+const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
 export const metadata: Metadata = {
-  title: "Ấn phẩm · Lễ kỷ niệm 40 năm THPT Nguyễn Công Trứ",
+  title: "Ấn phẩm Kỷ niệm 40 năm THPT Nguyễn Công Trứ",
   description:
-    "Ấn phẩm kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ — sẽ sớm ra mắt.",
+    "Bộ ấn phẩm đặc biệt kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ (1986 - 2026) — Kỷ yếu, quà tặng lưu niệm và kỷ vật thanh xuân.",
+  alternates: {
+    canonical: `${SITE_URL}/an-pham`,
+  },
+  openGraph: {
+    title: "Ấn phẩm Kỷ niệm 40 năm THPT Nguyễn Công Trứ",
+    description:
+      "Bộ ấn phẩm đặc biệt kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ (1986 - 2026) — Kỷ yếu, quà tặng lưu niệm và kỷ vật thanh xuân.",
+    url: `${SITE_URL}/an-pham`,
+    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    images: [
+      {
+        url: "/images/og-share.png",
+        width: 1200,
+        height: 630,
+        alt: "Ấn phẩm 40 năm THPT Nguyễn Công Trứ",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ấn phẩm Kỷ niệm 40 năm THPT Nguyễn Công Trứ",
+    description:
+      "Bộ ấn phẩm đặc biệt kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ (1986 - 2026).",
+    images: ["/images/og-share.png"],
+  },
 };
 
 export default function AnPhamPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Trang chủ", url: "/" },
+          { name: "Ấn phẩm", url: "/an-pham" },
+        ]}
+      />
       {/* Decorative blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
         <div
@@ -24,7 +58,7 @@ export default function AnPhamPage() {
 
       <div className="text-center">
         <h1 className="text-5xl md:text-7xl font-extrabold text-gray-900 tracking-tight">
-          Ấn phẩm
+          Ấn phẩm 40 Năm
         </h1>
         <p className="mt-4 text-2xl md:text-3xl font-semibold text-[#1d4ed8]">
           Coming soon

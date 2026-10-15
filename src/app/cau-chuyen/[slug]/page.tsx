@@ -14,22 +14,56 @@ import PostCard, { PostBadges } from "@/components/PostCard";
 import Reveal from "@/components/Reveal";
 import { getCategory } from "@/lib/categories";
 import { NewsRail, NewsShare } from "@/components/NewsRail";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
+
+const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPostBySlug(slug);
-  if (!post) return { title: "Không tìm thấy bài viết · THPT Nguyễn Công Trứ" };
+  if (!post) return { title: "Không tìm thấy bài viết" };
+
+  const rawCover = post.cover || extractFirstImage(post.content) || "/images/og-share.png";
+  const coverUrl = rawCover.startsWith("http")
+    ? rawCover
+    : `${SITE_URL}${rawCover.startsWith("/") ? "" : "/"}${rawCover}`;
+
+  const title = `${post.title} | Câu chuyện 40 năm THPT Nguyễn Công Trứ`;
+  const description =
+    post.excerpt ||
+    `Bài viết "${post.title}" của tác giả ${post.author} nhân dịp Kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ.`;
+
   return {
-    title: `${post.title} · 40 năm THPT Nguyễn Công Trứ`,
-    description: post.excerpt,
+    title,
+    description,
+    alternates: {
+      canonical: `${SITE_URL}/cau-chuyen/${post.slug}`,
+    },
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
       type: "article",
+      title: post.title,
+      description,
+      url: `${SITE_URL}/cau-chuyen/${post.slug}`,
+      siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+      publishedTime: post.createdAt,
+      modifiedTime: post.updatedAt || post.createdAt,
+      authors: [post.author],
+      images: [
+        {
+          url: coverUrl,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description,
+      images: [coverUrl],
     },
   };
 }
@@ -46,8 +80,28 @@ export default async function PostDetailPage({ params }: Props) {
   ).slice(0, 3);
   const readingMinutes = Math.max(1, Math.round(post.content.length / 900));
 
+  const coverImg = post.cover || extractFirstImage(post.content);
+
   return (
     <main className="min-h-screen bg-white">
+      <ArticleJsonLd
+        title={post.title}
+        description={post.excerpt}
+        image={coverImg}
+        datePublished={post.createdAt}
+        dateModified={post.updatedAt}
+        authorName={post.author}
+        slug={post.slug}
+        basePath="cau-chuyen"
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Trang chủ", url: "/" },
+          { name: "Câu chuyện", url: "/cau-chuyen" },
+          ...(category ? [{ name: category.name, url: `/cau-chuyen/danh-muc/${category.slug}` }] : []),
+          { name: post.title, url: `/cau-chuyen/${post.slug}` },
+        ]}
+      />
       <div className="mx-auto flex max-w-[860px] gap-10 px-6 pb-12 pt-32">
         <aside className="hidden shrink-0 lg:block">
           <NewsRail />

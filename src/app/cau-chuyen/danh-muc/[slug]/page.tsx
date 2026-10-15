@@ -5,17 +5,46 @@ import PostCard from "@/components/PostCard";
 import Reveal from "@/components/Reveal";
 import { listPublished } from "@/lib/posts";
 import { listCategories, getCategoryBySlug } from "@/lib/categories";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
+
+const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: "Không tìm thấy danh mục" };
 
+  const title = `${category.name} | Câu chuyện 40 năm THPT Nguyễn Công Trứ`;
+  const description =
+    category.description ||
+    `Tổng hợp bài viết và ký ức thuộc chủ đề ${category.name} - Kỷ niệm 40 năm Trường THPT Nguyễn Công Trứ.`;
+
   return {
-    title: `${category.name} · Câu chuyện 40 năm THPT Nguyễn Công Trứ`,
-    description: category.description || `Danh sách bài viết thuộc danh mục ${category.name}`,
+    title,
+    description,
+    alternates: {
+      canonical: `${SITE_URL}/cau-chuyen/danh-muc/${category.slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${SITE_URL}/cau-chuyen/danh-muc/${category.slug}`,
+      siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+      images: [
+        {
+          url: "/images/og-share.png",
+          alt: category.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/images/og-share.png"],
+    },
   };
 }
 
@@ -38,6 +67,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="min-h-screen bg-[#f8fafc]">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Trang chủ", url: "/" },
+          { name: "Câu chuyện", url: "/cau-chuyen" },
+          { name: category.name, url: `/cau-chuyen/danh-muc/${category.slug}` },
+        ]}
+      />
       {/* ══════════ PAGE HEADER ══════════ */}
       <section className="relative overflow-hidden pb-16 pt-32 text-white">
         <div

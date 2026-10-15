@@ -24,14 +24,14 @@ export default function SiteFooter() {
             >
               <Image
                 src="/images/NCT.webp"
-                alt="Logo NCT"
+                alt="Huy hiệu Trường THPT Nguyễn Công Trứ"
                 width={56}
                 height={56}
                 className="h-14 w-auto object-contain"
               />
               <Image
                 src="/images/Logo_40th_NCT.webp"
-                alt="Logo 40 năm NCT"
+                alt="Biểu trưng Lễ Kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026)"
                 width={56}
                 height={56}
                 className="h-14 w-auto object-contain"
@@ -124,7 +124,7 @@ export default function SiteFooter() {
             <div className="mt-4 mb-3 flex items-center gap-3">
               <Image
                 src="/images/Logo_CLB_Tin_Hoc.webp"
-                alt="Logo CLB Tin học"
+                alt="CLB Tin học THPT Nguyễn Công Trứ - NCT ITC"
                 width={72}
                 height={72}
                 className="h-[60px] w-auto object-contain opacity-90 grayscale hover:grayscale-0 transition-all duration-300"

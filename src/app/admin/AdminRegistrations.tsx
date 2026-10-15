@@ -200,6 +200,10 @@ export default function AdminRegistrations({
     setRejectReason("Đã hết thời gian đăng kí và thực hiện giao dịch đợt 1. Quý khách vui lòng thực hiện đăng kí mới ở đợt sau.");
   }
 
+  function applyPreset3() {
+    setRejectReason("Hệ thống tự động lọc ảo. Vui lòng thử đăng kí lại!");
+  }
+
   function handleInviIdChange(newVal: string) {
     const val = newVal.trim().toUpperCase();
     setInviIdInput(val);
@@ -2153,6 +2157,13 @@ export default function AdminRegistrations({
                   className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-amber-50 hover:text-amber-800 text-slate-700 transition-colors border border-slate-200/60"
                 >
                   Mẫu 2: Hết hạn đợt 1
+                </button>
+                <button
+                  type="button"
+                  onClick={applyPreset3}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-700 transition-colors border border-slate-200/60"
+                >
+                  Mẫu 3: Hệ thống tự động lọc ảo
                 </button>
               </div>
             </div>

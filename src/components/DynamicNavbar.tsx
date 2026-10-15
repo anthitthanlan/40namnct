@@ -142,7 +142,7 @@ export default function DynamicNavbar() {
           >
             <Image
               src="/images/NCT.webp"
-              alt="Logo NCT"
+              alt="Huy hiệu Trường THPT Nguyễn Công Trứ"
               width={34}
               height={34}
               priority
@@ -150,7 +150,7 @@ export default function DynamicNavbar() {
             />
             <Image
               src="/images/Logo_40th_NCT.webp"
-              alt="Logo 40 năm NCT"
+              alt="Biểu trưng Kỷ niệm 40 năm THPT Nguyễn Công Trứ"
               width={34}
               height={34}
               priority

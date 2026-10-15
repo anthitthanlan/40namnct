@@ -149,6 +149,12 @@ export async function POST(req: NextRequest) {
             { status: 409 },
           );
         }
+        if (memberRes.status < 500) {
+          return NextResponse.json(
+            { ok: false, message: errData?.detail || "Không thể tạo thông tin thành viên trên server." },
+            { status: memberRes.status },
+          );
+        }
         throw new Error(errData?.detail || "Không thể tạo thông tin thành viên trên server.");
       }
 
@@ -176,6 +182,13 @@ export async function POST(req: NextRequest) {
 
     if (!invRes.ok) {
       const errData = (await invRes.json().catch(() => ({}))) as { detail?: string };
+      // Nếu backend từ chối có chủ đích (ví dụ: hết suất đăng ký 400), trả về ngay thông báo rõ ràng cho client
+      if (invRes.status < 500) {
+        return NextResponse.json(
+          { ok: false, message: errData?.detail || "Không thể tạo thư mời trên server." },
+          { status: invRes.status },
+        );
+      }
       throw new Error(errData?.detail || "Không thể tạo thư mời trên server.");
     }
 
@@ -215,20 +228,32 @@ export async function POST(req: NextRequest) {
       fallbackMemberId = memberResult.member.id;
     }
 
-    const { createInvitation } = await import("@/lib/members");
-    const invitation = await createInvitation(fallbackMemberId, {
-      type,
-      nienKhoa,
-      attendeeName: name,
-      size,
-      quantity,
-      sizes,
-      snacks: comboCount,
-      note: finalNote,
-    });
+    try {
+      const { createInvitation } = await import("@/lib/members");
+      const invitation = await createInvitation(fallbackMemberId, {
+        type,
+        nienKhoa,
+        attendeeName: name,
+        size,
+        quantity,
+        sizes,
+        snacks: comboCount,
+        note: finalNote,
+      });
 
-    invitationId = invitation.id;
-    invitationCode = invitation.code;
+      invitationId = invitation.id;
+      invitationCode = invitation.code;
+    } catch (fallbackInvErr: any) {
+      console.error("[FALLBACK_INVITATION_FAILED]:", fallbackInvErr);
+      return NextResponse.json(
+        {
+          ok: false,
+          message: fallbackInvErr?.message || "Hệ thống đang quá tải hoặc đã hết suất đăng ký. Vui lòng thử lại sau.",
+          isFallback,
+        },
+        { status: 500 },
+      );
+    }
   }
 
   return NextResponse.json(

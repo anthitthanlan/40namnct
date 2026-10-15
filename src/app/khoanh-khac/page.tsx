@@ -2,13 +2,41 @@ import type { Metadata } from "next";
 import TimelineWall, { type WallMemory } from "@/components/TimelineWall";
 import { listApprovedMediaChronological, mediaFileUrl } from "@/lib/media";
 import { listPublished } from "@/lib/posts";
+import { BreadcrumbJsonLd } from "@/components/JsonLd";
 
 export const dynamic = "force-dynamic";
 
+const SITE_URL = "https://40namnctru.nctitc.io.vn";
+
 export const metadata: Metadata = {
-  title: "Khoảnh Khắc · Kỷ niệm 40 năm THPT Nguyễn Công Trứ",
+  title: "Khoảnh Khắc 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
   description:
-    "Góc lưu giữ những khoảnh khắc, kỷ niệm của các thế hệ Thầy trò Nguyễn Công Trứ theo dòng thời gian 40 năm.",
+    "Góc lưu giữ những khoảnh khắc, bức ảnh kỷ niệm thanh xuân của các thế hệ Thầy và Trò trường THPT Nguyễn Công Trứ theo dòng thời gian 40 năm.",
+  alternates: {
+    canonical: `${SITE_URL}/khoanh-khac`,
+  },
+  openGraph: {
+    title: "Khoảnh Khắc 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    description:
+      "Góc lưu giữ những khoảnh khắc, bức ảnh kỷ niệm thanh xuân của các thế hệ Thầy và Trò trường THPT Nguyễn Công Trứ theo dòng thời gian 40 năm.",
+    url: `${SITE_URL}/khoanh-khac`,
+    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    images: [
+      {
+        url: "/images/og-share.png",
+        width: 1200,
+        height: 630,
+        alt: "Khoảnh khắc 40 năm THPT Nguyễn Công Trứ",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Khoảnh Khắc 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    description:
+      "Góc lưu giữ những khoảnh khắc thanh xuân của các thế hệ Thầy và Trò Nguyễn Công Trứ.",
+    images: ["/images/og-share.png"],
+  },
 };
 
 async function readMemories(): Promise<WallMemory[]> {
@@ -50,6 +78,15 @@ export default async function KhoangKhacPage() {
 
   return (
     <main className="min-h-screen bg-[#f8fafc]">
+      <h1 className="sr-only">
+        Khoảnh Khắc &amp; Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)
+      </h1>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Trang chủ", url: "/" },
+          { name: "Khoảnh khắc", url: "/khoanh-khac" },
+        ]}
+      />
       <TimelineWall memories={memories} posts={posts} />
     </main>
   );

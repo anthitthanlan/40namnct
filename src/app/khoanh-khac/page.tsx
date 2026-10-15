@@ -9,18 +9,18 @@ export const dynamic = "force-dynamic";
 const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
 export const metadata: Metadata = {
-  title: "Khoảnh Khắc 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+  title: "Khoảnh Khắc Kỷ Niệm 40 Năm",
   description:
     "Góc lưu giữ những khoảnh khắc, bức ảnh kỷ niệm thanh xuân của các thế hệ Thầy và Trò trường THPT Nguyễn Công Trứ theo dòng thời gian 40 năm.",
   alternates: {
     canonical: `${SITE_URL}/khoanh-khac`,
   },
   openGraph: {
-    title: "Khoảnh Khắc 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    title: "Khoảnh Khắc Kỷ Niệm 40 Năm",
     description:
       "Góc lưu giữ những khoảnh khắc, bức ảnh kỷ niệm thanh xuân của các thế hệ Thầy và Trò trường THPT Nguyễn Công Trứ theo dòng thời gian 40 năm.",
     url: `${SITE_URL}/khoanh-khac`,
-    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    siteName: "40 Năm THPT Nguyễn Công Trứ",
     images: [
       {
         url: "/images/og-share.png",

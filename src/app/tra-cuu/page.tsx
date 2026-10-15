@@ -6,18 +6,18 @@ import { BreadcrumbJsonLd } from "@/components/JsonLd";
 const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
 export const metadata: Metadata = {
-  title: "Tra cứu thư mời điện tử · 40 Năm THPT Nguyễn Công Trứ",
+  title: "Tra Cứu Thư Mời Điện Tử",
   description:
-    "Tra cứu trạng thái đăng ký, kết quả xác nhận đóng góp và tải thư mời điện tử tham dự Ngày Trở Về 08/11/2026 - Kỷ niệm 40 năm THPT Nguyễn Công Trứ.",
+    "Tra cứu trạng thái đăng ký và tải thư mời điện tử tham dự Ngày Trở Về 08/11/2026 trường THPT Nguyễn Công Trứ.",
   alternates: {
     canonical: `${SITE_URL}/tra-cuu`,
   },
   openGraph: {
-    title: "Tra cứu thư mời điện tử · 40 Năm THPT Nguyễn Công Trứ",
+    title: "Tra Cứu Thư Mời Điện Tử",
     description:
       "Tra cứu trạng thái đăng ký và tải thư mời điện tử tham dự Ngày Trở Về 08/11/2026 trường THPT Nguyễn Công Trứ.",
     url: `${SITE_URL}/tra-cuu`,
-    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    siteName: "40 Năm THPT Nguyễn Công Trứ",
     images: [
       {
         url: "/images/og-share.png",

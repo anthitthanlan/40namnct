@@ -18,11 +18,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026) | Chuỗi Chương Trình Kỷ Niệm",
+    default: "Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
     template: "%s | 40 Năm THPT Nguyễn Công Trứ",
   },
   description:
-    "Trang thông tin chính thức Chuỗi chương trình Kỷ niệm 40 năm Thành lập Trường THPT Nguyễn Công Trứ (1986 - 2026). Nơi hội tụ các thế hệ Thầy và Trò, lưu giữ ký ức, câu chuyện và lan tỏa tinh thần 'Làm cây thông đứng giữa trời mà reo'.",
+    "Trang chính thức Kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026). Nơi hội tụ Thầy và Trò, lưu giữ ký ức và lan tỏa tinh thần 'Thắp Chí Vươn Xa'.",
   keywords: [
     "THPT Nguyễn Công Trứ",
     "40 năm Nguyễn Công Trứ",
@@ -66,10 +66,10 @@ export const metadata: Metadata = {
     type: "website",
     locale: "vi_VN",
     url: SITE_URL,
-    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
-    title: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026) | Chuỗi Chương Trình Kỷ Niệm",
+    siteName: "40 Năm THPT Nguyễn Công Trứ",
+    title: "Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
     description:
-      "Trang thông tin chính thức Chuỗi chương trình Kỷ niệm 40 năm Thành lập Trường THPT Nguyễn Công Trứ (1986 - 2026). Ngày Trở Về: 08/11/2026 · Đại Lễ Kỷ Niệm: 15/11/2026.",
+      "Chuỗi chương trình Kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026). Ngày Trở Về: 08/11/2026 · Đại Lễ Kỷ Niệm: 15/11/2026.",
     images: [
       {
         url: "/images/og-share.png",
@@ -81,9 +81,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    title: "Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
     description:
-      "Chuỗi chương trình Kỷ niệm 40 năm Thành lập Trường THPT Nguyễn Công Trứ. Ngày Trở Về: 08/11/2026 · Đại Lễ Kỷ Niệm: 15/11/2026.",
+      "Chuỗi chương trình Kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026). Ngày Trở Về: 08/11/2026 · Đại Lễ Kỷ Niệm: 15/11/2026.",
     images: ["/images/og-share.png"],
   },
   robots: {

@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const category = await getCategoryBySlug(slug);
   if (!category) return { title: "Không tìm thấy danh mục" };
 
-  const title = `${category.name} | Câu chuyện 40 năm THPT Nguyễn Công Trứ`;
+  const title = `Chủ đề: ${category.name}`;
   const description =
     category.description ||
     `Tổng hợp bài viết và ký ức thuộc chủ đề ${category.name} - Kỷ niệm 40 năm Trường THPT Nguyễn Công Trứ.`;

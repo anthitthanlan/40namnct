@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? rawCover
     : `${SITE_URL}${rawCover.startsWith("/") ? "" : "/"}${rawCover}`;
 
-  const title = `${post.title} | Câu chuyện 40 năm THPT Nguyễn Công Trứ`;
+  const title = post.title;
   const description =
     post.excerpt ||
     `Bài viết "${post.title}" của tác giả ${post.author} nhân dịp Kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ.`;

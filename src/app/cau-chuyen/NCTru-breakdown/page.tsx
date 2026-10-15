@@ -5,18 +5,18 @@ import { BreadcrumbJsonLd } from "@/components/JsonLd";
 const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
 export const metadata: Metadata = {
-  title: "NCT Logo Breakdown · Nghệ thuật phân rã biểu trưng 40 năm Nguyễn Công Trứ",
+  title: "Logo Breakdown 40 Năm",
   description:
     "Trải nghiệm phân rã biểu trưng kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026) – hiệu ứng Motion Graphics tương tác theo thao tác cuộn.",
   alternates: {
     canonical: `${SITE_URL}/cau-chuyen/NCTru-breakdown`,
   },
   openGraph: {
-    title: "NCT Logo Breakdown · Nghệ thuật phân rã biểu trưng 40 năm Nguyễn Công Trứ",
+    title: "Logo Breakdown 40 Năm",
     description:
       "Trải nghiệm phân rã biểu trưng kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026) – hiệu ứng Motion Graphics tương tác theo thao tác cuộn.",
     url: `${SITE_URL}/cau-chuyen/NCTru-breakdown`,
-    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    siteName: "40 Năm THPT Nguyễn Công Trứ",
     images: [
       {
         url: "/images/og-share.png",

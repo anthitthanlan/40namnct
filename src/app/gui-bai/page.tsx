@@ -6,18 +6,18 @@ import { BreadcrumbJsonLd } from "@/components/JsonLd";
 const SITE_URL = "https://40namnctru.nctitc.io.vn";
 
 export const metadata: Metadata = {
-  title: "Gửi gắm kỷ niệm & Khoảnh khắc · 40 Năm THPT Nguyễn Công Trứ",
+  title: "Gửi Gắm Kỷ Niệm & Khoảnh Khắc",
   description:
-    "Chia sẻ bài viết, câu chuyện và những bức ảnh kỷ niệm thanh xuân của bạn dưới mái trường THPT Nguyễn Công Trứ nhân dịp Kỷ niệm 40 năm thành lập (1986 - 2026).",
+    "Chia sẻ bài viết, câu chuyện và những bức ảnh kỷ niệm thanh xuân dưới mái trường THPT Nguyễn Công Trứ nhân dịp Kỷ niệm 40 năm thành lập.",
   alternates: {
     canonical: `${SITE_URL}/gui-bai`,
   },
   openGraph: {
-    title: "Gửi gắm kỷ niệm & Khoảnh khắc · 40 Năm THPT Nguyễn Công Trứ",
+    title: "Gửi Gắm Kỷ Niệm & Khoảnh Khắc",
     description:
-      "Chia sẻ bài viết, câu chuyện và những bức ảnh kỷ niệm thanh xuân dưới mái trường THPT Nguyễn Công Trứ nhân dịp Kỷ niệm 40 năm.",
+      "Chia sẻ bài viết, câu chuyện và những bức ảnh kỷ niệm thanh xuân dưới mái trường THPT Nguyễn Công Trứ nhân dịp Kỷ niệm 40 năm thành lập.",
     url: `${SITE_URL}/gui-bai`,
-    siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+    siteName: "40 Năm THPT Nguyễn Công Trứ",
     images: [
       {
         url: "/images/og-share.png",

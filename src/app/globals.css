@@ -106,8 +106,30 @@ h6,
   }
 }
 
+/* Hiệu ứng hiển thị nhẹ nhàng cho tiêu đề Hero (không gây ẩn trong SSR) */
+@keyframes heroFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-fade {
+  animation: heroFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* Feathered mask on mobile to eliminate any hard cuts at top & bottom without over-blurring */
 @media (max-width: 767px) {
+  /* Tắt zoom quá đà trên mobile khi bot chụp hoặc vừa mở web */
+  .hero-slide.active img {
+    animation: none;
+    transform: none;
+  }
+
   .hero-slide-mobile-feather {
     -webkit-mask-image: linear-gradient(
       to bottom,

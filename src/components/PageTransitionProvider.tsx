@@ -58,7 +58,7 @@ export default function PageTransitionProvider({ children }: { children: React.R
         {/* Lớp che lúc MỞ TRANG MỚI (Trượt lên trên & mất đi) */}
         <motion.div
           className="fixed inset-0 z-40 bg-white flex flex-col items-center justify-center pointer-events-none"
-          initial={{ y: 0 }}
+          initial={isInitialRender.current ? false : { y: 0 }}
           animate={{ y: "-100%" }}
           exit={{ opacity: 0, transition: { duration: 0 } }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.5 }} // Chờ 0.5s cho logo mờ đi rồi mới trượt màn trắng

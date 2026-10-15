@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useRef, useCallback } from "react";
-import Reveal from "@/components/Reveal";
 
 type Slide = { src: string; alt: string };
 
@@ -230,23 +229,23 @@ export default function HeroSlideshow() {
 
       {/* Nội dung */}
       <div className="relative z-10 flex h-full flex-col items-center justify-end pb-[15vh] px-6 text-center text-white md:items-start md:justify-center md:pb-0 md:text-left md:max-w-[55%] md:pl-16 xl:pl-24 pointer-events-none">
-        <Reveal className="mb-6">
+        <div className="mb-6 animate-hero-fade" style={{ animationDelay: "100ms" }}>
           <div className="floaty btn-lightship-soft inline-block max-w-full rounded-full bg-white px-5 py-2 font-bold tracking-wide text-[#1d4ed8] text-center whitespace-nowrap text-[clamp(0.6rem,3.5vw,0.875rem)] pointer-events-auto">
             1986 - 2026 · 40 NĂM TRỒNG NGƯỜI
           </div>
-        </Reveal>
-        <Reveal delay={100}>
+        </div>
+        <div className="animate-hero-fade" style={{ animationDelay: "200ms" }}>
           <h1 className="flex flex-col items-center lg:items-start gap-1 font-extrabold leading-tight drop-shadow-lg">
             <span className="whitespace-nowrap text-[clamp(1.25rem,5.5vw,2.75rem)]">40 Năm Trường THPT</span>
             <span className="whitespace-nowrap text-[clamp(1.6rem,8vw,3.75rem)]">Nguyễn Công Trứ</span>
           </h1>
-        </Reveal>
-        <Reveal delay={200}>
+        </div>
+        <div className="animate-hero-fade" style={{ animationDelay: "300ms" }}>
           <p className="mt-5 max-w-xl text-base text-slate-100 sm:text-lg drop-shadow">
             Hành trình 40 năm kiên trì sự nghiệp &ldquo;trồng người&rdquo; - nơi
             ươm mầm những thế hệ học trò hiếu học, nhân ái, giàu ý chí.
           </p>
-        </Reveal>
+        </div>
       </div>
 
       {/* Desktop Prev / Next Buttons */}

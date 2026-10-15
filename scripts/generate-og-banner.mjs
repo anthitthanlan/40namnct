@@ -9,10 +9,11 @@ async function generatePerfectOgBannerWithEdge() {
   const footerHeight = 85;
   const photoHeight = height - footerHeight; // 545px
 
-  // 1. Trích xuất CSS styles (chứa nhúng base64 của Unbounded 400/700/800/900 và Google Sans Flex) từ poster-dot2-local.html
+  // 1. Trích xuất CHỈ các định nghĩa @font-face (Unbounded 400/700/800/900 và Google Sans Flex) từ poster-dot2-local.html
+  // Tránh triệt để việc import nhầm các class CSS như .header-text { text-align: right; } từ poster
   const posterHtml = fs.readFileSync("../poster-dot2-local.html", "utf8");
-  const styleMatch = posterHtml.match(/<style>([\s\S]*?)<\/style>/);
-  const embeddedFontsCss = styleMatch ? styleMatch[1] : "";
+  const fontFaceMatches = posterHtml.match(/@font-face\s*\{[\s\S]*?\}/g) || [];
+  const embeddedFontsCss = fontFaceMatches.join("\n");
 
   // Đọc font Montserrat ExtraBold và Bold để nhúng vào trang phục vụ hiển thị chữ số ngày tháng
   const montserratExtraBoldB64 = fs.readFileSync("public/fonts/Montserrat-ExtraBold.otf").toString("base64");
@@ -121,13 +122,13 @@ async function generatePerfectOgBannerWithEdge() {
       left: 0;
       width: 720px;
       height: ${photoHeight}px;
-      padding: 32px 0 32px 55px;
+      padding: 32px 0 0 55px;
       z-index: 10;
       display: flex;
       flex-direction: column;
     }
 
-    /* Header cặp logo và tên trường (Khối text giữ hoàn toàn Google Sans Flex) */
+    /* Header cặp logo và tên trường (Khối text căn trái chuẩn xác, không bị đẩy thụt lề) */
     .header-row {
       display: flex;
       align-items: center;
@@ -153,10 +154,12 @@ async function generatePerfectOgBannerWithEdge() {
       object-fit: contain;
     }
 
-    .header-text {
+    .banner-header-text {
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: flex-start;
+      text-align: left;
       gap: 4px;
       margin-left: 2px;
     }
@@ -166,8 +169,9 @@ async function generatePerfectOgBannerWithEdge() {
       font-weight: 700;
       font-size: 16.5px;
       color: #0f172a;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
       line-height: 1.2;
+      text-align: left;
       white-space: nowrap;
     }
 
@@ -176,8 +180,9 @@ async function generatePerfectOgBannerWithEdge() {
       font-weight: 700;
       font-size: 13.5px;
       color: #16a34a;
-      letter-spacing: 0.7px;
+      letter-spacing: 0.5px;
       line-height: 1.2;
+      text-align: left;
       white-space: nowrap;
     }
 
@@ -188,23 +193,33 @@ async function generatePerfectOgBannerWithEdge() {
       margin-top: 18px;
     }
 
-    /* Khối tiêu đề chính: 3 dòng cân đối theo chỉ đạo */
-    .title-block {
-      margin-top: 30px;
+    /* Khu vực thân nội dung: CĂN GIỮA CHÍNH XÁC THEO CHIỀU DỌC trong khung phân cách (giữa header divider và footer divider) */
+    .center-content-frame {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      justify-content: center;
+      padding-bottom: 6px;
     }
 
+    /* Khối tiêu đề chính: 3 dòng cân đối */
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* CHUỖI CHƯƠNG TRÌNH: tăng weight chắc khỏe, giảm khoảng cách ký tự để không bị còi cọc và đứng xa nhau */
     .title-kicker {
       font-family: 'Google Sans Flex', sans-serif;
-      font-weight: 700;
-      font-size: 15.5px;
+      font-weight: 800;
+      font-size: 16.5px;
       color: #1d4ed8;
-      letter-spacing: 2.2px;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
       line-height: 1.25;
       margin-bottom: 2px;
+      -webkit-text-stroke: 0.35px #1d4ed8;
     }
 
     .title-main-black {
@@ -227,12 +242,12 @@ async function generatePerfectOgBannerWithEdge() {
       white-space: nowrap;
     }
 
-    /* Hai mốc sự kiện: Dịch xuống lấp đầy khoảng trống, tạo nhịp điệu cân bằng tuyệt đối */
+    /* Hai mốc sự kiện */
     .events-stack {
-      margin-top: 48px;
+      margin-top: 40px;
       display: flex;
       flex-direction: column;
-      gap: 36px;
+      gap: 32px;
     }
 
     .event-row {
@@ -360,12 +375,12 @@ async function generatePerfectOgBannerWithEdge() {
 
   <!-- Main Content Area -->
   <div class="content-area">
-    <!-- Header Row (Google Sans Flex) -->
+    <!-- Header Row (Google Sans Flex - Left Aligned) -->
     <div class="header-row">
       <img class="school-logo" src="data:image/webp;base64,${schoolLogoB64}" alt="Logo Trường">
       <div class="divider-v"></div>
       <img class="logo-40th" src="data:image/webp;base64,${logo40thB64}" alt="Logo 40 Năm">
-      <div class="header-text">
+      <div class="banner-header-text">
         <span class="header-school-name">TRƯỜNG THPT NGUYỄN CÔNG TRỨ</span>
         <span class="header-anniversary">KỶ NIỆM 40 NĂM THÀNH LẬP (1986 - 2026)</span>
       </div>
@@ -373,43 +388,46 @@ async function generatePerfectOgBannerWithEdge() {
 
     <div class="divider-h"></div>
 
-    <!-- Title Block (3 dòng: Chuỗi chương trình [Google Sans Bold], Kỷ niệm 40 năm thành lập [Unbounded], THPT Nguyễn Công Trứ [Unbounded]) -->
-    <div class="title-block">
-      <div class="title-kicker">CHUỖI CHƯƠNG TRÌNH</div>
-      <div class="title-main-black">KỶ NIỆM 40 NĂM THÀNH LẬP</div>
-      <div class="title-main-blue">THPT NGUYỄN CÔNG TRỨ</div>
-    </div>
-
-    <!-- Events Stack (Khoảng cách chia đều, Tên sự kiện Unbounded nổi bật, Số ngày tháng Montserrat) -->
-    <div class="events-stack">
-      <!-- Event 1: Ngày Trở Về -->
-      <div class="event-row">
-        <div class="icon-box-blue">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="4" width="20" height="18" rx="4" stroke="#1d4ed8" stroke-width="2"/>
-            <line x1="2" y1="9" x2="22" y2="9" stroke="#1d4ed8" stroke-width="1.8"/>
-            <line x1="7" y1="1" x2="7" y2="6" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
-            <line x1="17" y1="1" x2="17" y2="6" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="12" cy="15" r="2.2" fill="#1d4ed8"/>
-          </svg>
-        </div>
-        <div class="event-text">
-          <span class="event-label">NGÀY TRỞ VỀ · CỰU HỌC SINH</span>
-          <span class="event-date-blue">08 / 11 / 2026</span>
-        </div>
+    <!-- Center Content Frame (Được căn giữa hoàn toàn theo chiều dọc trong khung xanh) -->
+    <div class="center-content-frame">
+      <!-- Title Block (3 dòng: Chuỗi chương trình [Google Sans Bold đậm đà], Kỷ niệm 40 năm thành lập [Unbounded], THPT Nguyễn Công Trứ [Unbounded]) -->
+      <div class="title-block">
+        <div class="title-kicker">CHUỖI CHƯƠNG TRÌNH</div>
+        <div class="title-main-black">KỶ NIỆM 40 NĂM THÀNH LẬP</div>
+        <div class="title-main-blue">THPT NGUYỄN CÔNG TRỨ</div>
       </div>
 
-      <!-- Event 2: Đại Lễ Kỷ Niệm 40 Năm -->
-      <div class="event-row">
-        <div class="icon-box-green">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="3" width="20" height="19" rx="4" stroke="#16a34a" stroke-width="2"/>
-            <path d="M12 6.5L13.7 10.2L17.7 10.6L14.7 13.4L15.5 17.3L12 15.3L8.5 17.3L9.3 13.4L6.3 10.6L10.3 10.2Z" fill="#16a34a"/>
-          </svg>
+      <!-- Events Stack (Tên sự kiện Unbounded nổi bật, Số ngày tháng Montserrat) -->
+      <div class="events-stack">
+        <!-- Event 1: Ngày Trở Về -->
+        <div class="event-row">
+          <div class="icon-box-blue">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="4" width="20" height="18" rx="4" stroke="#1d4ed8" stroke-width="2"/>
+              <line x1="2" y1="9" x2="22" y2="9" stroke="#1d4ed8" stroke-width="1.8"/>
+              <line x1="7" y1="1" x2="7" y2="6" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+              <line x1="17" y1="1" x2="17" y2="6" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="15" r="2.2" fill="#1d4ed8"/>
+            </svg>
+          </div>
+          <div class="event-text">
+            <span class="event-label">NGÀY TRỞ VỀ · CỰU HỌC SINH</span>
+            <span class="event-date-blue">08 / 11 / 2026</span>
+          </div>
         </div>
-        <div class="event-text">
-          <span class="event-label">ĐẠI LỄ KỶ NIỆM 40 NĂM</span>
-          <span class="event-date-green">15 / 11 / 2026</span>
+
+        <!-- Event 2: Đại Lễ Kỷ Niệm 40 Năm -->
+        <div class="event-row">
+          <div class="icon-box-green">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="3" width="20" height="19" rx="4" stroke="#16a34a" stroke-width="2"/>
+              <path d="M12 6.5L13.7 10.2L17.7 10.6L14.7 13.4L15.5 17.3L12 15.3L8.5 17.3L9.3 13.4L6.3 10.6L10.3 10.2Z" fill="#16a34a"/>
+            </svg>
+          </div>
+          <div class="event-text">
+            <span class="event-label">ĐẠI LỄ KỶ NIỆM 40 NĂM</span>
+            <span class="event-date-green">15 / 11 / 2026</span>
+          </div>
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ from app.services.vietqr_service import get_vietqr_url
 router = APIRouter(prefix="/api/invitations", tags=["Invitations"])
 
 UNIT_PRICE = 500000
+MAX_REGISTRATION_LIMIT = 400
 
 def generate_invitation_code(db: Session) -> str:
     # Lấy số lượng ticket hiện tại để làm số thứ tự
@@ -119,14 +120,14 @@ def get_invitation(id_or_code: str, db: Session = Depends(get_db)):
 
 @router.post("", response_model=InvitationResponse)
 def create_invitation(inv_in: InvitationCreate, db: Session = Depends(get_db)):
-    # Check registration limit (350 attendees max - only count confirmed/approved invitations)
+    # Check registration limit (MAX_REGISTRATION_LIMIT attendees max - only count confirmed/approved invitations)
     total_quantity = db.query(func.sum(func.coalesce(Invitation.quantity, 1))).filter(Invitation.status == "confirmed").scalar() or 0
-    remaining = max(0, 350 - total_quantity)
+    remaining = max(0, MAX_REGISTRATION_LIMIT - total_quantity)
 
     if remaining <= 0:
         raise HTTPException(
             status_code=400,
-            detail="Cổng đăng ký đã đạt giới hạn tối đa 350 người tham dự."
+            detail=f"Cổng đăng ký đã đạt giới hạn tối đa {MAX_REGISTRATION_LIMIT} người tham dự."
         )
 
     if inv_in.quantity > remaining:

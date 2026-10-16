@@ -119,10 +119,21 @@ def get_invitation(id_or_code: str, db: Session = Depends(get_db)):
 
 @router.post("", response_model=InvitationResponse)
 def create_invitation(inv_in: InvitationCreate, db: Session = Depends(get_db)):
-    # Check registration limit (350 shirts max)
-    total_quantity = db.query(func.sum(Invitation.quantity)).filter(Invitation.status != "rejected").scalar() or 0
-    if total_quantity + inv_in.quantity > 350:
-        raise HTTPException(status_code=400, detail=f"Đã vượt quá số lượng đăng ký. Chỉ còn trống {350 - total_quantity} suất.")
+    # Check registration limit (350 attendees max - only count confirmed/approved invitations)
+    total_quantity = db.query(func.sum(func.coalesce(Invitation.quantity, 1))).filter(Invitation.status == "confirmed").scalar() or 0
+    remaining = max(0, 350 - total_quantity)
+
+    if remaining <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Cổng đăng ký đã đạt giới hạn tối đa 350 người tham dự."
+        )
+
+    if inv_in.quantity > remaining:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Số lượng đăng ký ({inv_in.quantity} người) vượt quá số chỗ còn lại. Hiện hệ thống chỉ còn trống {remaining} suất."
+        )
 
     code = inv_in.code or generate_invitation_code(db)
     

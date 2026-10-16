@@ -34,8 +34,8 @@ def get_admin_stats(db: Session = Depends(get_db), admin = Depends(get_current_a
     total_members = db.query(Member).count()
     total_posts = db.query(Post).count()
 
-    # Size aggregation
-    invitations = db.query(Invitation).all()
+    # Size aggregation & attendees (chỉ tính thư mời đã duyệt - status == "confirmed")
+    invitations = db.query(Invitation).filter(Invitation.status == "confirmed").all()
     size_counts: Dict[str, int] = {}
     total_attendees = 0
     total_snacks = 0

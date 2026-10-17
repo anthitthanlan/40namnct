@@ -111,6 +111,22 @@ export async function POST(req: NextRequest) {
   const userNote = typeof body.note === "string" ? body.note.trim().slice(0, 500) : "";
   const finalNote = [lop ? `Lớp: ${lop}` : "", userNote ? `Lời nhắn: ${userNote}` : ""].filter(Boolean).join(" | ");
 
+  const attendees: { name: string; isLeader?: boolean; size?: string }[] = [];
+  if (type === "group" && Array.isArray(body.attendees)) {
+    for (const a of body.attendees) {
+      if (typeof a === "object" && a !== null && typeof (a as any).name === "string") {
+        const cleanName = (a as any).name.trim().slice(0, 80);
+        if (cleanName) {
+          attendees.push({
+            name: cleanName,
+            isLeader: Boolean((a as any).isLeader),
+            size: typeof (a as any).size === "string" ? (a as any).size : undefined,
+          });
+        }
+      }
+    }
+  }
+
   const backendUrl =
     process.env.NEXT_PUBLIC_API_URL ||
     process.env.BACKEND_API_URL ||
@@ -177,6 +193,7 @@ export async function POST(req: NextRequest) {
         snacks: comboCount,
         amount: comboCount * 500000,
         note: finalNote,
+        attendees,
       }),
     });
 
@@ -239,6 +256,7 @@ export async function POST(req: NextRequest) {
         sizes,
         snacks: comboCount,
         note: finalNote,
+        attendees,
       });
 
       invitationId = invitation.id;

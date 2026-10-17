@@ -62,6 +62,7 @@ export type Invitation = {
   checkinEntries?: CheckInEntry[];
   shirtReceived?: boolean;
   shirtReceivedAt?: string | null;
+  attendees?: { name: string; isLeader?: boolean; size?: string }[];
   emailSent?: boolean;
   emailSentAt?: string | null;
   createdAt: string;
@@ -77,6 +78,7 @@ export type InvitationInput = {
   sizes: Record<string, number>;
   snacks: number;
   note: string;
+  attendees?: { name: string; isLeader?: boolean; size?: string }[];
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
@@ -204,6 +206,7 @@ export async function createInvitation(
     sizes: input.sizes,
     snacks: input.snacks,
     note: input.note,
+    attendees: input.attendees || [],
   };
   const res = await fetch(`${API_URL}/api/invitations`, {
     method: "POST",

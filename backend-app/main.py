@@ -37,6 +37,8 @@ def ensure_database_schema(engine_obj):
                     conn.execute(text("ALTER TABLE invitations ADD COLUMN email_sent_at VARCHAR(64)"))
                 if "checkin_entries" not in columns:
                     conn.execute(text("ALTER TABLE invitations ADD COLUMN checkin_entries JSON DEFAULT '[]'"))
+                if "attendees" not in columns:
+                    conn.execute(text("ALTER TABLE invitations ADD COLUMN attendees JSON DEFAULT '[]'"))
                 
                 if "action_logs" in tables:
                     conn.execute(text("""

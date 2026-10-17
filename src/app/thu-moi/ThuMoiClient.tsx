@@ -335,6 +335,27 @@ export default function ThuMoiClient() {
                   </div>
                 </div>
 
+                {invitation.type === "group" && Array.isArray(invitation.attendees) && invitation.attendees.length > 0 && (
+                  <div className="pb-4 border-b border-gray-200">
+                    <span className="text-gray-500 font-medium block mb-2.5 text-sm sm:text-base">Danh sách thành viên đoàn ({invitation.attendees.length} người)</span>
+                    <div className="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-100 max-h-40 overflow-y-auto">
+                      {invitation.attendees.map((att: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between text-xs sm:text-sm text-gray-800">
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-gray-400 font-mono text-xs">{idx + 1}.</span>
+                            <span className="font-semibold">{att.name}</span>
+                          </span>
+                          {att.isLeader && (
+                            <span className="text-[10px] uppercase font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                              Trưởng đoàn
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center pt-2 gap-4">
                   <span className="text-gray-900 font-bold text-base sm:text-lg shrink-0">Thành tiền</span>
                   <span className="font-black text-emerald-600 text-2xl sm:text-3xl tracking-tight text-right break-words max-w-[60%]">

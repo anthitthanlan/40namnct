@@ -68,8 +68,15 @@ export async function PATCH(
   const result = await updateInvitationDetails(id, body, token);
   
   if (result) {
-    const details = isSizeChanged
-      ? `Cập nhật thông tin thư mời: điều chỉnh phân bổ size áo (Tổng: ${existing.quantity} áo)`
+    const changedFields: string[] = [];
+    if (isSizeChanged) changedFields.push(`size áo (${existing.quantity} áo)`);
+    if (body.memberPhone) changedFields.push(`SĐT (${body.memberPhone})`);
+    if (body.memberEmail) changedFields.push(`Email (${body.memberEmail})`);
+    if (body.attendeeName) changedFields.push(`Tên (${body.attendeeName})`);
+    if (Array.isArray(body.attendees)) changedFields.push(`DS thành viên (${body.attendees.length} người)`);
+
+    const details = changedFields.length > 0
+      ? `Cập nhật thông tin thư mời: ${changedFields.join(", ")}`
       : "Cập nhật thông tin thư mời";
 
     await logAction(

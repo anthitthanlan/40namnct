@@ -111,6 +111,9 @@ export default function RegisterForm() {
   const [quantity, setQuantity] = useState(1);
   const [comboCount, setComboCount] = useState(0);
   const [sizes, setSizes] = useState<Record<string, number>>({});
+  const [groupMembers, setGroupMembers] = useState<string[]>([]);
+  const [showBatchAddModal, setShowBatchAddModal] = useState(false);
+  const [batchAddText, setBatchAddText] = useState("");
 
   // Status
   const [busy, setBusy] = useState(false);
@@ -504,6 +507,16 @@ export default function RegisterForm() {
 
     setBusy(true);
     try {
+      const attendeesList: { name: string; isLeader?: boolean }[] = [];
+      if (buyCombo && type === "group" && name.trim()) {
+        attendeesList.push({ name: name.trim(), isLeader: true });
+        for (const m of groupMembers) {
+          if (m.trim()) {
+            attendeesList.push({ name: m.trim(), isLeader: false });
+          }
+        }
+      }
+
       const payload = {
         type: buyCombo ? type : "individual",
         name,
@@ -516,7 +529,7 @@ export default function RegisterForm() {
         ...(buyCombo
           ? type === "individual"
             ? { size: `${gender}-${size}`, comboCount: 1, quantity: 1 }
-            : { quantity: comboCount, comboCount, sizes }
+            : { quantity: comboCount, comboCount, sizes, attendees: attendeesList }
           : { size: null, comboCount: 0, quantity: 1 }),
         forceNewInvitation,
       };
@@ -856,11 +869,27 @@ export default function RegisterForm() {
                 transition={boxTransition}
                 className="w-full lg:w-[36rem] flex-shrink-0 bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6"
               >
+                {/* Banner đại diện nhóm */}
+                {buyCombo && type === "group" && (
+                  <div className="rounded-xl border border-indigo-200 bg-indigo-50/90 p-3.5 sm:p-4 text-xs text-indigo-950 flex items-start gap-3 shadow-xs">
+                    <span className="material-symbols-rounded text-indigo-600 text-xl shrink-0 mt-0.5">groups</span>
+                    <div className="space-y-1">
+                      <p className="font-bold text-indigo-900 flex items-center gap-1.5 text-xs sm:text-sm">
+                        <span>Đăng ký tham dự theo Nhóm / Tập thể</span>
+                        <span className="inline-block bg-indigo-600 text-white text-[10px] uppercase font-black px-2 py-0.5 rounded-full tracking-wider">Trưởng đoàn</span>
+                      </p>
+                      <p className="text-indigo-800/90 text-xs leading-relaxed">
+                        Bạn đang đại diện đăng ký cho nhóm. Thông tin <strong>Họ tên, Số điện thoại và Email</strong> sẽ là đầu mối của Trưởng đoàn để nhận Thư mời QR chung, liên hệ thanh toán và điều phối nhận áo cho cả nhóm.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Full Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {buyCombo && type === "group"
-                      ? "Họ và Tên (Đại diện)"
+                      ? "Họ và Tên Trưởng đoàn (Người đại diện)"
                       : "Họ và Tên"}{" "}
                     <span className="text-red-500">*</span>
                   </label>
@@ -1391,6 +1420,99 @@ export default function RegisterForm() {
                                     </div>
                                   </div>
 
+                                  {/* Danh sách thành viên (Tùy chọn) */}
+                                  <div className="border-t border-gray-100 pt-4 mt-2">
+                                    <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+                                      <div className="flex items-center gap-2">
+                                        <label className="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                                          <span className="material-symbols-rounded text-indigo-600 text-lg">format_list_bulleted</span>
+                                          Danh sách thành viên (Tùy chọn)
+                                        </label>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                          {1 + groupMembers.filter((m) => m.trim()).length} / {comboCount || 1} người
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setBatchAddText(groupMembers.join("\n"));
+                                            setShowBatchAddModal(true);
+                                          }}
+                                          className="px-2.5 py-1 text-xs font-bold rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors flex items-center gap-1"
+                                        >
+                                          <span className="material-symbols-rounded text-sm">content_paste</span>
+                                          Dán nhanh
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+                                      💡 <em>Bạn có thể nhập trước danh sách để các thành viên trong đoàn check-in nhanh tại cổng. Nếu chưa chốt danh sách, bạn có thể để trống.</em>
+                                    </p>
+
+                                    {/* Thành viên #1: Trưởng đoàn */}
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2 bg-indigo-50/70 border border-indigo-100 rounded-xl px-3 py-2 text-xs">
+                                        <span className="w-5 h-5 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center text-[10px] shrink-0">
+                                          1
+                                        </span>
+                                        <span className="font-bold text-indigo-900 flex-1 truncate">
+                                          {name.trim() || "(Chưa nhập Họ tên Trưởng đoàn)"}
+                                        </span>
+                                        <span className="text-[10px] uppercase font-extrabold bg-indigo-200/80 text-indigo-800 px-2 py-0.5 rounded-md shrink-0">
+                                          Trưởng đoàn
+                                        </span>
+                                      </div>
+
+                                      {/* Các thành viên tiếp theo */}
+                                      {groupMembers.map((member, idx) => (
+                                        <div key={idx} className="flex items-center gap-2">
+                                          <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center text-[10px] shrink-0">
+                                            {idx + 2}
+                                          </span>
+                                          <input
+                                            type="text"
+                                            value={member}
+                                            placeholder={`Họ và tên thành viên #${idx + 2}`}
+                                            onChange={(e) => {
+                                              const val = e.target.value.replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+                                              setGroupMembers((prev) => {
+                                                const next = [...prev];
+                                                next[idx] = val;
+                                                return next;
+                                              });
+                                            }}
+                                            className="flex-1 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-800 focus:border-indigo-500 focus:outline-none bg-white"
+                                          />
+                                          <button
+                                            type="button"
+                                            title="Xóa thành viên này"
+                                            onClick={() => {
+                                              setGroupMembers((prev) => prev.filter((_, i) => i !== idx));
+                                            }}
+                                            className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                                          >
+                                            <span className="material-symbols-rounded text-base">close</span>
+                                          </button>
+                                        </div>
+                                      ))}
+
+                                      {1 + groupMembers.length < (comboCount || 1) && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setGroupMembers((prev) => [...prev, ""]);
+                                          }}
+                                          className="w-full mt-2 py-2 rounded-xl border border-dashed border-slate-300 text-slate-600 hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50/50 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                                        >
+                                          <span className="material-symbols-rounded text-sm">person_add</span>
+                                          Thêm thành viên #{groupMembers.length + 2}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
                                   {/* Tổng tiền */}
                                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                                     <span className="text-sm font-medium text-gray-700">Tổng mức đóng góp</span>
@@ -1661,6 +1783,53 @@ export default function RegisterForm() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Dán nhanh danh sách thành viên */}
+      <Modal
+        isOpen={showBatchAddModal}
+        onClose={() => setShowBatchAddModal(false)}
+        title="Dán nhanh danh sách thành viên"
+        subtitle={`Tối đa ${Math.max(0, (comboCount || 1) - 1)} thành viên đi cùng`}
+        icon="playlist_add"
+      >
+        <div className="space-y-4 text-left p-1">
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Dán danh sách tên từ Zalo / Excel vào ô bên dưới (mỗi người một dòng). Thành viên đầu tiên mặc định là <strong>Trưởng đoàn ({name.trim() || "Chưa nhập tên"})</strong>.
+          </p>
+          <textarea
+            rows={7}
+            value={batchAddText}
+            onChange={(e) => setBatchAddText(e.target.value)}
+            placeholder={"Trần Văn Bình\nLê Thị Cúc\nHoàng Minh Đức..."}
+            className="w-full rounded-xl border border-slate-200 p-3.5 text-xs font-medium text-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+          />
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowBatchAddModal(false)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const maxOther = Math.max(0, (comboCount || 1) - 1);
+                const lines = batchAddText
+                  .split("\n")
+                  .map((l) => l.trim().replace(/(^|\s)\S/g, (c) => c.toUpperCase()))
+                  .filter(Boolean)
+                  .slice(0, maxOther);
+                setGroupMembers(lines);
+                setShowBatchAddModal(false);
+              }}
+              className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              Áp dụng danh sách
+            </button>
           </div>
         </div>
       </Modal>

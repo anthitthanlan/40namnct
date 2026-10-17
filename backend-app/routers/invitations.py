@@ -58,6 +58,7 @@ def to_response(inv: Invitation) -> InvitationResponse:
         "checkedInAt": inv.checked_in_at,
         "shirtReceived": inv.shirt_received,
         "shirtReceivedAt": inv.shirt_received_at,
+        "attendees": getattr(inv, "attendees", []) or [],
         "emailSent": bool(getattr(inv, "email_sent", False)),
         "emailSentAt": getattr(inv, "email_sent_at", None),
         "createdAt": inv.created_at,
@@ -174,6 +175,7 @@ def create_invitation(inv_in: InvitationCreate, db: Session = Depends(get_db)):
         amount=calculated_amount,
         status="pending",
         note=inv_in.note or "",
+        attendees=inv_in.attendees or [],
     )
     db.add(new_inv)
     db.commit()
@@ -232,6 +234,14 @@ def update_invitation(
         member = db.query(Member).filter(Member.id == inv.member_id).first()
         if member:
             member.email = changes["memberEmail"]
+
+    if "memberPhone" in changes and changes["memberPhone"] is not None:
+        member = db.query(Member).filter(Member.id == inv.member_id).first()
+        if member:
+            member.phone = changes["memberPhone"].strip()
+
+    if "attendees" in changes and changes["attendees"] is not None:
+        inv.attendees = changes["attendees"]
 
     if "emailSent" in changes and changes["emailSent"] is not None:
         inv.email_sent = changes["emailSent"]

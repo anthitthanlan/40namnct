@@ -21,6 +21,12 @@ export type CheckInEntry = {
   by?: string;
 };
 
+export type GroupAttendee = {
+  name: string;
+  isLeader?: boolean;
+  size?: string;
+};
+
 export type InvitationView = {
   id: string;
   code: string;
@@ -57,6 +63,7 @@ export type InvitationView = {
   checkinEntries?: CheckInEntry[];
   shirtReceived?: boolean;
   shirtReceivedAt?: string | null;
+  attendees?: GroupAttendee[];
   emailSent?: boolean;
   emailSentAt?: string | null;
   emailSentCount?: number;

@@ -439,8 +439,10 @@ export default function AdminRegistrations({
           nienKhoa: editingInvitation.nienKhoa,
           size: editingInvitation.size,
           sizes: editingInvitation.type === "group" ? editingInvitation.sizes : undefined,
-          note: editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "",
+          note: editingInvitation.note || "",
           memberEmail: editingInvitation.memberEmail,
+          memberPhone: editingInvitation.memberPhone,
+          attendees: editingInvitation.type === "group" ? editingInvitation.attendees : undefined,
         }),
       });
       if (res.status === 401) {
@@ -452,7 +454,6 @@ export default function AdminRegistrations({
         flash(false, data.message || "Cập nhật thất bại.");
         return;
       }
-      const finalNote = editingInvitation.note ? (editingInvitation.note.startsWith("Lớp: ") ? editingInvitation.note : `Lớp: ${editingInvitation.note}`) : "";
       setInvitations((prev) =>
         prev ? prev.map((t) => (t.id === editingInvitation.id ? { 
           ...t, 
@@ -461,10 +462,23 @@ export default function AdminRegistrations({
           nienKhoa: editingInvitation.nienKhoa, 
           size: editingInvitation.size, 
           sizes: editingInvitation.sizes,
-          note: finalNote,
+          note: editingInvitation.note || "",
           memberEmail: editingInvitation.memberEmail,
+          memberPhone: editingInvitation.memberPhone || t.memberPhone,
+          attendees: editingInvitation.attendees,
         } : t)) : prev
       );
+      if (editingInvitation.memberPhone) {
+        setMembers((prev) =>
+          prev
+            ? prev.map((m) =>
+                m.id === editingInvitation.memberId
+                  ? { ...m, phone: editingInvitation.memberPhone!, name: editingInvitation.attendeeName }
+                  : m
+              )
+            : prev
+        );
+      }
       flash(true, "Đã cập nhật thông tin thành công.");
       setEditingInvitation(null);
     } catch (err) {
@@ -1021,9 +1035,9 @@ export default function AdminRegistrations({
                                 </span>
                               )}
                               {t.memberEmail && (
-                                <span className="inline-flex items-center gap-1 truncate max-w-[200px]" title={t.memberEmail}>
-                                  <span className="material-symbols-rounded text-[13px] text-slate-400">alternate_email</span>
-                                  {t.memberEmail}
+                                <span className="inline-flex items-center gap-1 break-all text-slate-600" title={t.memberEmail}>
+                                  <span className="material-symbols-rounded text-[13px] text-slate-400 shrink-0">alternate_email</span>
+                                  <span>{t.memberEmail}</span>
                                 </span>
                               )}
                             </div>
@@ -1047,13 +1061,65 @@ export default function AdminRegistrations({
                               <span className="material-symbols-rounded text-[13px] text-slate-400">schedule</span>
                               <span>Ngày tạo: {vi(t.createdAt)}</span>
                             </div>
-                            {t.note && (
-                              <p className="mt-1 text-[11px] italic text-slate-600 line-clamp-2 bg-slate-50/70 rounded px-2 py-0.5 border border-slate-100" title={t.note}>
-                                &ldquo;{t.note}&rdquo;
-                              </p>
-                            )}
                           </div>
                         </div>
+
+                        {/* Ghi chú & Lời nhắn đầy đủ (không bị che lấp / cắt bớt) */}
+                        {t.note && (
+                          <div className="mt-2.5 rounded-xl bg-amber-50/70 border border-amber-200/70 px-3 py-2 text-xs text-amber-950 flex items-start gap-2">
+                            <span className="material-symbols-rounded text-amber-600 text-[16px] shrink-0 mt-0.5">sticky_note_2</span>
+                            <div className="min-w-0 flex-1">
+                              <span className="font-bold text-[11px] uppercase tracking-wider text-amber-800 block mb-0.5">Ghi chú / Lời nhắn:</span>
+                              <p className="text-[11px] text-slate-700 whitespace-pre-wrap break-words leading-relaxed font-medium">
+                                {t.note}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Danh sách thành viên dự kiến (đối với vé tập thể) */}
+                        {isGroup && Array.isArray(t.attendees) && t.attendees.length > 0 && (
+                          <div className="mt-3 rounded-xl bg-indigo-50/60 border border-indigo-200/70 p-3 text-xs">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-extrabold text-[11px] uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                                <span className="material-symbols-rounded text-[15px] text-indigo-600">groups</span>
+                                Danh sách đoàn dự kiến ({t.attendees.length} thành viên):
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
+                              {t.attendees.map((att, idx) => {
+                                const isCheckedIn = (t.checkinEntries || []).some(
+                                  (e) => e.name.trim().toLowerCase() === att.name.trim().toLowerCase()
+                                );
+                                return (
+                                  <div
+                                    key={idx}
+                                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-[11px] ${
+                                      isCheckedIn
+                                        ? "bg-emerald-50 border-emerald-200 text-emerald-900 font-bold"
+                                        : "bg-white border-indigo-100/80 text-slate-800 font-medium"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-1.5 truncate">
+                                      <span className="text-[10px] text-slate-400 font-mono">{idx + 1}.</span>
+                                      <span className="truncate">{att.name}</span>
+                                      {att.isLeader && (
+                                        <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-indigo-200/80 text-indigo-800 font-bold shrink-0">
+                                          Trưởng đoàn
+                                        </span>
+                                      )}
+                                    </div>
+                                    {isCheckedIn && (
+                                      <span className="material-symbols-rounded text-emerald-600 text-sm shrink-0" title="Đã check-in vào cổng">
+                                        check_circle
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Lịch sử Check-in (hiển thị danh sách tên người tham dự đã check-in) */}
                         {Array.isArray(t.checkinEntries) && t.checkinEntries.length > 0 && (
@@ -1490,7 +1556,7 @@ export default function AdminRegistrations({
                                         setActiveMenuId(null);
                                         setEditingInvitation({
                                           ...t,
-                                          note: t.note ? t.note.replace(/^Lớp:\s*/, "").split(" | ")[0] : "",
+                                          note: t.note || "",
                                         });
                                       }}
                                       className="w-full text-left px-3.5 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium"
@@ -1978,19 +2044,35 @@ export default function AdminRegistrations({
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={editingInvitation.memberEmail || ""}
-                  onChange={(e) =>
-                    setEditingInvitation({ ...editingInvitation, memberEmail: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
-                  placeholder="example@gmail.com"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">
+                    Số điện thoại <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={editingInvitation.memberPhone || ""}
+                    onChange={(e) =>
+                      setEditingInvitation({ ...editingInvitation, memberPhone: e.target.value })
+                    }
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-mono"
+                    placeholder="0912345678"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editingInvitation.memberEmail || ""}
+                    onChange={(e) =>
+                      setEditingInvitation({ ...editingInvitation, memberEmail: e.target.value })
+                    }
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                    placeholder="example@gmail.com"
+                  />
+                </div>
               </div>
               {editingInvitation.type === "individual" && (() => {
                 const parts = (editingInvitation.size || "Nam-M").split("-");
@@ -2189,17 +2271,78 @@ export default function AdminRegistrations({
                   </div>
                 );
               })()}
+
+              {editingInvitation.type === "group" && (
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-bold text-indigo-950 flex items-center gap-1.5">
+                      <span className="material-symbols-rounded text-indigo-600 text-lg">groups</span>
+                      Danh sách thành viên đoàn ({Array.isArray(editingInvitation.attendees) ? editingInvitation.attendees.length : 0} / {editingInvitation.quantity || 1} người)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = Array.isArray(editingInvitation.attendees) ? [...editingInvitation.attendees] : [];
+                        if (current.length < (editingInvitation.quantity || 1)) {
+                          current.push({ name: "", isLeader: current.length === 0 });
+                          setEditingInvitation({ ...editingInvitation, attendees: current });
+                        }
+                      }}
+                      className="text-xs font-bold px-2.5 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors flex items-center gap-1 shadow-2xs"
+                    >
+                      <span className="material-symbols-rounded text-sm">add</span>
+                      Thêm người
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {(editingInvitation.attendees || []).map((att, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <span className="text-xs font-mono text-slate-400 w-5 text-right">{idx + 1}.</span>
+                        <input
+                          type="text"
+                          value={att.name}
+                          placeholder={`Họ và tên thành viên #${idx + 1}`}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+                            const next = [...(editingInvitation.attendees || [])];
+                            next[idx] = { ...next[idx], name: val };
+                            setEditingInvitation({ ...editingInvitation, attendees: next });
+                          }}
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-800 bg-white focus:border-indigo-500 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          title="Xóa người này"
+                          onClick={() => {
+                            const next = (editingInvitation.attendees || []).filter((_, i) => i !== idx);
+                            setEditingInvitation({ ...editingInvitation, attendees: next });
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                        >
+                          <span className="material-symbols-rounded text-base">close</span>
+                        </button>
+                      </div>
+                    ))}
+                    {(!editingInvitation.attendees || editingInvitation.attendees.length === 0) && (
+                      <p className="text-xs text-slate-400 italic">Chưa có danh sách thành viên nhập sẵn.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">
-                  Lớp
+                  Ghi chú / Lớp / Lời nhắn
                 </label>
-                <input
-                  type="text"
+                <textarea
+                  rows={3}
                   value={editingInvitation.note || ""}
                   onChange={(e) =>
                     setEditingInvitation({ ...editingInvitation, note: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                  placeholder="Lớp: ... | Lời nhắn: ..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm leading-relaxed"
                 />
               </div>
             </div>

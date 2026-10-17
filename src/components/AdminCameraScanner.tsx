@@ -556,6 +556,67 @@ export default function AdminCameraScanner({
                         </div>
                       )}
 
+                      {/* Danh sách thành viên đăng ký trước (nếu có) */}
+                      {isGroup && Array.isArray(currentInv.attendees) && currentInv.attendees.length > 0 && (
+                        <div className="rounded-xl bg-indigo-50/60 p-3 border border-indigo-100 text-xs space-y-2">
+                          <p className="text-[11px] font-extrabold text-indigo-900 uppercase flex items-center gap-1.5">
+                            <span className="material-symbols-rounded text-sm text-indigo-600">groups</span>
+                            Danh sách thành viên đăng ký trước:
+                          </p>
+                          <div className="space-y-1.5 max-h-44 overflow-y-auto">
+                            {currentInv.attendees.map((att, idx) => {
+                              const checkedEntry = groupEntries.find(
+                                (e) => e.name.trim().toLowerCase() === att.name.trim().toLowerCase()
+                              );
+                              const isChecked = Boolean(checkedEntry);
+                              const isSelectingThis = groupAttendeeName.trim().toLowerCase() === att.name.trim().toLowerCase();
+
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-colors ${
+                                    isChecked
+                                      ? "bg-emerald-50/80 border-emerald-200 text-emerald-900"
+                                      : isSelectingThis
+                                        ? "bg-indigo-100/80 border-indigo-300 text-indigo-950 ring-1 ring-indigo-400"
+                                        : "bg-white border-indigo-100 text-slate-800"
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="text-[11px] font-mono text-slate-400">{idx + 1}.</span>
+                                    <span className="font-bold truncate">{att.name}</span>
+                                    {att.isLeader && (
+                                      <span className="text-[9px] uppercase font-extrabold bg-indigo-200 text-indigo-800 px-1.5 py-0.2 rounded shrink-0">
+                                        Trưởng đoàn
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {isChecked ? (
+                                    <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-700 shrink-0">
+                                      <span className="material-symbols-rounded text-sm">check_circle</span>
+                                      Đã vào
+                                    </span>
+                                  ) : !isGroupFull && userCanCheckIn ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setGroupAttendeeName(att.name);
+                                        setPendingCheckIn(true);
+                                      }}
+                                      className="px-2.5 py-1 text-[11px] font-bold rounded-md bg-indigo-600 hover:bg-indigo-700 text-white transition-colors shrink-0 flex items-center gap-1 shadow-2xs"
+                                    >
+                                      <span>Chọn check-in</span>
+                                      <span className="material-symbols-rounded text-xs">arrow_forward</span>
+                                    </button>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Input check-in cho tập thể */}
                       {isGroup ? (
                         isGroupFull ? (

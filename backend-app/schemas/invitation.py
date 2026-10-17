@@ -13,6 +13,7 @@ class InvitationBase(BaseModel):
     amount: int = 0
     status: str = "pending"
     note: Optional[str] = ""
+    attendees: Optional[List[Dict[str, Any]]] = Field(default_factory=list, alias="attendees")
 
     class Config:
         populate_by_name = True
@@ -33,6 +34,8 @@ class InvitationUpdate(BaseModel):
     checkinEntries: Optional[List[Dict[str, Any]]] = Field(None, alias="checkinEntries")
     shirtReceived: Optional[bool] = Field(None, alias="shirtReceived")
     memberEmail: Optional[str] = Field(None, alias="memberEmail")
+    memberPhone: Optional[str] = Field(None, alias="memberPhone")
+    attendees: Optional[List[Dict[str, Any]]] = Field(None, alias="attendees")
     emailSent: Optional[bool] = Field(None, alias="emailSent")
     emailSentAt: Optional[str] = Field(None, alias="emailSentAt")
 
@@ -52,6 +55,7 @@ class InvitationResponse(InvitationBase):
     checkinEntries: List[Dict[str, Any]] = Field(default_factory=list, alias="checkinEntries")
     shirtReceived: bool = Field(False, alias="shirtReceived")
     shirtReceivedAt: Optional[str] = Field(None, alias="shirtReceivedAt")
+    memberPhone: Optional[str] = Field(None, alias="memberPhone")
     emailSent: bool = Field(False, alias="emailSent")
     emailSentAt: Optional[str] = Field(None, alias="emailSentAt")
     createdAt: str = Field(alias="createdAt")

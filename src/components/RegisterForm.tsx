@@ -756,18 +756,18 @@ export default function RegisterForm() {
             noValidate
             className="flex flex-col items-center"
           >
-            {/* Cảnh báo số lượng chỗ sắp hết */}
-            {slotStats && !slotStats.isFull && slotStats.remaining <= 50 && (
+            {/* Cảnh báo số lượng chỗ sắp hết / Mở thêm 50 lượt */}
+            {slotStats && !slotStats.isFull && (
               <motion.div
                 layout
                 transition={boxTransition}
                 className="w-full max-w-[64rem] mb-6 p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 shadow-sm flex items-center gap-3.5"
               >
                 <span className="material-symbols-rounded text-2xl text-amber-600 shrink-0">
-                  timer
+                  campaign
                 </span>
-                <p className="text-sm sm:text-base font-bold text-amber-900">
-                  Số lượng chỗ tham dự sắp hết (Hiện chỉ còn{" "}
+                <p className="text-sm sm:text-base font-bold text-amber-950">
+                  Nhà trường vừa mở thêm <span className="text-[#1d4ed8] font-black">50 LƯỢT ĐĂNG KÝ CUỐI CÙNG</span> (Hiện chỉ còn{" "}
                   <span className="text-rose-600 font-extrabold">{slotStats.remaining}</span> suất). Hãy hoàn tất đăng ký sớm!
                 </p>
               </motion.div>

@@ -58,9 +58,9 @@ export function getRegistrationStatus(now: Date = new Date()): RegStatusResult {
       title: "Cổng Đăng Ký Bổ Sung Sẽ Mở Lúc 13:00 Chiều Nay",
       targetDate: openTime,
       countdownLabel: "MỞ ĐĂNG KÝ BỔ SUNG SAU",
-      badgeText: "Đăng ký bổ sung (tối đa 450 người) mở vào 13:00 chiều nay 17/10/2026",
+      badgeText: "Nhà trường mở thêm 50 LƯỢT đăng ký cuối cùng vào 13:00 chiều nay 17/10/2026",
       message:
-        "Cổng đăng ký tham dự Ngày Trở Về sẽ mở đợt đăng ký bổ sung (nâng giới hạn lên 450 người) vào lúc 13:00 chiều nay, Thứ Bảy ngày 17/10/2026.\nQuý Thầy Cô và các bạn cựu học sinh vui lòng quay lại sau ít phút để hoàn tất đăng ký.",
+        "Cổng đăng ký tham dự Ngày Trở Về sẽ mở thêm 50 LƯỢT ĐĂNG KÝ CUỐI CÙNG (nâng giới hạn lên 450 người) vào lúc 13:00 chiều nay, Thứ Bảy ngày 17/10/2026.\nQuý Thầy Cô và các bạn cựu học sinh vui lòng quay lại sau ít phút để hoàn tất đăng ký.",
       canRegister: false,
     };
   }
@@ -69,11 +69,11 @@ export function getRegistrationStatus(now: Date = new Date()): RegStatusResult {
   if (now.getTime() < closeTime.getTime()) {
     return {
       status: "OPEN",
-      title: "Đang Mở Đăng Ký Bổ Sung",
+      title: "Đang Mở 50 Lượt Đăng Ký Cuối Cùng",
       targetDate: closeTime,
       countdownLabel: "KẾT THÚC ĐĂNG KÝ SAU",
-      badgeText: "Đang mở đăng ký bổ sung (giới hạn 450 người) đến 23:59 ngày 19/10/2026 (hoặc khi đủ số lượng)",
-      message: "Cổng đăng ký bổ sung đang mở. Hãy hoàn tất đăng ký sớm trước khi hết suất!",
+      badgeText: "Nhà trường mở thêm 50 LƯỢT đăng ký cuối cùng (nâng tổng lên 450 người) đến 23:59 ngày 19/10/2026 (hoặc khi đủ số lượng)",
+      message: "Cổng đăng ký 50 lượt cuối cùng đang mở. Hãy hoàn tất đăng ký sớm trước khi hết suất!",
       canRegister: true,
     };
   }

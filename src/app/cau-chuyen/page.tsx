@@ -71,13 +71,21 @@ export default async function BaiVietPage() {
     updatedAt: new Date().toISOString(),
   } as const;
 
+  const otherPinned = pinnedPosts.filter((p) => p.id !== featured?.id);
+  // 2 bài phụ xếp cạnh bài nổi bật trong cụm Bento Hero
+  const heroSidePosts = otherPinned.length > 0
+    ? otherPinned.slice(0, 2)
+    : rest.filter((p) => p.id !== syntheticMotionPost.id).slice(0, 2);
+  const heroSideIds = new Set(heroSidePosts.map((p) => p.id));
+  const remainingPinned = otherPinned.filter((p) => !heroSideIds.has(p.id));
+
   const thanhXuanCat = categories.find(
     (c) => c.slug === "cau-chuyen-thanh-xuan" || c.name.toLowerCase().includes("thanh xuân")
   );
 
-  const adminPosts = [syntheticMotionPost as any, ...rest.filter((p) => p.source === "admin" && !p.pinned)];
+  const adminPosts = [syntheticMotionPost as any, ...rest.filter((p) => p.source === "admin" && !p.pinned && !heroSideIds.has(p.id))];
   const communityPosts = rest.filter(
-    (p) => !p.pinned && (
+    (p) => !p.pinned && !heroSideIds.has(p.id) && (
       (thanhXuanCat && p.categoryId === thanhXuanCat.id) ||
       p.source !== "admin"
     )
@@ -134,13 +142,13 @@ export default async function BaiVietPage() {
         </div>
       </section>
 
-      {/* ══════════ CATEGORY TABS ══════════ */}
-      <section className="pt-6">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="flex overflow-x-auto py-3 no-scrollbar items-center gap-2">
+      {/* ══════════ CATEGORY TABS (STICKY PILLS) ══════════ */}
+      <section className="sticky top-[68px] sm:top-[72px] md:top-[76px] z-30 pointer-events-none py-2 transition-all">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pointer-events-auto">
+          <div className="flex overflow-x-auto py-1 no-scrollbar items-center gap-2">
             <Link
               href="/cau-chuyen"
-              className="whitespace-nowrap rounded-full bg-slate-900 px-4 py-1.5 text-sm font-bold text-white transition-colors"
+              className="whitespace-nowrap rounded-full bg-slate-900 px-4 py-1.5 text-xs sm:text-sm font-bold text-white shadow-md transition-colors"
             >
               Tất cả
             </Link>
@@ -148,7 +156,7 @@ export default async function BaiVietPage() {
               <Link
                 key={c.id}
                 href={`/cau-chuyen/danh-muc/${c.slug}`}
-                className="whitespace-nowrap rounded-full bg-slate-100 px-4 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+                className="whitespace-nowrap rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 px-4 py-1.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:border-[#1d4ed8]/40 hover:text-[#1d4ed8] hover:shadow-md transition-all active:scale-95"
               >
                 {c.name}
               </Link>
@@ -159,7 +167,7 @@ export default async function BaiVietPage() {
 
       {/* ══════════ MOMENT CAROUSEL ══════════ */}
       {carouselMoments.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 pt-12">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 pt-8 sm:pt-12">
           <Reveal>
             <MomentCarousel moments={carouselMoments} />
           </Reveal>
@@ -191,43 +199,73 @@ export default async function BaiVietPage() {
         </section>
       ) : (
         <>
-          {/* ══════════ SECTION: BÀI NỔI BẬT ══════════ */}
-          <section className="mx-auto max-w-6xl px-6 py-10">
+          {/* ══════════ SECTION: BÀI NỔI BẬT & TIÊU ĐIỂM (BENTO EDITORIAL) ══════════ */}
+          <section className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8">
             <Reveal>
-              <div className="mb-7 flex items-center gap-4">
-                <div className="h-7 w-1 shrink-0 rounded-full bg-[#1d4ed8]" />
+              <div className="mb-5 sm:mb-6 flex items-center gap-4">
+                <div className="h-6 w-1 shrink-0 rounded-full bg-[#1d4ed8]" />
                 <h2 className="shrink-0 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#1d4ed8]">
-                  Bài nổi bật
+                  Tiêu điểm hôm nay
                 </h2>
                 <div className="flex-1 border-t border-slate-200" />
               </div>
             </Reveal>
-            <Reveal>
-              <PostCard post={featured} featured categoryName={featured.categoryId ? catMap[featured.categoryId] : undefined} />
-            </Reveal>
+
+            {heroSidePosts.length > 0 ? (
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 items-stretch">
+                <div className="lg:col-span-7 xl:col-span-7 flex flex-col">
+                  <Reveal className="h-full">
+                    <PostCard
+                      post={featured}
+                      variant="featured"
+                      categoryName={featured.categoryId ? catMap[featured.categoryId] : undefined}
+                      className="h-full"
+                    />
+                  </Reveal>
+                </div>
+                <div className="lg:col-span-5 xl:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 sm:gap-5">
+                  {heroSidePosts.map((p, idx) => (
+                    <Reveal key={p.id} delay={idx * 80} className="h-full">
+                      <PostCard
+                        post={p}
+                        variant="compact"
+                        categoryName={p.categoryId ? catMap[p.categoryId] : undefined}
+                        className="h-full"
+                      />
+                    </Reveal>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Reveal>
+                <PostCard
+                  post={featured}
+                  variant="featured"
+                  categoryName={featured.categoryId ? catMap[featured.categoryId] : undefined}
+                />
+              </Reveal>
+            )}
           </section>
 
-          {/* ══════════ SECTION: ĐƯỢC GHIM ══════════ */}
-          {pinnedPosts.filter((p) => p.id !== featured.id).length > 0 && (
-            <section className="border-t border-slate-200 bg-amber-50/50 py-10">
-              <div className="mx-auto max-w-6xl px-6">
+          {/* ══════════ SECTION: ĐƯỢC GHIM (NẾU CÒN) ══════════ */}
+          {remainingPinned.length > 0 && (
+            <section className="border-t border-slate-200 bg-amber-50/40 py-8 sm:py-10">
+              <div className="mx-auto max-w-6xl px-4 sm:px-6">
                 <Reveal>
-                  <div className="mb-7 flex items-center gap-4">
-                    <div className="h-7 w-1 shrink-0 rounded-full bg-amber-500" />
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="h-6 w-1 shrink-0 rounded-full bg-amber-500" />
                     <h2 className="shrink-0 text-[11px] font-extrabold uppercase tracking-[0.18em] text-amber-700">
                       📌 Được ghim
                     </h2>
                     <div className="flex-1 border-t border-amber-200" />
                   </div>
                 </Reveal>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {pinnedPosts
-                    .filter((p) => p.id !== featured.id)
-                    .map((post, i) => (
-                      <Reveal key={post.id} delay={(i % 3) * 80} className="h-full">
-                        <PostCard post={post} categoryName={post.categoryId ? catMap[post.categoryId] : undefined} />
-                      </Reveal>
-                    ))}
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {remainingPinned.map((post, i) => (
+                    <Reveal key={post.id} delay={(i % 3) * 80} className="h-full">
+                      <PostCard post={post} categoryName={post.categoryId ? catMap[post.categoryId] : undefined} />
+                    </Reveal>
+                  ))}
                 </div>
               </div>
             </section>

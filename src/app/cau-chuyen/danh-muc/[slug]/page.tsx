@@ -110,13 +110,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         </div>
       </section>
 
-      {/* ══════════ CATEGORY TABS ══════════ */}
-      <section className="pt-6">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="flex overflow-x-auto py-3 no-scrollbar items-center gap-2">
+      {/* ══════════ CATEGORY TABS (STICKY PILLS) ══════════ */}
+      <section className="sticky top-[68px] sm:top-[72px] md:top-[76px] z-30 pointer-events-none py-2 transition-all">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pointer-events-auto">
+          <div className="flex overflow-x-auto py-1 no-scrollbar items-center gap-2">
             <Link
               href="/cau-chuyen"
-              className="whitespace-nowrap rounded-full bg-slate-100 px-4 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+              className="whitespace-nowrap rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 px-4 py-1.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm hover:border-[#1d4ed8]/40 hover:text-[#1d4ed8] hover:shadow-md transition-all active:scale-95"
             >
               Tất cả
             </Link>
@@ -124,10 +124,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
               <Link
                 key={c.id}
                 href={`/cau-chuyen/danh-muc/${c.slug}`}
-                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-bold transition-colors ${
+                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs sm:text-sm font-bold transition-all ${
                   c.id === category.id
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-slate-900 text-white shadow-md"
+                    : "bg-white/95 backdrop-blur-md border border-slate-200/90 text-slate-700 shadow-sm hover:border-[#1d4ed8]/40 hover:text-[#1d4ed8] hover:shadow-md active:scale-95"
                 }`}
               >
                 {c.name}

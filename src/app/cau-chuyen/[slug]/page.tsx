@@ -112,6 +112,19 @@ export default async function PostDetailPage({ params }: Props) {
         </aside>
 
         <article className="min-w-0 flex-1 max-w-[700px]">
+          {/* Nút trở về trang Câu chuyện ở đầu trang */}
+          <div className="mb-5 sm:mb-6">
+            <Link
+              href="/cau-chuyen"
+              className="group inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3.5 py-1.5 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs hover:border-[#1d4ed8]/40 hover:bg-blue-50/70 hover:text-[#1d4ed8] transition-all duration-200 active:scale-95"
+            >
+              <span className="material-symbols-rounded text-base transition-transform duration-200 group-hover:-translate-x-1">
+                arrow_back
+              </span>
+              <span>Trở về Câu chuyện</span>
+            </Link>
+          </div>
+
           <nav className="flex items-center gap-2 text-sm font-semibold text-[#454545]">
             <Link href="/cau-chuyen" className="hover:text-[#0098d1]">
               Câu chuyện
@@ -182,7 +195,7 @@ export default async function PostDetailPage({ params }: Props) {
               <h2 className="news-title inline-block border-b-2 border-[#0098d1] pb-1 text-[18px]">
                 Đọc thêm
               </h2>
-              <div className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {related.map((p, i) => (
                   <Reveal key={p.id} delay={i * 90} className="h-full">
                     <PostCard post={p} />

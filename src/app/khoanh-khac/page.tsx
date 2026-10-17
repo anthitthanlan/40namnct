@@ -72,7 +72,12 @@ async function readMemories(): Promise<WallMemory[]> {
   return memories;
 }
 
-export default async function KhoangKhacPage() {
+export default async function KhoangKhacPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ moment?: string }>;
+}) {
+  const { moment } = await searchParams;
   const memories = await readMemories();
   const allPosts = await listPublished();
   // Chỉ hiển thị chéo những bài viết có ảnh bìa và được Admin bật cờ crossDisplay
@@ -89,7 +94,11 @@ export default async function KhoangKhacPage() {
           { name: "Khoảnh khắc", url: "/khoanh-khac" },
         ]}
       />
-      <TimelineWall memories={memories} posts={posts} />
+      <TimelineWall
+        memories={memories}
+        posts={posts}
+        initialTargetMomentId={moment}
+      />
     </main>
   );
 }

@@ -181,8 +181,8 @@ export default function MomentCard({
 
   const containerClasses = `group relative block w-full transition-all duration-300 touch-manipulation select-none ${
     isFixed
-      ? "aspect-[4/5] rounded-2xl sm:rounded-3xl bg-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.015] overflow-hidden"
-      : "bg-transparent sm:bg-slate-100 sm:rounded-3xl sm:border sm:border-transparent sm:shadow-sm sm:overflow-hidden sm:hover:shadow-xl sm:hover:scale-[1.015]"
+      ? "aspect-[4/5] rounded-2xl sm:rounded-xl bg-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.015] overflow-hidden"
+      : "bg-transparent sm:bg-slate-100 sm:rounded-xl sm:border sm:border-transparent sm:shadow-sm sm:overflow-hidden sm:hover:shadow-xl sm:hover:scale-[1.015]"
   } ${onClick || href ? "cursor-pointer" : ""}`;
 
   if (href) {

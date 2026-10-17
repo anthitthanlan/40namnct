@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,6 +36,7 @@ type CarouselSlide = {
 type Props = {
   memories: WallMemory[];
   posts?: Post[];
+  initialTargetMomentId?: string;
 };
 
 const YEARS: number[] = [];
@@ -50,12 +51,28 @@ function shuffleWithSeed<T>(arr: T[], seed: number): T[] {
   });
 }
 
+import { useColumnCount } from "@/hooks/useColumnCount";
+
 const ITEMS_PER_PAGE = 15;
 
-export default function TimelineWall({ memories, posts = [] }: Props) {
+export default function TimelineWall({ memories, posts = [], initialTargetMomentId }: Props) {
   const [seed] = useState(() => Math.random());
+  const [targetMomentId, setTargetMomentId] = useState<string | null>(initialTargetMomentId || null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const m =
+      params.get("moment") ||
+      (window.location.hash.startsWith("#moment-")
+        ? window.location.hash.replace("#moment-", "")
+        : "");
+    if (m) {
+      setTargetMomentId(m);
+    }
+  }, []);
   
-  /* ─── Build year → items map ─── */
+  /* ─── Build year → items map with Hoisting ─── */
   const itemsByYear = useMemo(() => {
     const map = new Map<number | "all", FeedItem[]>();
     map.set("all", []);
@@ -84,11 +101,28 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
       if (map.has(y)) map.get(y)!.push(item);
     });
 
+    const isMatchTarget = (it: FeedItem) => {
+      if (!targetMomentId) return false;
+      if (it.type === "memory") return String(it.data.id) === targetMomentId;
+      if (it.type === "post") return String(it.data.id) === targetMomentId;
+      return false;
+    };
+
     map.forEach((items, y) => {
-      map.set(y, shuffleWithSeed(items, seed));
+      if (targetMomentId) {
+        // Tách item mục tiêu ra
+        const targetItems = items.filter(isMatchTarget);
+        const remainingItems = items.filter((it) => !isMatchTarget(it));
+        // Xáo ngẫu nhiên toàn bộ danh sách còn lại
+        const shuffledRemaining = shuffleWithSeed(remainingItems, seed);
+        // Đẩy item mục tiêu lên vị trí số 1 (Index 0)
+        map.set(y, [...targetItems, ...shuffledRemaining]);
+      } else {
+        map.set(y, shuffleWithSeed(items, seed));
+      }
     });
     return map;
-  }, [memories, posts, seed]);
+  }, [memories, posts, seed, targetMomentId]);
 
   /* ─── Carousel slides: random selection from all items ─── */
   const carouselSlides = useMemo((): CarouselSlide[] => {
@@ -117,43 +151,34 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
     setLightboxIndex(null);
   }, [activeYear]);
 
-
-
   const visibleItems = currentItems.slice(0, visibleCount);
+
+  /* ─── Column distribution for Unsplash-style Masonry ─── */
+  const columnCount = useColumnCount();
+
+  const columns = useMemo(() => {
+    const cols: { item: FeedItem; globalIndex: number }[][] = Array.from(
+      { length: columnCount },
+      () => []
+    );
+    visibleItems.forEach((item, idx) => {
+      cols[idx % columnCount].push({ item, globalIndex: idx });
+    });
+    return cols;
+  }, [visibleItems, columnCount]);
 
   /* ─── Lightbox ─── */
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   /* ─── Target Moment & Highlight from URL ─── */
-  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(initialTargetMomentId || null);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-    const targetMomentId =
-      params.get("moment") ||
-      (window.location.hash.startsWith("#moment-")
-        ? window.location.hash.replace("#moment-", "")
-        : "");
-
     if (!targetMomentId) return;
-
-    // Check where this item is in the current items list
-    const allItems = itemsByYear.get(activeYear) ?? [];
-    const targetIndex = allItems.findIndex((it) => {
-      if (it.type === "memory") return String(it.data.id) === targetMomentId;
-      if (it.type === "post") return String(it.data.id) === targetMomentId;
-      return false;
-    });
-
-    if (targetIndex !== -1 && targetIndex >= visibleCount) {
-      setVisibleCount(targetIndex + 5);
-    }
 
     setHighlightId(targetMomentId);
 
-    // Scroll to target element with retry to accommodate delayed page mount / transition
+    // Scroll to target element or feed start with retry
     const scrollToTarget = () => {
       const el = document.getElementById(`moment-${targetMomentId}`);
       if (el) {
@@ -163,20 +188,30 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
       return false;
     };
 
-    const timers = [100, 300, 600, 900, 1200].map((delay) =>
+    const timers = [150, 400, 800, 1200].map((delay) =>
       setTimeout(scrollToTarget, delay)
     );
 
-    // Fade out highlight ring after 4 seconds
+    // Fade out highlight ring after 6 seconds
     const clearHighlightTimer = setTimeout(() => {
       setHighlightId(null);
-    }, 4000);
+    }, 6000);
 
     return () => {
       timers.forEach(clearTimeout);
       clearTimeout(clearHighlightTimer);
     };
-  }, [itemsByYear, activeYear, visibleCount]);
+  }, [targetMomentId]);
+
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const handleLoadMore = () => {
+    setIsLoadingMore(true);
+    setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
+    setTimeout(() => {
+      setIsLoadingMore(false);
+    }, 500);
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc]">
@@ -225,68 +260,110 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
           </div>
         ) : (
           <>
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 sm:gap-4 lg:gap-5">
-              {visibleItems.map((item, idx) => {
-                if (item.type === "memory") {
-                  const m = item.data;
-                  const src = m.images[item.imageIndex];
-                  const isVideo = m.kind === "video";
-                  const isTarget = highlightId === String(m.id);
-                  return (
-                    <div
-                      key={`${m.id}-${item.imageIndex}`}
-                      id={item.imageIndex === 0 ? `moment-${m.id}` : undefined}
-                      className={`break-inside-avoid mb-14 sm:mb-4 lg:mb-5 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
-                        isTarget
-                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
-                          : ""
-                      }`}
-                    >
-                      <MomentCard
-                        coverUrl={src}
-                        title={m.title}
-                        caption={m.caption}
-                        author={m.author}
-                        role={m.isCommunity ? m.role : ""}
-                        year={m.year}
-                        kind={isVideo ? "video" : "image"}
-                        onClick={() => {
-                          setLightboxIndex(idx);
-                        }}
-                      />
-                    </div>
-                  );
-                } else {
-                  const p = item.data;
-                  const isTarget = highlightId === String(p.id);
-                  return (
-                    <div
-                      key={`post-${p.id}`}
-                      id={`moment-${p.id}`}
-                      className={`break-inside-avoid mb-14 sm:mb-4 lg:mb-5 scroll-mt-32 rounded-2xl sm:rounded-3xl transition-all duration-500 ${
-                        isTarget
-                          ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
-                          : ""
-                      }`}
-                    >
-                      <MomentCard
-                        coverUrl={p.cover!}
-                        title={p.title}
-                        caption={p.excerpt}
-                        author={p.author}
-                        role="Câu chuyện"
-                        year={new Date(p.createdAt).getFullYear()}
-                        kind="image"
-                        onClick={() => {
-                          setLightboxIndex(idx);
-                        }}
-                      />
-                    </div>
-                  );
-                }
-              })}
+            <div
+              className={`grid gap-4 sm:gap-4 lg:gap-5 items-start ${
+                columnCount === 1
+                  ? "grid-cols-1"
+                  : columnCount === 2
+                  ? "grid-cols-2"
+                  : "grid-cols-3"
+              }`}
+            >
+              {columns.map((colItems, colIdx) => (
+                <div key={colIdx} className="flex flex-col gap-4 sm:gap-4 lg:gap-5">
+                  {colItems.map(({ item, globalIndex }) => {
+                    // Tính độ trễ 0.1s giữa mỗi hàng ảnh trong đợt nạp hiện tại
+                    const batchIdx = globalIndex % ITEMS_PER_PAGE;
+                    const rowInBatch = Math.floor(batchIdx / columnCount);
+                    const staggerDelay = Math.min(rowInBatch * 0.1, 0.6);
+
+                    if (item.type === "memory") {
+                      const m = item.data;
+                      const src = m.images[item.imageIndex];
+                      const isVideo = m.kind === "video";
+                      const isTarget = highlightId === String(m.id);
+                      return (
+                        <motion.div
+                          key={`${m.id}-${item.imageIndex}`}
+                          id={item.imageIndex === 0 ? `moment-${m.id}` : undefined}
+                          initial={{ opacity: 0, y: 28 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.5,
+                            ease: [0.22, 1, 0.36, 1],
+                            delay: staggerDelay,
+                          }}
+                          className={`break-inside-avoid mb-8 sm:mb-0 scroll-mt-32 rounded-2xl sm:rounded-xl transition-all duration-500 ${
+                            isTarget
+                              ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
+                              : ""
+                          }`}
+                        >
+                          {isTarget && item.imageIndex === 0 && (
+                            <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1 text-xs font-black text-white shadow-md animate-pulse">
+                              <span className="material-symbols-rounded text-sm">push_pin</span>
+                              <span>Khoảnh khắc bạn vừa chọn</span>
+                            </div>
+                          )}
+                          <MomentCard
+                            coverUrl={src}
+                            title={m.title}
+                            caption={m.caption}
+                            author={m.author}
+                            role={m.isCommunity ? m.role : ""}
+                            year={m.year}
+                            kind={isVideo ? "video" : "image"}
+                            onClick={() => {
+                              setLightboxIndex(globalIndex);
+                            }}
+                          />
+                        </motion.div>
+                      );
+                    } else {
+                      const p = item.data;
+                      const isTarget = highlightId === String(p.id);
+                      return (
+                        <motion.div
+                          key={`post-${p.id}`}
+                          id={`moment-${p.id}`}
+                          initial={{ opacity: 0, y: 28 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.5,
+                            ease: [0.22, 1, 0.36, 1],
+                            delay: staggerDelay,
+                          }}
+                          className={`break-inside-avoid mb-8 sm:mb-0 scroll-mt-32 rounded-2xl sm:rounded-xl transition-all duration-500 ${
+                            isTarget
+                              ? "ring-4 ring-[#1d4ed8] ring-offset-4 ring-offset-[#f8fafc] scale-[1.02] shadow-2xl relative z-10"
+                              : ""
+                          }`}
+                        >
+                          {isTarget && (
+                            <div className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-3.5 py-1 text-xs font-black text-white shadow-md animate-pulse">
+                              <span className="material-symbols-rounded text-sm">push_pin</span>
+                              <span>Bài viết bạn vừa chọn</span>
+                            </div>
+                          )}
+                          <MomentCard
+                            coverUrl={p.cover!}
+                            title={p.title}
+                            caption={p.excerpt}
+                            author={p.author}
+                            role="Câu chuyện"
+                            year={new Date(p.createdAt).getFullYear()}
+                            kind="image"
+                            onClick={() => {
+                              setLightboxIndex(globalIndex);
+                            }}
+                          />
+                        </motion.div>
+                      );
+                    }
+                  })}
+                </div>
+              ))}
             </div>
-            {/* Lazy Load Observer */}
             {/* Nút Xem Thêm Khoảnh Khắc */}
             {visibleCount < currentItems.length ? (
               <div className="mt-10 mb-6 flex flex-col items-center justify-center gap-3">
@@ -295,11 +372,14 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
-                  className="btn-lightship inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black text-sm px-8 py-3.5 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5"
+                  disabled={isLoadingMore}
+                  onClick={handleLoadMore}
+                  className="btn-lightship inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 disabled:opacity-75 text-white font-black text-sm px-8 py-3.5 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 active:scale-95"
                 >
-                  <span className="material-symbols-rounded text-lg">add_photo_alternate</span>
-                  <span>Xem thêm khoảnh khắc</span>
+                  <span className={`material-symbols-rounded text-lg ${isLoadingMore ? "animate-spin" : ""}`}>
+                    {isLoadingMore ? "progress_activity" : "add_photo_alternate"}
+                  </span>
+                  <span>{isLoadingMore ? "Đang tải thêm khoảnh khắc..." : "Xem thêm khoảnh khắc"}</span>
                 </button>
               </div>
             ) : currentItems.length > ITEMS_PER_PAGE ? (

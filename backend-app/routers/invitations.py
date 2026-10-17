@@ -18,7 +18,7 @@ from app.services.vietqr_service import get_vietqr_url
 router = APIRouter(prefix="/api/invitations", tags=["Invitations"])
 
 UNIT_PRICE = 500000
-MAX_REGISTRATION_LIMIT = 400
+MAX_REGISTRATION_LIMIT = 450
 
 def generate_invitation_code(db: Session) -> str:
     # Lấy số lượng ticket hiện tại để làm số thứ tự
@@ -31,35 +31,42 @@ def generate_invitation_code(db: Session) -> str:
             return code
 
 def to_response(inv: Invitation) -> InvitationResponse:
-    return InvitationResponse(
-        id=inv.id,
-        code=inv.code,
-        memberId=inv.member_id,
-        nienKhoa=inv.nien_khoa,
-        type=inv.type,
-        attendeeName=inv.attendee_name,
-        size=inv.size,
-        quantity=inv.quantity,
-        sizes=inv.sizes or {},
-        snacks=inv.snacks,
-        amount=inv.amount,
-        status=inv.status,
-        note=inv.note or "",
-        paymentClaimedAt=inv.payment_claimed_at,
-        receiptUrl=inv.receipt_url,
-        ocrResult=inv.ocr_result,
-        receiptAttempts=inv.receipt_attempts or [],
-        lastSessionId=inv.last_session_id,
-        checkedIn=inv.checked_in,
-        checkedInAt=inv.checked_in_at,
-        checkinEntries=inv.checkin_entries or [],
-        shirtReceived=inv.shirt_received,
-        shirtReceivedAt=inv.shirt_received_at,
-        emailSent=bool(getattr(inv, "email_sent", False)),
-        emailSentAt=getattr(inv, "email_sent_at", None),
-        createdAt=inv.created_at,
-        updatedAt=inv.updated_at
-    )
+    entries = getattr(inv, "checkin_entries", [])
+    if entries is None:
+        entries = []
+
+    res_data = {
+        "id": inv.id,
+        "code": inv.code,
+        "memberId": inv.member_id,
+        "nienKhoa": inv.nien_khoa,
+        "type": inv.type,
+        "attendeeName": inv.attendee_name,
+        "size": inv.size,
+        "quantity": inv.quantity,
+        "sizes": inv.sizes or {},
+        "snacks": inv.snacks,
+        "amount": inv.amount,
+        "status": inv.status,
+        "note": inv.note or "",
+        "paymentClaimedAt": inv.payment_claimed_at,
+        "receiptUrl": inv.receipt_url,
+        "ocrResult": inv.ocr_result,
+        "receiptAttempts": inv.receipt_attempts or [],
+        "lastSessionId": inv.last_session_id,
+        "checkedIn": inv.checked_in,
+        "checkedInAt": inv.checked_in_at,
+        "shirtReceived": inv.shirt_received,
+        "shirtReceivedAt": inv.shirt_received_at,
+        "emailSent": bool(getattr(inv, "email_sent", False)),
+        "emailSentAt": getattr(inv, "email_sent_at", None),
+        "createdAt": inv.created_at,
+        "updatedAt": inv.updated_at,
+    }
+    try:
+        return InvitationResponse(**res_data, checkinEntries=entries)
+    except Exception:
+        return InvitationResponse(**res_data)
 
 @router.get("", response_model=List[InvitationResponse])
 def get_invitations(
@@ -125,6 +132,14 @@ def get_invitation(id_or_code: str, db: Session = Depends(get_db)):
 
 @router.post("", response_model=InvitationResponse)
 def create_invitation(inv_in: InvitationCreate, db: Session = Depends(get_db)):
+    # Check supplementary opening time: 13:00 17/10/2026 UTC+7 (06:00 UTC)
+    open_time_utc = datetime(2026, 10, 17, 6, 0, 0, tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) < open_time_utc:
+        raise HTTPException(
+            status_code=400,
+            detail="Cổng đăng ký bổ sung sẽ chính thức mở vào lúc 13:00 chiều nay (17/10/2026). Vui lòng quay lại sau ít phút."
+        )
+
     # Check registration limit (MAX_REGISTRATION_LIMIT attendees max - only count confirmed/approved invitations)
     total_quantity = db.query(func.sum(func.coalesce(Invitation.quantity, 1))).filter(Invitation.status == "confirmed").scalar() or 0
     remaining = max(0, MAX_REGISTRATION_LIMIT - total_quantity)

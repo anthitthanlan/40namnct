@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { Modal } from "./modal";
-import { getRegistrationStatus } from "@/lib/registration-config";
+import CountdownBadge from "./CountdownBadge";
+import { getRegistrationStatus, type RegStatusResult } from "@/lib/registration-config";
 
 const SIZES = ["S", "M", "L", "XL", "XXL", "NC1", "NC2", "NC3"] as const;
 type Size = (typeof SIZES)[number];
@@ -150,7 +151,7 @@ export default function RegisterForm() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {
-          const maxLimit = data.maxLimit ?? 400;
+          const maxLimit = data.maxLimit ?? 450;
           const attendeeCount = data.attendeeCount ?? 0;
           setSlotStats({
             attendeeCount,
@@ -669,7 +670,15 @@ export default function RegisterForm() {
   const modalEase = [0.22, 1, 0.36, 1] as [number, number, number, number];
   const boxTransition = { duration: 0.4, ease: modalEase };
 
-  const regStatus = getRegistrationStatus();
+  const [regStatus, setRegStatus] = useState<RegStatusResult>(() => getRegistrationStatus());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRegStatus(getRegistrationStatus());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const isCapacityFull = !!slotStats?.isFull;
 
   if (!regStatus.canRegister || isCapacityFull) {
@@ -687,12 +696,19 @@ export default function RegisterForm() {
         </span>
         <h2 className="text-2xl font-bold text-slate-900 mb-4">
           {isCapacityFull
-            ? "Cổng Đăng Ký Đã Đạt Giới Hạn 400 Người Tham Dự"
+            ? "Cổng Đăng Ký Đã Đạt Giới Hạn 450 Người Tham Dự"
             : regStatus.title}
         </h2>
+        {isPreOpen && (
+          <div className="my-6 flex justify-center">
+            <div className="inline-block p-4 sm:p-6 bg-slate-50 border border-slate-200/80 rounded-2xl shadow-sm text-left">
+              <CountdownBadge />
+            </div>
+          </div>
+        )}
         <p className="text-slate-600 mb-8 leading-relaxed text-lg whitespace-pre-line">
           {isCapacityFull
-            ? "Cổng đăng ký tham dự Ngày Trở Về đã đạt giới hạn 400 người tham dự. Mọi thắc mắc và hỗ trợ xin vui lòng liên hệ Fanpage chính thức của Nhà trường để được hướng dẫn."
+            ? "Cổng đăng ký tham dự Ngày Trở Về đã đạt giới hạn 450 người tham dự. Mọi thắc mắc và hỗ trợ xin vui lòng liên hệ Fanpage chính thức của Nhà trường để được hướng dẫn."
             : regStatus.message}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">

@@ -15,7 +15,7 @@ export async function GET() {
     if (res.ok) {
       const data = await res.json();
       const attendeeCount = data.attendeeCount || 0;
-      const maxLimit = data.maxLimit || 400;
+      const maxLimit = data.maxLimit || 450;
       return NextResponse.json({
         ...data,
         maxLimit,
@@ -32,8 +32,8 @@ export async function GET() {
     attendeeCount: 0,
     memberCount: 0,
     totalAmount: 0,
-    maxLimit: 400,
+    maxLimit: 450,
     isFull: false,
-    remaining: 400,
+    remaining: 450,
   });
 }

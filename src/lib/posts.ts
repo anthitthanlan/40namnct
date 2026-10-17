@@ -76,6 +76,20 @@ export function extractFirstImage(content: string): string | null {
   return null;
 }
 
+export function getSmartExcerpt(content: string, maxLength = 160): string {
+  if (!content) return "";
+  let text = content.replace(/<[^>]*>/g, " ");
+  text = text.replace(/!\[.*?\]\(.*?\)/g, "");
+  text = text.replace(/\[([^\]]+)\]\(.*?\)/g, "$1");
+  text = text.replace(/[#*_`>~-]/g, " ");
+  text = text.replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  if (text.length <= maxLength) return text;
+  const truncated = text.slice(0, maxLength);
+  const lastSpace = truncated.lastIndexOf(" ");
+  return (lastSpace > maxLength * 0.7 ? truncated.slice(0, lastSpace) : truncated) + "...";
+}
+
 export async function listPublished(): Promise<Post[]> {
   try {
     const res = await fetch(`${API_URL}/api/posts?status=published`, {

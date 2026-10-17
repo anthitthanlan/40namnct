@@ -31,10 +31,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       url: `${SITE_URL}/cau-chuyen/danh-muc/${category.slug}`,
-      siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+      siteName: "40 Năm THPT Nguyễn Công Trứ",
       images: [
         {
           url: "/images/og-share.png",
+          width: 1200,
+          height: 630,
           alt: category.name,
         },
       ],
@@ -60,8 +62,11 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const categories = await listCategories();
   const catMap = Object.fromEntries(categories.map((c) => [c.id, c.name]));
 
-  // Lọc bài viết theo danh mục
-  const posts = allPosts.filter((p) => p.categoryId === category.id);
+  // Lọc bài viết theo danh mục (hỗ trợ hiển thị bài viết cộng đồng/thanh xuân)
+  const isThanhXuan = category.slug === "cau-chuyen-thanh-xuan" || category.name.toLowerCase().includes("thanh xuân");
+  const posts = allPosts.filter(
+    (p) => p.categoryId === category.id || (isThanhXuan && (p.source === "user" || !p.categoryId))
+  );
   const pinnedPosts = posts.filter((p) => p.pinned);
   const normalPosts = posts.filter((p) => !p.pinned);
 

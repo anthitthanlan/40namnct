@@ -2,31 +2,36 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import jsQR from "jsqr";
+import toast from "react-hot-toast";
 import { type InvitationView, formatVnd, sizesLabel } from "@/lib/invitation-view";
-
-type ScanMode = "checkin" | "shirt" | "info";
+import { type AdminRole, canCheckIn as checkCanCheckIn, canDistributeShirt as checkCanDistributeShirt } from "@/lib/admin";
 
 type ScanHistoryEntry = {
   id: string;
   ok: boolean;
-  mode: ScanMode;
   message: string;
   invitation?: InvitationView;
   time: string;
 };
 
 export default function AdminCameraScanner({
+  adminRole,
   onCheckInSuccess,
 }: {
+  adminRole?: AdminRole;
   onCheckInSuccess?: (invitation: InvitationView) => void;
 }) {
+  const role = adminRole || "super_admin";
+  const userCanCheckIn = checkCanCheckIn(role);
+  const userCanDistributeShirt = checkCanDistributeShirt(role);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  
+
   const [active, setActive] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [busy, setBusy] = useState(false);
-  
+
   // Danh sách camera và camera hiện tại
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [currentCameraIdx, setCurrentCameraIdx] = useState(0);
@@ -38,9 +43,15 @@ export default function AdminCameraScanner({
     message: string;
     invitation?: InvitationView;
   } | null>(null);
-  
+
+  // Trạng thái tạm thời trước khi Submit (0 lên 1, 1 không thể về 0)
+  const [pendingCheckIn, setPendingCheckIn] = useState(false);
+  const [pendingShirt, setPendingShirt] = useState(false);
+  const [groupAttendeeName, setGroupAttendeeName] = useState("");
+  const [submitError, setSubmitError] = useState("");
+
   const [scanHistory, setScanHistory] = useState<ScanHistoryEntry[]>([]);
-  
+
   const isScanningRef = useRef(false);
   const isProcessingRef = useRef(false);
 
@@ -66,10 +77,13 @@ export default function AdminCameraScanner({
 
   // Lấy danh sách camera
   useEffect(() => {
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const videoDevices = devices.filter((d) => d.kind === "videoinput");
-      setCameras(videoDevices);
-    }).catch(console.error);
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((devices) => {
+        const videoDevices = devices.filter((d) => d.kind === "videoinput");
+        setCameras(videoDevices);
+      })
+      .catch(console.error);
   }, []);
 
   const stopCamera = useCallback(() => {
@@ -82,161 +96,7 @@ export default function AdminCameraScanner({
     }
   }, []);
 
-  const startCamera = useCallback(async () => {
-    setCameraError("");
-    setScanResult(null);
-    setScannedPayload(null);
-    isProcessingRef.current = false; // Reset processing state
-    
-    try {
-      let constraints: MediaStreamConstraints = {
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-      };
-      
-      // Nếu có nhiều camera và đã chọn index
-      if (cameras.length > 0) {
-        const deviceId = cameras[currentCameraIdx].deviceId;
-        if (deviceId) {
-          constraints = {
-            video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-          };
-        }
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setActive(true);
-        isScanningRef.current = true;
-        requestAnimationFrame(tick);
-      }
-    } catch (err) {
-      console.error("Camera access error:", err);
-      setCameraError(
-        "Không thể mở Camera. Vui lòng cấp quyền truy cập máy ảnh cho trình duyệt.",
-      );
-    }
-  }, [cameras, currentCameraIdx]);
-
-  function switchCamera() {
-    stopCamera();
-    setCurrentCameraIdx((prev) => (prev + 1) % cameras.length);
-  }
-
-  // Khởi động lại camera nếu index thay đổi
-  useEffect(() => {
-    if (active) {
-      startCamera();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentCameraIdx]);
-
-  useEffect(() => {
-    return () => stopCamera();
-  }, [stopCamera]);
-
-  async function handleAction(mode: "checkin" | "shirt") {
-    if (!scannedPayload) return;
-    setBusy(true);
-    const now = Date.now();
-    try {
-      const res = await fetch("/api/admin/invitations/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: scannedPayload, mode }),
-      });
-      const data = await res.json();
-      
-      if (res.ok && data.ok) {
-        playBeep(true);
-        // Cập nhật lại kết quả hiển thị với thông tin vé mới nhất
-        setScanResult({
-          ok: true,
-          message: data.message,
-          invitation: data.invitation,
-        });
-        
-        if (mode === "checkin" && onCheckInSuccess && data.invitation) {
-          onCheckInSuccess(data.invitation);
-        }
-      } else {
-        playBeep(false);
-        setScanResult({
-          ok: false,
-          message: data.message || "Có lỗi xảy ra khi thực hiện hành động.",
-          invitation: data.invitation,
-        });
-      }
-
-      // Luôn lưu vào lịch sử dù thành công hay thất bại
-      setScanHistory((prev) => [
-        {
-          id: `${now}-${Math.random().toString(36).slice(2, 6)}`,
-          ok: data.ok,
-          mode: mode,
-          message: data.message || "Thất bại",
-          invitation: data.invitation || scanResult?.invitation,
-          time: new Date().toLocaleTimeString("vi-VN"),
-        },
-        ...prev,
-      ].slice(0, 10));
-
-    } catch (err) {
-      playBeep(false);
-      alert("Lỗi kết nối máy chủ.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function fetchQrInfo(codePayload: string) {
-    if (isProcessingRef.current) return;
-    isProcessingRef.current = true;
-    setBusy(true);
-    try {
-      const res = await fetch("/api/admin/invitations/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ payload: codePayload, mode: "info" }),
-      });
-      const data = await res.json();
-      
-      if (res.ok && data.ok) {
-        playBeep(true);
-        setScannedPayload(codePayload);
-        setScanResult({
-          ok: true,
-          message: "Lấy thông tin thành công. Chọn hành động bên dưới.",
-          invitation: data.invitation,
-        });
-        stopCamera(); // Tắt camera sau khi quét thành công
-      } else {
-        playBeep(false);
-        setScanResult({
-          ok: false,
-          message: data.message || "Mã QR không hợp lệ",
-        });
-        // Lỗi QR (không hợp lệ, etc.) => Có thể quét tiếp mã khác sau 1.5s
-        setTimeout(() => {
-          isProcessingRef.current = false;
-        }, 1500);
-      }
-    } catch {
-      playBeep(false);
-      setScanResult({
-        ok: false,
-        message: "Lỗi kết nối máy chủ.",
-      });
-      setTimeout(() => {
-        isProcessingRef.current = false;
-      }, 1500);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function tick() {
+  const tick = useCallback(() => {
     if (!isScanningRef.current || !videoRef.current) return;
     const video = videoRef.current;
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -258,7 +118,217 @@ export default function AdminCameraScanner({
     if (isScanningRef.current) {
       requestAnimationFrame(tick);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    setCameraError("");
+    setScanResult(null);
+    setScannedPayload(null);
+    setPendingCheckIn(false);
+    setPendingShirt(false);
+    setGroupAttendeeName("");
+    setSubmitError("");
+    isProcessingRef.current = false;
+
+    try {
+      let constraints: MediaStreamConstraints = {
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+      };
+
+      if (cameras.length > 0) {
+        const deviceId = cameras[currentCameraIdx]?.deviceId;
+        if (deviceId) {
+          constraints = {
+            video: { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          };
+        }
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setActive(true);
+        isScanningRef.current = true;
+        requestAnimationFrame(tick);
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      setCameraError(
+        "Không thể mở Camera. Vui lòng cấp quyền truy cập máy ảnh cho trình duyệt.",
+      );
+    }
+  }, [cameras, currentCameraIdx, tick]);
+
+  function switchCamera() {
+    stopCamera();
+    setCurrentCameraIdx((prev) => (prev + 1) % cameras.length);
   }
+
+  useEffect(() => {
+    if (active) {
+      startCamera();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentCameraIdx]);
+
+  useEffect(() => {
+    return () => stopCamera();
+  }, [stopCamera]);
+
+  async function fetchQrInfo(codePayload: string) {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/admin/invitations/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: codePayload, mode: "info" }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        playBeep(true);
+        setScannedPayload(codePayload);
+        const inv: InvitationView = data.invitation;
+        setScanResult({
+          ok: true,
+          message: "Lấy thông tin thành công.",
+          invitation: inv,
+        });
+
+        // Thiết lập trạng thái ban đầu:
+        // Với vé cá nhân: nếu đã checkin thì khoá, nếu chưa thì mặc định là false
+        // Với vé tập thể: nếu đã đủ số lượng thì khoá, nếu chưa đủ thì mặc định là false
+        setPendingCheckIn(inv.type === "group" ? false : Boolean(inv.checkedIn));
+        setPendingShirt(Boolean(inv.shirtReceived));
+        setGroupAttendeeName("");
+        setSubmitError("");
+
+        stopCamera(); // Tắt camera sau khi quét thành công
+      } else {
+        playBeep(false);
+        setScanResult({
+          ok: false,
+          message: data.message || "Mã QR không hợp lệ",
+        });
+        setTimeout(() => {
+          isProcessingRef.current = false;
+        }, 1500);
+      }
+    } catch {
+      playBeep(false);
+      setScanResult({
+        ok: false,
+        message: "Lỗi kết nối máy chủ.",
+      });
+      setTimeout(() => {
+        isProcessingRef.current = false;
+      }, 1500);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSubmitAction() {
+    if (!scannedPayload || !scanResult?.invitation) return;
+    const inv = scanResult.invitation;
+    setSubmitError("");
+
+    const isGroup = inv.type === "group";
+    const entries = inv.checkinEntries || [];
+    const maxQty = inv.quantity || 1;
+    const isGroupFull = entries.length >= maxQty;
+
+    // Validate check-in tập thể: bắt buộc nhập tên
+    if (isGroup && pendingCheckIn && !isGroupFull) {
+      if (!groupAttendeeName.trim()) {
+        const errMsg = "Vui lòng nhập họ và tên của người tham dự cho lượt check-in này.";
+        setSubmitError(errMsg);
+        toast.error(errMsg);
+        return;
+      }
+    }
+
+    // Tính toán cờ hành động
+    // Riêng trang quét QR: 0 có thể lên 1, 1 không thể về 0
+    const doCheckIn = isGroup
+      ? pendingCheckIn && !isGroupFull
+      : pendingCheckIn && !inv.checkedIn;
+    const doShirt = pendingShirt && !inv.shirtReceived;
+
+    setBusy(true);
+    const now = Date.now();
+
+    try {
+      const res = await fetch("/api/admin/invitations/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          payload: scannedPayload,
+          mode: "submit",
+          doCheckIn,
+          attendeeName: isGroup ? groupAttendeeName.trim() : undefined,
+          doShirt,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok && data.ok) {
+        playBeep(true);
+        toast.success(data.message || "Đã lưu thành công!");
+
+        if (onCheckInSuccess && data.invitation) {
+          onCheckInSuccess(data.invitation);
+        }
+
+        // Thêm vào lịch sử
+        setScanHistory((prev) => [
+          {
+            id: `${now}-${Math.random().toString(36).slice(2, 6)}`,
+            ok: true,
+            message: data.message || "Hoàn tất thao tác",
+            invitation: data.invitation || inv,
+            time: new Date().toLocaleTimeString("vi-VN"),
+          },
+          ...prev,
+        ].slice(0, 10));
+
+        // Tự động bật lại camera để quét mã tiếp theo
+        await startCamera();
+      } else {
+        playBeep(false);
+        const errMsg = data.message || "Có lỗi xảy ra khi lưu thay đổi.";
+        setSubmitError(errMsg);
+        toast.error(errMsg);
+
+        setScanHistory((prev) => [
+          {
+            id: `${now}-${Math.random().toString(36).slice(2, 6)}`,
+            ok: false,
+            message: errMsg,
+            invitation: inv,
+            time: new Date().toLocaleTimeString("vi-VN"),
+          },
+          ...prev,
+        ].slice(0, 10));
+      }
+    } catch {
+      playBeep(false);
+      setSubmitError("Lỗi kết nối máy chủ khi lưu thông tin.");
+      toast.error("Lỗi kết nối máy chủ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const currentInv = scanResult?.invitation;
+  const isGroup = currentInv?.type === "group";
+  const groupEntries = currentInv?.checkinEntries || [];
+  const groupMax = currentInv?.quantity || 1;
+  const isGroupFull = isGroup && groupEntries.length >= groupMax;
 
   return (
     <div className="space-y-6">
@@ -271,7 +341,7 @@ export default function AdminCameraScanner({
               <span>Quét QR Sự kiện 08/11</span>
             </h3>
             <p className="mt-0.5 text-xs text-slate-500">
-              Hướng camera vào mã để xem thông tin trước khi thực hiện Check-in / Trao áo.
+              Quét mã thư mời · Tương tác lựa chọn Check-in / Trao áo · Nhấn Submit để lưu và tự động mở camera quét lượt tiếp theo.
             </p>
           </div>
 
@@ -285,7 +355,7 @@ export default function AdminCameraScanner({
                 <span className="material-symbols-rounded inline-block align-middle text-[1em]">videocam</span> Bật Camera
               </button>
             ) : null}
-            
+
             {active && (
               <>
                 {cameras.length > 1 && (
@@ -306,31 +376,21 @@ export default function AdminCameraScanner({
                 </button>
               </>
             )}
-            
-            {scanResult && !active && (
-              <button
-                type="button"
-                onClick={startCamera}
-                className="btn-lightship rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-xs font-extrabold text-white shadow-md transition-all"
-              >
-                <span className="material-symbols-rounded inline-block align-middle text-[1em]">qr_code_scanner</span> Quét mã khác
-              </button>
-            )}
           </div>
         </div>
       </div>
 
       {cameraError && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700">
-          <span className="material-symbols-rounded inline-block align-middle text-[1em]">warning</span> {cameraError}
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700 flex items-center gap-2">
+          <span className="material-symbols-rounded text-lg">warning</span> {cameraError}
         </div>
       )}
 
       <div className="grid gap-6 md:grid-cols-[1.4fr_1fr] items-start">
-        {/* Cột trái: Máy ảnh và Kết quả */}
+        {/* Cột trái: Máy ảnh và Chi tiết vé đang quét */}
         <div className="flex flex-col gap-6">
           {/* Khung máy ảnh */}
-          <div className={`${scanResult ? 'hidden' : 'flex'} relative overflow-hidden rounded-2xl bg-black aspect-video items-center justify-center border-2 shadow-inner border-slate-800`}>
+          <div className={`${scanResult ? "hidden" : "flex"} relative overflow-hidden rounded-2xl bg-black aspect-video items-center justify-center border-2 shadow-inner border-slate-800`}>
             <video
               ref={videoRef}
               className={`h-full w-full object-cover ${active ? "block" : "hidden"}`}
@@ -353,8 +413,8 @@ export default function AdminCameraScanner({
                 </div>
 
                 {busy && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs text-white text-xs font-extrabold">
-                    <span className="material-symbols-rounded inline-block align-middle text-[1em]">hourglass_empty</span> Đang đọc mã…
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs text-white text-xs font-extrabold gap-2">
+                    <span className="material-symbols-rounded animate-spin">progress_activity</span> Đang đọc mã…
                   </div>
                 )}
               </>
@@ -366,116 +426,285 @@ export default function AdminCameraScanner({
             )}
           </div>
 
-          {/* Kết quả scan nằm dưới camera */}
+          {/* Chi tiết vé sau khi quét */}
           {scanResult && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
               {!scanResult.ok ? (
                 <div className="flex flex-col items-center justify-center text-center text-rose-600 py-8">
                   <span className="material-symbols-rounded text-5xl mb-2">error</span>
                   <p className="font-bold text-lg">{scanResult.message}</p>
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="mt-4 rounded-xl bg-slate-900 px-5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-all"
+                  >
+                    Quét lại
+                  </button>
                 </div>
-              ) : scanResult.invitation ? (
+              ) : currentInv ? (
                 <div className="flex flex-col">
+                  {/* Người đại diện & Mã vé */}
                   <div className="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4">
                     <div className="h-12 w-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                      <span className="material-symbols-rounded text-2xl">person</span>
+                      <span className="material-symbols-rounded text-2xl">
+                        {isGroup ? "groups" : "person"}
+                      </span>
                     </div>
-                    <div>
-                      <h4 className="font-black text-xl text-slate-900">
-                        {scanResult.invitation.attendeeName || "Theo đoàn"}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-black text-xl text-slate-900 truncate">
+                        {currentInv.attendeeName || "Theo đoàn"}
                       </h4>
-                      <p className="text-sm font-mono text-slate-500">
-                        {scanResult.invitation.code}
+                      <p className="text-sm font-mono text-slate-500 flex items-center gap-2">
+                        <span>{currentInv.code}</span>
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          isGroup ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                        }`}>
+                          {isGroup ? `Tập thể (${groupMax} suất)` : "Cá nhân"}
+                        </span>
                       </p>
                     </div>
                   </div>
-                  
+
+                  {/* Thông tin vé cơ bản */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-slate-50 rounded-xl p-3">
-                      <p className="text-[10px] uppercase font-bold text-slate-400">Loại vé</p>
-                      <p className="font-bold text-slate-800 mt-1 text-sm">
-                        {scanResult.invitation.type === "group"
-                          ? `Tập thể (${scanResult.invitation.quantity} suất)`
-                          : "Cá nhân"}
-                      </p>
-                    </div>
                     <div className="bg-slate-50 rounded-xl p-3">
                       <p className="text-[10px] uppercase font-bold text-slate-400">Áo & F&B</p>
                       <p className="font-bold text-slate-800 mt-1 text-sm">
                         {sizesLabel(
-                          scanResult.invitation.type,
-                          scanResult.invitation.size,
-                          scanResult.invitation.sizes,
+                          currentInv.type,
+                          currentInv.size,
+                          currentInv.sizes,
                         ) || "Không áo"}
                         <span className="mx-1 text-slate-300">|</span>
-                        {scanResult.invitation.snacks} F&B
+                        {currentInv.snacks} F&B
                       </p>
+                    </div>
+                    <div className="bg-slate-50 rounded-xl p-3">
+                      <p className="text-[10px] uppercase font-bold text-slate-400">Đóng góp</p>
+                      <p className="font-bold text-amber-700 mt-1 text-sm">{formatVnd(currentInv.amount)}</p>
                     </div>
                   </div>
 
-                  <div className="bg-amber-50/50 rounded-xl p-4 mb-6 border border-amber-100/50">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-slate-400">Đóng góp</p>
-                        <p className="font-bold text-amber-700 mt-1 text-sm">{formatVnd(scanResult.invitation.amount)}</p>
-                      </div>
-                      {scanResult.invitation.nienKhoa && (
+                  <div className="bg-amber-50/50 rounded-xl p-4 mb-6 border border-amber-100/50 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {currentInv.nienKhoa && (
                         <div>
                           <p className="text-[10px] uppercase font-bold text-slate-400">Niên khóa / Lớp</p>
-                          <p className="font-bold text-slate-700 mt-1 text-sm">{scanResult.invitation.nienKhoa}</p>
+                          <p className="font-bold text-slate-700 mt-0.5">{currentInv.nienKhoa}</p>
                         </div>
                       )}
-                      {(scanResult.invitation as any).memberPhone && (
+                      {(currentInv as any).memberPhone && (
                         <div>
                           <p className="text-[10px] uppercase font-bold text-slate-400">Số điện thoại</p>
-                          <p className="font-bold text-slate-700 mt-1 text-sm">{(scanResult.invitation as any).memberPhone}</p>
+                          <p className="font-bold text-slate-700 mt-0.5">{(currentInv as any).memberPhone}</p>
                         </div>
                       )}
-                      {(scanResult.invitation as any).memberEmail && (
+                      {(currentInv as any).memberEmail && (
                         <div>
                           <p className="text-[10px] uppercase font-bold text-slate-400">Email</p>
-                          <p className="font-bold text-slate-700 mt-1 text-sm">{(scanResult.invitation as any).memberEmail}</p>
+                          <p className="font-bold text-slate-700 mt-0.5">{(currentInv as any).memberEmail}</p>
                         </div>
                       )}
                     </div>
-                    {scanResult.invitation.note && (
-                      <div className="mt-4 pt-4 border-t border-amber-100/50">
+                    {currentInv.note && (
+                      <div className="mt-3 pt-3 border-t border-amber-100/50">
                         <p className="text-[10px] uppercase font-bold text-slate-400">Ghi chú</p>
-                        <p className="font-medium text-slate-700 mt-1 text-[13px]">{scanResult.invitation.note}</p>
+                        <p className="font-medium text-slate-700 mt-0.5">{currentInv.note}</p>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  {/* KHU VỰC THAO TÁC (TICK CHỌN & NHẬP LIỆU) */}
+                  <div className="space-y-5 rounded-2xl border-2 border-indigo-100 bg-indigo-50/30 p-5 mb-6">
+                    <h5 className="text-xs font-black uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                      <span className="material-symbols-rounded text-[18px]">checklist</span>
+                      Thao tác xử lý thư mời
+                    </h5>
+
+                    {/* 1. Phần Check-in */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                          <span className="material-symbols-rounded text-emerald-600">gps_fixed</span>
+                          Check-in vào cổng
+                        </span>
+
+                        {isGroup ? (
+                          <span className="text-xs font-extrabold text-slate-600">
+                            Đã check-in: <strong className="text-emerald-700">{groupEntries.length}</strong> / {groupMax}
+                          </span>
+                        ) : currentInv.checkedIn ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            <span className="material-symbols-rounded text-[14px]">check_circle</span>
+                            Đã Check-in
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {/* Danh sách người trong đoàn đã check-in trước đó (nếu là tập thể) */}
+                      {isGroup && groupEntries.length > 0 && (
+                        <div className="rounded-lg bg-slate-50 p-3 border border-slate-100 text-xs space-y-1.5 max-h-36 overflow-y-auto">
+                          <p className="text-[11px] font-bold text-slate-400 uppercase">Danh sách người đã check-in trong đoàn:</p>
+                          {groupEntries.map((entry, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-slate-700 py-0.5 border-b border-slate-100 last:border-0">
+                              <span className="font-semibold">{idx + 1}. {entry.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {new Date(entry.time).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Input check-in cho tập thể */}
+                      {isGroup ? (
+                        isGroupFull ? (
+                          <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-xs font-bold text-emerald-800 flex items-center gap-2">
+                            <span className="material-symbols-rounded text-base">check_circle</span>
+                            Đoàn đã check-in đủ tất cả {groupMax} suất tham dự.
+                          </div>
+                        ) : (
+                          <div className="space-y-3 pt-2 border-t border-slate-100">
+                            <label className={`flex items-center gap-3 cursor-pointer select-none ${!userCanCheckIn ? "opacity-50 pointer-events-none" : ""}`}>
+                              <input
+                                type="checkbox"
+                                checked={pendingCheckIn}
+                                disabled={!userCanCheckIn}
+                                onChange={(e) => setPendingCheckIn(e.target.checked)}
+                                className="h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                              />
+                              <span className="text-xs font-extrabold text-slate-800">
+                                Check-in lượt tiếp theo (Lượt {groupEntries.length + 1}/{groupMax})
+                              </span>
+                              {!userCanCheckIn && (
+                                <span className="text-[11px] text-rose-500 font-bold">(Chỉ bộ phận check-in)</span>
+                              )}
+                            </label>
+
+                            {pendingCheckIn && (
+                              <div className="space-y-1.5 pl-8">
+                                <label className="block text-[11px] font-bold uppercase text-slate-500">
+                                  Họ và tên người tham dự lượt này <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={groupAttendeeName}
+                                  onChange={(e) => setGroupAttendeeName(e.target.value)}
+                                  placeholder="Nhập tên người tham dự trong đoàn..."
+                                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:border-indigo-600 focus:bg-white focus:outline-none"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )
+                      ) : (
+                        /* Toggle cho vé cá nhân: 0 có thể lên 1, 1 không thể về 0 */
+                        <div className="pt-1">
+                          <label className={`flex items-center gap-3 select-none ${
+                            currentInv.checkedIn
+                              ? "cursor-not-allowed opacity-80"
+                              : !userCanCheckIn
+                                ? "cursor-not-allowed opacity-50"
+                                : "cursor-pointer"
+                          }`}>
+                            <input
+                              type="checkbox"
+                              checked={pendingCheckIn}
+                              disabled={currentInv.checkedIn || !userCanCheckIn}
+                              onChange={(e) => {
+                                // 1 không thể về 0 trên trang QR
+                                if (currentInv.checkedIn) return;
+                                setPendingCheckIn(e.target.checked);
+                              }}
+                              className="h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:opacity-75"
+                            />
+                            <span className="text-xs font-extrabold text-slate-800">
+                              {currentInv.checkedIn ? "Đã Check-in vào cổng (Đã lưu)" : "Xác nhận Check-in vào cổng"}
+                            </span>
+                            {!userCanCheckIn && !currentInv.checkedIn && (
+                              <span className="text-[11px] text-rose-500 font-bold">(Chỉ bộ phận check-in)</span>
+                            )}
+                          </label>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. Phần Trao áo: 0 có thể lên 1, 1 không thể về 0 */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                          <span className="material-symbols-rounded text-orange-600">checkroom</span>
+                          Trao áo kỷ niệm & Quà
+                        </span>
+
+                        {currentInv.shirtReceived ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-extrabold text-orange-700 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-200">
+                            <span className="material-symbols-rounded text-[14px]">check_circle</span>
+                            Đã trao áo
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className="pt-1">
+                        <label className={`flex items-center gap-3 select-none ${
+                          currentInv.shirtReceived
+                            ? "cursor-not-allowed opacity-80"
+                            : !userCanDistributeShirt
+                              ? "cursor-not-allowed opacity-50"
+                              : "cursor-pointer"
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={pendingShirt}
+                            disabled={currentInv.shirtReceived || !userCanDistributeShirt}
+                            onChange={(e) => {
+                              // 1 không thể về 0 trên trang QR
+                              if (currentInv.shirtReceived) return;
+                              setPendingShirt(e.target.checked);
+                            }}
+                            className="h-5 w-5 rounded border-slate-300 text-orange-600 focus:ring-orange-500 disabled:opacity-75"
+                          />
+                          <span className="text-xs font-extrabold text-slate-800">
+                            {currentInv.shirtReceived ? "Đã trao áo (Đã lưu)" : "Xác nhận Trao áo & vật phẩm"}
+                          </span>
+                          {!userCanDistributeShirt && !currentInv.shirtReceived && (
+                            <span className="text-[11px] text-rose-500 font-bold">(Không có quyền trao áo)</span>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+
+                    {submitError && (
+                      <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 flex items-center gap-2">
+                        <span className="material-symbols-rounded text-base">error</span>
+                        {submitError}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* NÚT SUBMIT DUY NHẤT */}
+                  <div className="space-y-2">
                     <button
-                      onClick={() => handleAction("checkin")}
-                      disabled={busy || scanResult.invitation?.checkedIn}
-                      className={`flex-1 rounded-xl py-3 px-4 font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-                        scanResult.invitation?.checkedIn
-                          ? "bg-gradient-to-tr from-emerald-100 to-emerald-50 text-emerald-600 border border-emerald-200 cursor-not-allowed"
-                          : "bg-gradient-to-tr from-emerald-700 to-emerald-500 text-white hover:from-emerald-800 hover:to-emerald-600 shadow-md hover:shadow-lg"
-                      }`}
+                      type="button"
+                      disabled={busy}
+                      onClick={handleSubmitAction}
+                      className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-700 hover:from-indigo-700 hover:to-blue-800 py-3.5 px-6 font-black text-sm text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                     >
-                      <span className="material-symbols-rounded text-[18px]">
-                        {scanResult.invitation?.checkedIn ? "check_circle" : "gps_fixed"}
-                      </span>
-                      {scanResult.invitation?.checkedIn ? "Đã Check-in" : "Check-in"}
+                      {busy ? (
+                        <>
+                          <span className="material-symbols-rounded animate-spin">progress_activity</span>
+                          <span>Đang lưu...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-rounded">task_alt</span>
+                          <span>Xác nhận & Hoàn tất (Submit)</span>
+                        </>
+                      )}
                     </button>
-                    
-                    <button
-                      onClick={() => handleAction("shirt")}
-                      disabled={busy || scanResult.invitation?.shirtReceived}
-                      className={`flex-1 rounded-xl py-3 px-4 font-bold text-sm flex items-center justify-center gap-2 transition-all ${
-                        scanResult.invitation?.shirtReceived
-                          ? "bg-gradient-to-tr from-orange-50 to-red-50 text-red-600 border border-red-200 cursor-not-allowed"
-                          : "bg-gradient-to-tr from-orange-600 to-red-500 text-white hover:from-orange-700 hover:to-red-600 shadow-md hover:shadow-lg"
-                      }`}
-                    >
-                      <span className="material-symbols-rounded text-[18px]">
-                        {scanResult.invitation?.shirtReceived ? "check_circle" : "checkroom"}
-                      </span>
-                      {scanResult.invitation?.shirtReceived ? "Đã trao áo" : "Trao áo"}
-                    </button>
+                    <p className="text-[11px] text-center text-slate-400 font-medium">
+                      Nhấn Submit để lưu trạng thái và tự động mở lại camera quét thư mời tiếp theo.
+                    </p>
                   </div>
                 </div>
               ) : null}
@@ -483,7 +712,7 @@ export default function AdminCameraScanner({
           )}
         </div>
 
-        {/* Lịch sử hành động */}
+        {/* Cột phải: Lịch sử hành động */}
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 min-h-[300px]">
             <div className="flex items-center justify-between mb-3">
@@ -501,29 +730,27 @@ export default function AdminCameraScanner({
                 </button>
               )}
             </div>
-            
+
             {scanHistory.length === 0 ? (
               <div className="h-[200px] flex items-center justify-center text-xs text-slate-400 italic">
                 Chưa có dữ liệu lịch sử
               </div>
             ) : (
-              <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[450px] overflow-y-auto pr-1">
                 {scanHistory.map((entry) => (
                   <div
                     key={entry.id}
-                    className={`flex items-start gap-2 rounded-xl px-2 py-1.5 text-[11px] ${
+                    className={`flex items-start gap-2 rounded-xl px-2.5 py-2 text-[11px] ${
                       entry.ok
-                        ? entry.mode === "shirt"
-                          ? "bg-gradient-to-tr from-orange-50 to-red-50 border border-red-100"
-                          : "bg-gradient-to-tr from-emerald-100 to-emerald-50 border border-emerald-200"
+                        ? "bg-white border border-slate-200/80 shadow-xs"
                         : "bg-rose-50 border border-rose-100"
                     }`}
                   >
-                    <span className={`material-symbols-rounded text-[14px] mt-0.5 shrink-0 ${
-                      entry.ok
-                        ? entry.mode === "shirt" ? "text-red-600" : "text-emerald-700"
-                        : "text-rose-500"
-                    }`}>
+                    <span
+                      className={`material-symbols-rounded text-[16px] mt-0.5 shrink-0 ${
+                        entry.ok ? "text-emerald-600" : "text-rose-500"
+                      }`}
+                    >
                       {entry.ok ? "check_circle" : "cancel"}
                     </span>
                     <div className="flex-1 min-w-0">

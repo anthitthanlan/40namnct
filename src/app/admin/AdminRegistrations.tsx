@@ -105,6 +105,7 @@ export default function AdminRegistrations({
   }, []);
 
   const [page, setPage] = useState(1);
+  const [jumpPageInput, setJumpPageInput] = useState("");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/registrations", { cache: "no-store" });
@@ -580,6 +581,25 @@ export default function AdminRegistrations({
     return filtered;
   }, [invitations, statusFilter, typeFilter, q, multiTicketPhoneFilter, emailFilter, logs]);
 
+  const PAGE_SIZE = 10;
+  const totalPages = Math.ceil((filteredInvitations?.length || 0) / PAGE_SIZE) || 1;
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const paginatedInvitations = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return (filteredInvitations || []).slice(start, start + PAGE_SIZE);
+  }, [filteredInvitations, currentPage]);
+
+  const handleJumpPage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const p = parseInt(jumpPageInput, 10);
+    if (!isNaN(p) && p >= 1 && p <= totalPages) {
+      setPage(p);
+      setJumpPageInput("");
+    } else {
+      toast.error(`Vui lòng nhập số trang từ 1 đến ${totalPages}`);
+    }
+  };
+
   if (members === null || invitations === null) {
     return (
       <div className="rounded-3xl bg-white p-10 text-center text-sm font-semibold text-slate-400">
@@ -880,7 +900,7 @@ export default function AdminRegistrations({
                 </div>
               ) : (
                 <>
-                  {filteredInvitations.slice(0, page * 20).map((t) => {
+                  {paginatedInvitations.map((t) => {
                     const status = invitationStatusInfo(t.status);
                     const isGroup = t.type === "group";
                     const isConfirmed = t.status === "confirmed";
@@ -1034,6 +1054,31 @@ export default function AdminRegistrations({
                             )}
                           </div>
                         </div>
+
+                        {/* Lịch sử Check-in (hiển thị danh sách tên người tham dự đã check-in) */}
+                        {Array.isArray(t.checkinEntries) && t.checkinEntries.length > 0 && (
+                          <div className="mt-3 rounded-xl bg-slate-50 border border-slate-200/80 p-3 text-xs">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="font-extrabold text-[11px] uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                <span className="material-symbols-rounded text-[15px] text-emerald-600">how_to_reg</span>
+                                Danh sách check-in ({t.checkinEntries.length}{isGroup ? ` / ${t.quantity} suất` : ""}):
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {t.checkinEntries.map((entry, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-[11px] bg-white px-2.5 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
+                                  <span className="font-bold text-slate-800">
+                                    {idx + 1}. {entry.name || t.attendeeName}
+                                  </span>
+                                  <div className="flex items-center gap-2 text-slate-400 font-mono text-[10px]">
+                                    {entry.by && <span className="text-slate-500 font-medium">Bởi: {entry.by}</span>}
+                                    <span>{vi(entry.time)}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Ảnh biên lai & Kết quả OCR (Thu gọn thông minh) */}
                         {hasReceipt && (
@@ -1509,15 +1554,102 @@ export default function AdminRegistrations({
                     );
                   })}
 
-                  {filteredInvitations.length > page * 20 && (
-                    <div className="pt-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => setPage((p) => p + 1)}
-                        className="rounded-xl border border-slate-200 bg-white px-6 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        Tải thêm thư mời (Đã hiển thị {page * 20} / {filteredInvitations.length})
-                      </button>
+                  {/* Pagination Toolbar */}
+                  {filteredInvitations.length > 0 && (
+                    <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                      {/* Left: Info */}
+                      <div className="text-xs text-slate-500 font-medium text-center md:text-left">
+                        Hiển thị <strong className="text-slate-800">{(currentPage - 1) * PAGE_SIZE + 1}</strong> - <strong className="text-slate-800">{Math.min(currentPage * PAGE_SIZE, filteredInvitations.length)}</strong> trong <strong className="text-slate-800">{filteredInvitations.length}</strong> thư mời (Trang {currentPage}/{totalPages})
+                      </div>
+
+                      {/* Center: Prev/Next & Page numbers */}
+                      <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                        <button
+                          type="button"
+                          disabled={currentPage <= 1}
+                          onClick={() => setPage(1)}
+                          title="Trang đầu"
+                          className="h-8 w-8 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold transition-colors"
+                        >
+                          «
+                        </button>
+                        <button
+                          type="button"
+                          disabled={currentPage <= 1}
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          title="Trang trước"
+                          className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold gap-1 transition-colors"
+                        >
+                          <span className="material-symbols-rounded text-[14px]">chevron_left</span>
+                          <span>Trước</span>
+                        </button>
+
+                        {/* Page numbers */}
+                        <div className="hidden sm:flex items-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                            .map((p, idx, arr) => {
+                              const prev = arr[idx - 1];
+                              const showEllipsis = prev && p - prev > 1;
+                              return (
+                                <span key={p} className="flex items-center">
+                                  {showEllipsis && <span className="px-1 text-slate-400 text-xs font-bold">…</span>}
+                                  <button
+                                    type="button"
+                                    onClick={() => setPage(p)}
+                                    className={`h-8 w-8 rounded-lg text-xs font-bold transition-all ${
+                                      p === currentPage
+                                        ? "bg-blue-600 text-white shadow-xs"
+                                        : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                    }`}
+                                  >
+                                    {p}
+                                  </button>
+                                </span>
+                              );
+                            })}
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={currentPage >= totalPages}
+                          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                          title="Trang sau"
+                          className="h-8 px-2.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold gap-1 transition-colors"
+                        >
+                          <span>Sau</span>
+                          <span className="material-symbols-rounded text-[14px]">chevron_right</span>
+                        </button>
+                        <button
+                          type="button"
+                          disabled={currentPage >= totalPages}
+                          onClick={() => setPage(totalPages)}
+                          title="Trang cuối"
+                          className="h-8 w-8 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none flex items-center justify-center text-xs font-bold transition-colors"
+                        >
+                          »
+                        </button>
+                      </div>
+
+                      {/* Right: Quick jump to page */}
+                      <form onSubmit={handleJumpPage} className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-500 font-medium">Đến trang:</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={totalPages}
+                          value={jumpPageInput}
+                          onChange={(e) => setJumpPageInput(e.target.value)}
+                          placeholder={currentPage.toString()}
+                          className="w-14 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-center font-bold text-slate-800 focus:bg-white focus:border-blue-600 focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-slate-800 hover:bg-slate-900 text-white px-3 py-1 font-bold text-xs transition-colors"
+                        >
+                          Đi tới
+                        </button>
+                      </form>
                     </div>
                   )}
                 </>

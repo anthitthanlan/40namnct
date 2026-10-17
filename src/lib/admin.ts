@@ -1,4 +1,9 @@
-export type AdminRole = "super_admin" | "system_manager" | "editor";
+export type AdminRole =
+  | "super_admin"
+  | "system_manager"
+  | "editor"
+  | "shirt_staff"
+  | "checkin_staff";
 
 export type AdminLogEntry = {
   action: string;
@@ -23,7 +28,7 @@ export type CreateAdminInput = {
   username: string;
   fullName: string;
   title: string;
-  role: "system_manager" | "editor";
+  role: "system_manager" | "editor" | "shirt_staff" | "checkin_staff";
   password: string;
 };
 
@@ -108,6 +113,18 @@ export function canCreateAccounts(role: AdminRole): boolean {
   return role === "super_admin";
 }
 
+export function isScannerOnlyRole(role: AdminRole): boolean {
+  return role === "shirt_staff" || role === "checkin_staff";
+}
+
+export function canCheckIn(role: AdminRole): boolean {
+  return role === "super_admin" || role === "system_manager" || role === "checkin_staff";
+}
+
+export function canDistributeShirt(role: AdminRole): boolean {
+  return role === "super_admin" || role === "system_manager" || role === "checkin_staff" || role === "shirt_staff";
+}
+
 export function roleLabel(role: AdminRole): string {
   switch (role) {
     case "super_admin":
@@ -116,6 +133,10 @@ export function roleLabel(role: AdminRole): string {
       return "Quản lý hệ thống";
     case "editor":
       return "Biên tập viên";
+    case "shirt_staff":
+      return "Bộ phận trao áo";
+    case "checkin_staff":
+      return "Bộ phận check-in";
     default:
       return role;
   }

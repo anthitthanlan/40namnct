@@ -9,6 +9,7 @@ import {
   listPublished,
   sortPublic,
   extractFirstImage,
+  getSmartExcerpt,
 } from "@/lib/posts";
 import Markdown from "@/components/Markdown";
 import PostCard, { PostBadges } from "@/components/PostCard";
@@ -34,7 +35,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = post.title;
   const description =
-    post.excerpt ||
+    post.excerpt?.trim() ||
+    getSmartExcerpt(post.content) ||
     `Bài viết "${post.title}" của tác giả ${post.author} nhân dịp Kỷ niệm 40 năm thành lập trường THPT Nguyễn Công Trứ.`;
 
   return {
@@ -48,13 +50,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description,
       url: `${SITE_URL}/bai-viet/${post.slug}`,
-      siteName: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+      siteName: "40 Năm THPT Nguyễn Công Trứ",
       publishedTime: post.createdAt,
       modifiedTime: post.updatedAt || post.createdAt,
       authors: [post.author],
       images: [
         {
           url: coverUrl,
+          width: 1200,
+          height: 630,
           alt: post.title,
         },
       ],
@@ -93,7 +97,7 @@ export default async function PostDetailPage({ params }: Props) {
     <main className="min-h-screen bg-white">
       <ArticleJsonLd
         title={post.title}
-        description={post.excerpt}
+        description={post.excerpt?.trim() || getSmartExcerpt(post.content)}
         image={coverImg}
         datePublished={post.createdAt}
         dateModified={post.updatedAt}

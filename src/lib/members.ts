@@ -32,6 +32,12 @@ export type ReceiptAttempt = {
   createdAt: string;
 };
 
+export type CheckInEntry = {
+  name: string;
+  time: string;
+  by?: string;
+};
+
 export type Invitation = {
   id: string;
   code: string;
@@ -53,6 +59,7 @@ export type Invitation = {
   receiptAttempts?: ReceiptAttempt[];
   checkedIn?: boolean;
   checkedInAt?: string | null;
+  checkinEntries?: CheckInEntry[];
   shirtReceived?: boolean;
   shirtReceivedAt?: string | null;
   emailSent?: boolean;
@@ -289,8 +296,9 @@ export async function updateInvitationReceipt(
 
 export async function checkInInvitation(
   id: string,
-  token?: string,
+  options?: { attendeeName?: string; adminName?: string; token?: string },
 ): Promise<{ ok: boolean; invitation?: Invitation; message?: string }> {
+  const token = options?.token;
   const inv = await findInvitationById(id);
   if (!inv) return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
   if (inv.status !== "confirmed") {
@@ -299,22 +307,80 @@ export async function checkInInvitation(
       message: `Vé chưa được duyệt phát hành (trạng thái: ${inv.status})`,
     };
   }
-  if (inv.checkedIn) {
+
+  const nowIso = new Date().toISOString();
+  const existingEntries: CheckInEntry[] = Array.isArray(inv.checkinEntries) ? [...inv.checkinEntries] : [];
+
+  if (inv.type === "group") {
+    const maxQty = inv.quantity || 1;
+    if (existingEntries.length >= maxQty) {
+      return {
+        ok: false,
+        invitation: inv,
+        message: `Vé tập thể này đã hoàn tất check-in đủ ${existingEntries.length}/${maxQty} suất.`,
+      };
+    }
+
+    const attendeeName = options?.attendeeName?.trim();
+    if (!attendeeName) {
+      return {
+        ok: false,
+        invitation: inv,
+        message: "Vui lòng nhập họ và tên của người tham dự cho lượt check-in này.",
+      };
+    }
+
+    existingEntries.push({
+      name: attendeeName,
+      time: nowIso,
+      by: options?.adminName || "Check-in Staff",
+    });
+
+    const isFull = existingEntries.length >= maxQty;
+    const res = await fetch(`${API_URL}/api/invitations/${id}`, {
+      method: "PATCH",
+      headers: getHeaders(token),
+      body: JSON.stringify({
+        checkinEntries: existingEntries,
+        checkedIn: isFull,
+      }),
+    });
+    if (!res.ok) return { ok: false, message: "Lỗi cập nhật server" };
+    const updated = await res.json();
     return {
-      ok: false,
-      invitation: inv,
-      message: `Vé này đã được quét vào cổng lúc ${new Date(inv.checkedInAt || "").toLocaleTimeString("vi-VN")}`,
+      ok: true,
+      invitation: updated,
+      message: `Check-in thành công: ${attendeeName} (Lượt ${existingEntries.length}/${maxQty})`,
     };
+  } else {
+    // Individual
+    if (inv.checkedIn) {
+      return {
+        ok: false,
+        invitation: inv,
+        message: `Vé này đã được quét vào cổng lúc ${new Date(inv.checkedInAt || "").toLocaleTimeString("vi-VN")}`,
+      };
+    }
+
+    const attendeeName = options?.attendeeName?.trim() || inv.attendeeName;
+    existingEntries.push({
+      name: attendeeName,
+      time: nowIso,
+      by: options?.adminName || "Check-in Staff",
+    });
+
+    const res = await fetch(`${API_URL}/api/invitations/${id}`, {
+      method: "PATCH",
+      headers: getHeaders(token),
+      body: JSON.stringify({
+        checkedIn: true,
+        checkinEntries: existingEntries,
+      }),
+    });
+    if (!res.ok) return { ok: false, message: "Lỗi cập nhật server" };
+    const updated = await res.json();
+    return { ok: true, invitation: updated, message: "Check-in thành công!" };
   }
-  
-  const res = await fetch(`${API_URL}/api/invitations/${id}`, {
-    method: "PATCH",
-    headers: getHeaders(token),
-    body: JSON.stringify({ checkedIn: true }),
-  });
-  if (!res.ok) return { ok: false, message: "Lỗi cập nhật server" };
-  const updated = await res.json();
-  return { ok: true, invitation: updated };
 }
 
 export async function shirtCheckInByQr(
@@ -344,7 +410,54 @@ export async function shirtCheckInByQr(
   });
   if (!res.ok) return { ok: false, message: "Lỗi cập nhật server" };
   const updated = await res.json();
-  return { ok: true, invitation: updated };
+  return { ok: true, invitation: updated, message: "Đã trao áo thành công!" };
+}
+
+export async function submitQrScanAction(
+  id: string,
+  data: {
+    doCheckIn?: boolean;
+    attendeeName?: string;
+    doShirt?: boolean;
+    adminName?: string;
+  },
+  token?: string,
+): Promise<{ ok: boolean; invitation?: Invitation; message: string }> {
+  const inv = await findInvitationById(id);
+  if (!inv) return { ok: false, message: "Không tìm thấy vé trong hệ thống" };
+
+  let currentInv = inv;
+  const messages: string[] = [];
+
+  // 1. Process Check-in if requested
+  if (data.doCheckIn) {
+    const checkInRes = await checkInInvitation(id, {
+      attendeeName: data.attendeeName,
+      adminName: data.adminName,
+      token,
+    });
+    if (!checkInRes.ok) {
+      return { ok: false, invitation: currentInv, message: checkInRes.message || "Lỗi check-in" };
+    }
+    if (checkInRes.invitation) currentInv = checkInRes.invitation;
+    messages.push(checkInRes.message || "Đã check-in");
+  }
+
+  // 2. Process Shirt if requested
+  if (data.doShirt && !currentInv.shirtReceived) {
+    const shirtRes = await shirtCheckInByQr(id, token);
+    if (!shirtRes.ok) {
+      return { ok: false, invitation: currentInv, message: shirtRes.message || "Lỗi trao áo" };
+    }
+    if (shirtRes.invitation) currentInv = shirtRes.invitation;
+    messages.push(shirtRes.message || "Đã trao áo");
+  }
+
+  return {
+    ok: true,
+    invitation: currentInv,
+    message: messages.length > 0 ? messages.join(" · ") : "Đã cập nhật vé thành công",
+  };
 }
 
 export async function vietqrUrl(amount: number, content: string): Promise<string> {

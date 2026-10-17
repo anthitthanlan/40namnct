@@ -138,6 +138,31 @@ export default function RegisterForm() {
   } | null>(null);
   const [checkingPhone, setCheckingPhone] = useState(false);
 
+  const [slotStats, setSlotStats] = useState<{
+    attendeeCount: number;
+    maxLimit: number;
+    remaining: number;
+    isFull: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/invitations/stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          const maxLimit = data.maxLimit ?? 400;
+          const attendeeCount = data.attendeeCount ?? 0;
+          setSlotStats({
+            attendeeCount,
+            maxLimit,
+            remaining: data.remaining ?? Math.max(0, maxLimit - attendeeCount),
+            isFull: attendeeCount >= maxLimit || !!data.isFull,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem("nct40_pending_invitation");
@@ -645,9 +670,11 @@ export default function RegisterForm() {
   const boxTransition = { duration: 0.4, ease: modalEase };
 
   const regStatus = getRegistrationStatus();
-  if (!regStatus.canRegister) {
-    const isPreOpen = regStatus.status === "NOT_OPEN_YET";
-    const isSlotFull = regStatus.status === "SLOT_FULL";
+  const isCapacityFull = !!slotStats?.isFull;
+
+  if (!regStatus.canRegister || isCapacityFull) {
+    const isPreOpen = regStatus.status === "NOT_OPEN_YET" && !isCapacityFull;
+    const isSlotFull = isCapacityFull || regStatus.status === "SLOT_FULL";
 
     return (
       <div className="bg-white rounded-3xl p-8 md:p-12 text-center shadow-sm border border-slate-100 max-w-2xl mx-auto">
@@ -658,18 +685,38 @@ export default function RegisterForm() {
         >
           {isPreOpen ? "event_upcoming" : isSlotFull ? "group_off" : "event_busy"}
         </span>
-        <h2 className="text-2xl font-bold text-slate-900 mb-4">{regStatus.title}</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">
+          {isCapacityFull
+            ? "Cổng Đăng Ký Đã Đạt Giới Hạn 400 Người Tham Dự"
+            : regStatus.title}
+        </h2>
         <p className="text-slate-600 mb-8 leading-relaxed text-lg whitespace-pre-line">
-          {regStatus.message}
+          {isCapacityFull
+            ? "Cổng đăng ký tham dự Ngày Trở Về đã đạt giới hạn 400 người tham dự. Mọi thắc mắc và hỗ trợ xin vui lòng liên hệ Fanpage chính thức của Nhà trường để được hướng dẫn."
+            : regStatus.message}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 bg-[#1d4ed8] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
-          >
-            <span className="material-symbols-rounded">arrow_back</span>
-            Về trang chủ
-          </Link>
+          {isSlotFull ? (
+            <a
+              href="https://www.facebook.com/clb.Tin.nct"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-[#1877f2] text-white px-7 py-3 rounded-xl font-bold hover:bg-[#166fe5] transition-colors shadow-sm"
+            >
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
+              Liên hệ Fanpage Hỗ Trợ
+            </a>
+          ) : (
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 bg-[#1d4ed8] text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+            >
+              <span className="material-symbols-rounded">arrow_back</span>
+              Về trang chủ
+            </Link>
+          )}
           <Link
             href="/tra-cuu"
             className="inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-colors border border-slate-200"
@@ -693,6 +740,23 @@ export default function RegisterForm() {
             noValidate
             className="flex flex-col items-center"
           >
+            {/* Cảnh báo số lượng chỗ sắp hết */}
+            {slotStats && !slotStats.isFull && slotStats.remaining <= 50 && (
+              <motion.div
+                layout
+                transition={boxTransition}
+                className="w-full max-w-[64rem] mb-6 p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 shadow-sm flex items-center gap-3.5"
+              >
+                <span className="material-symbols-rounded text-2xl text-amber-600 shrink-0">
+                  timer
+                </span>
+                <p className="text-sm sm:text-base font-bold text-amber-900">
+                  Số lượng chỗ tham dự sắp hết (Hiện chỉ còn{" "}
+                  <span className="text-rose-600 font-extrabold">{slotStats.remaining}</span> suất). Hãy hoàn tất đăng ký sớm!
+                </p>
+              </motion.div>
+            )}
+
             {/* Smart Reminder Banner từ localStorage */}
             {savedPending && !dismissedPendingBanner && (
               <motion.div

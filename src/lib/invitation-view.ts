@@ -15,6 +15,12 @@ export type InvitationStatus =
   | "rejected" // Bị từ chối (chưa nhận được tiền)
   | "cancelled"; // Đã hủy
 
+export type CheckInEntry = {
+  name: string;
+  time: string;
+  by?: string;
+};
+
 export type InvitationView = {
   id: string;
   code: string;
@@ -48,6 +54,7 @@ export type InvitationView = {
   };
   checkedIn?: boolean;
   checkedInAt?: string | null;
+  checkinEntries?: CheckInEntry[];
   shirtReceived?: boolean;
   shirtReceivedAt?: string | null;
   emailSent?: boolean;

@@ -50,9 +50,16 @@ export function SchoolAndEventsJsonLd() {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         url: SITE_URL,
-        name: "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+        name: "40 Năm THPT Nguyễn Công Trứ",
+        alternateName: [
+          "THPT Nguyễn Công Trứ",
+          "Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ",
+          "40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
+          "nctitc.io.vn",
+          "40namnctru.nctitc.io.vn",
+        ],
         description:
-          "Trang thông tin chính thức Chuỗi chương trình Kỷ niệm 40 năm Thành lập THPT Nguyễn Công Trứ (1986 - 2026).",
+          "Chuyên trang thông tin Chuỗi hoạt động Kỷ niệm 40 năm Thành lập Trường THPT Nguyễn Công Trứ (1986 - 2026). Nơi hội tụ Thầy và Trò, lưu giữ ký ức và lan tỏa tinh thần 'Thắp Chí Vươn Xa'.",
         inLanguage: "vi-VN",
         publisher: {
           "@id": `${SITE_URL}/#organization`,

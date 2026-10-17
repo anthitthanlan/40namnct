@@ -30,6 +30,7 @@ class InvitationUpdate(BaseModel):
     amount: Optional[int] = None
     note: Optional[str] = None
     checkedIn: Optional[bool] = Field(None, alias="checkedIn")
+    checkinEntries: Optional[List[Dict[str, Any]]] = Field(None, alias="checkinEntries")
     shirtReceived: Optional[bool] = Field(None, alias="shirtReceived")
     memberEmail: Optional[str] = Field(None, alias="memberEmail")
     emailSent: Optional[bool] = Field(None, alias="emailSent")
@@ -48,6 +49,7 @@ class InvitationResponse(InvitationBase):
     lastSessionId: Optional[str] = Field(None, alias="lastSessionId")
     checkedIn: bool = Field(False, alias="checkedIn")
     checkedInAt: Optional[str] = Field(None, alias="checkedInAt")
+    checkinEntries: List[Dict[str, Any]] = Field(default_factory=list, alias="checkinEntries")
     shirtReceived: bool = Field(False, alias="shirtReceived")
     shirtReceivedAt: Optional[str] = Field(None, alias="shirtReceivedAt")
     emailSent: bool = Field(False, alias="emailSent")

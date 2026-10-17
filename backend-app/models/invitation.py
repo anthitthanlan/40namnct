@@ -36,6 +36,7 @@ class Invitation(Base):
     # Checkin & Shirts
     checked_in = Column(Boolean, default=False)
     checked_in_at = Column(String(64), nullable=True)
+    checkin_entries = Column(JSON, default=list)
     shirt_received = Column(Boolean, default=False)
     shirt_received_at = Column(String(64), nullable=True)
 

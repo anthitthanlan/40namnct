@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     template: "%s | 40 Năm THPT Nguyễn Công Trứ",
   },
   description:
-    "Trang chính thức Kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026). Nơi hội tụ Thầy và Trò, lưu giữ ký ức và lan tỏa tinh thần 'Thắp Chí Vươn Xa'.",
+    "Chuyên trang thông tin Chuỗi hoạt động Kỷ niệm 40 năm Thành lập Trường THPT Nguyễn Công Trứ (1986 - 2026). Nơi hội tụ Thầy và Trò, lưu giữ ký ức và lan tỏa tinh thần 'Thắp Chí Vươn Xa'.",
   keywords: [
     "THPT Nguyễn Công Trứ",
     "40 năm Nguyễn Công Trứ",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     siteName: "40 Năm THPT Nguyễn Công Trứ",
     title: "Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
     description:
-      "Chuỗi chương trình Kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026). Ngày Trở Về: 08/11/2026 · Đại Lễ Kỷ Niệm: 15/11/2026.",
+      "Chuyên trang thông tin Chuỗi hoạt động Kỷ niệm 40 năm Thành lập Trường THPT Nguyễn Công Trứ (1986 - 2026). Nơi hội tụ Thầy và Trò, lưu giữ ký ức và lan tỏa tinh thần 'Thắp Chí Vươn Xa'.",
     images: [
       {
         url: "/images/og-share.png",
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kỷ Niệm 40 Năm THPT Nguyễn Công Trứ (1986 - 2026)",
     description:
-      "Chuỗi chương trình Kỷ niệm 40 năm THPT Nguyễn Công Trứ (1986 - 2026). Ngày Trở Về: 08/11/2026 · Đại Lễ Kỷ Niệm: 15/11/2026.",
+      "Chuyên trang thông tin Chuỗi hoạt động Kỷ niệm 40 năm Thành lập Trường THPT Nguyễn Công Trứ (1986 - 2026). Nơi hội tụ Thầy và Trò, lưu giữ ký ức và lan tỏa tinh thần 'Thắp Chí Vươn Xa'.",
     images: ["/images/og-share.png"],
   },
   robots: {

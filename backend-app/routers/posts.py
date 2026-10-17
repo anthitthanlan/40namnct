@@ -97,6 +97,13 @@ def create_post(
         slug = f"{base_slug}-{idx}"
         idx += 1
 
+    category_id = post_in.categoryId
+    if not category_id and post_in.source == "user":
+        from app.models.category import Category
+        tx = db.query(Category).filter((Category.slug == "cau-chuyen-thanh-xuan") | (Category.name == "Câu chuyện thanh xuân")).first()
+        if tx:
+            category_id = tx.id
+
     new_post = Post(
         title=post_in.title,
         slug=slug,
@@ -108,7 +115,7 @@ def create_post(
         status=post_in.status,
         pinned=post_in.pinned,
         cover=post_in.cover,
-        category_id=post_in.categoryId,
+        category_id=category_id,
         cross_display=post_in.crossDisplay or False,
     )
     db.add(new_post)

@@ -52,6 +52,7 @@ def to_response(inv: Invitation) -> InvitationResponse:
         lastSessionId=inv.last_session_id,
         checkedIn=inv.checked_in,
         checkedInAt=inv.checked_in_at,
+        checkinEntries=inv.checkin_entries or [],
         shirtReceived=inv.shirt_received,
         shirtReceivedAt=inv.shirt_received_at,
         emailSent=bool(getattr(inv, "email_sent", False)),
@@ -79,11 +80,15 @@ def get_invitations(
 def public_stats(db: Session = Depends(get_db)):
     """Số liệu tổng hợp công khai (không chứa thông tin cá nhân) cho trang chủ."""
     rows = db.query(Invitation).filter(Invitation.status == "confirmed").all()
+    attendee_count = sum((r.quantity or 1) for r in rows)
     return {
         "orderCount": len(rows),
-        "attendeeCount": sum((r.quantity or 1) for r in rows),
+        "attendeeCount": attendee_count,
         "memberCount": len({r.member_id for r in rows}),
         "totalAmount": sum((r.amount or 0) for r in rows),
+        "maxLimit": MAX_REGISTRATION_LIMIT,
+        "remaining": max(0, MAX_REGISTRATION_LIMIT - attendee_count),
+        "isFull": attendee_count >= MAX_REGISTRATION_LIMIT,
     }
 
 @router.get("/search")
@@ -182,6 +187,9 @@ def update_invitation(
     if "checkedIn" in changes and changes["checkedIn"] is not None:
         inv.checked_in = changes["checkedIn"]
         inv.checked_in_at = now_iso if changes["checkedIn"] else None
+
+    if "checkinEntries" in changes and changes["checkinEntries"] is not None:
+        inv.checkin_entries = changes["checkinEntries"]
         
     if "shirtReceived" in changes and changes["shirtReceived"] is not None:
         inv.shirt_received = changes["shirtReceived"]

@@ -16,12 +16,13 @@ function formatDate(iso: string): string {
   }
 }
 
-/** Huy hiệu nguồn bài: ✦ Ban Biên tập (admin) hay 🗣 Câu chuyện cộng đồng (user) */
+/** Huy hiệu nguồn bài: ✦ Ban Biên tập (admin) hay 🌿 Câu chuyện thanh xuân (user) */
 export function PostBadges({ post, categoryName }: { post: Post; categoryName?: string }) {
+  const displayCategory = categoryName || (post.source === "user" ? "Câu chuyện thanh xuân" : "Chung");
   return (
     <div className="flex flex-wrap gap-2">
       <span className="rounded-full bg-[#1d4ed8] px-3 py-1 text-[11px] font-extrabold tracking-wide text-white">
-        {categoryName || "Chung"}
+        {displayCategory}
       </span>
       {post.pinned ? (
         <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold tracking-wide text-amber-700">
@@ -34,7 +35,7 @@ export function PostBadges({ post, categoryName }: { post: Post; categoryName?: 
         </span>
       ) : (
         <span className="rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-extrabold tracking-wide text-emerald-700">
-          🗣 Câu chuyện cộng đồng
+          🌱 Ký ức thành viên
         </span>
       )}
     </div>

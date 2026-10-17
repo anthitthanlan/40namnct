@@ -22,28 +22,55 @@ function getHeaders(token?: string) {
   return headers;
 }
 
+export const DEFAULT_THANH_XUAN_CATEGORY: Category = {
+  id: "cau-chuyen-thanh-xuan",
+  slug: "cau-chuyen-thanh-xuan",
+  name: "Câu chuyện thanh xuân",
+  description: "Nơi lưu giữ những câu chuyện, ký ức và dòng hồi tưởng thanh xuân của các thế hệ Thầy và Trò Nguyễn Công Trứ.",
+  order: 1,
+  createdAt: "2026-10-17T00:00:00.000Z",
+  updatedAt: "2026-10-17T00:00:00.000Z",
+};
+
 export async function listCategories(): Promise<Category[]> {
   try {
     const res = await fetch(`${API_URL}/api/categories`, {
       cache: "no-store",
     });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch {
-    return [];
-  }
+    if (res.ok) {
+      const list: Category[] = await res.json();
+      const hasThanhXuan = list.some(
+        (c) => c.slug === "cau-chuyen-thanh-xuan" || c.name.toLowerCase().includes("thanh xuân")
+      );
+      if (!hasThanhXuan) {
+        list.push(DEFAULT_THANH_XUAN_CATEGORY);
+      }
+      return list.sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+  } catch {}
+  return [DEFAULT_THANH_XUAN_CATEGORY];
 }
 
 export async function getCategory(id: string): Promise<Category | null> {
-  const res = await fetch(`${API_URL}/api/categories/${id}`);
-  if (!res.ok) return null;
-  return await res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/categories/${id}`);
+    if (res.ok) return await res.json();
+  } catch {}
+  if (id === "cau-chuyen-thanh-xuan") {
+    return DEFAULT_THANH_XUAN_CATEGORY;
+  }
+  return null;
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const res = await fetch(`${API_URL}/api/categories/${slug}`);
-  if (!res.ok) return null;
-  return await res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/categories/${slug}`);
+    if (res.ok) return await res.json();
+  } catch {}
+  if (slug === "cau-chuyen-thanh-xuan") {
+    return DEFAULT_THANH_XUAN_CATEGORY;
+  }
+  return null;
 }
 
 export async function createCategory(

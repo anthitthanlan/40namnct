@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import type { SafeAdminAccount } from "@/lib/admin";
+import { type SafeAdminAccount, type AdminRole, roleLabel } from "@/lib/admin";
 import type { ActionLog } from "@/lib/action-logs";
 
 export default function AdminAccounts({
@@ -24,7 +24,7 @@ export default function AdminAccounts({
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [title, setTitle] = useState("Thầy");
-  const [role, setRole] = useState<"system_manager" | "editor">("editor");
+  const [role, setRole] = useState<"system_manager" | "editor" | "shirt_staff" | "checkin_staff">("editor");
   const [password, setPassword] = useState("");
 
   // Form states (Change/Reset Password)
@@ -140,14 +140,26 @@ export default function AdminAccounts({
   };
 
   const getRoleLabel = (r: string) => {
-    if (r === "system_manager") return "Quản lý hệ thống";
-    if (r === "editor") return "Biên tập viên";
-    return r;
+    return roleLabel(r as AdminRole);
+  };
+
+  const getRoleBadgeStyle = (r: string) => {
+    switch (r) {
+      case "super_admin":
+        return "bg-red-100 text-red-700";
+      case "system_manager":
+        return "bg-blue-100 text-blue-700";
+      case "shirt_staff":
+        return "bg-orange-100 text-orange-700";
+      case "checkin_staff":
+        return "bg-purple-100 text-purple-700";
+      default:
+        return "bg-emerald-100 text-emerald-700";
+    }
   };
 
   return (
     <div className="space-y-8">
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-6">
         <div>
@@ -235,41 +247,61 @@ export default function AdminAccounts({
       {isSuperAdmin && !selectedUser && (
         <div className="space-y-6">
           {showForm && (
-             <div className="rounded-[2rem] border border-slate-200/60 bg-white/70 p-6 sm:p-8 backdrop-blur-xl shadow-sm">
-             <h3 className="mb-6 text-lg font-extrabold text-slate-900">Tạo tài khoản mới</h3>
-             <form onSubmit={handleCreate} className="space-y-5">
-               <div className="grid gap-5 sm:grid-cols-2">
-                 <div>
-                   <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Tên đăng nhập</label>
-                   <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm" />
-                 </div>
-                 <div>
-                   <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Mật khẩu</label>
-                   <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm" />
-                 </div>
-                 <div className="sm:col-span-2 grid gap-5 sm:grid-cols-3">
-                   <div className="sm:col-span-1">
-                     <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Danh xưng</label>
-                     <select value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm appearance-none">
-                       <option value="Thầy">Thầy</option><option value="Cô">Cô</option><option value="Anh">Anh</option><option value="Chị">Chị</option><option value="Bạn">Bạn</option>
-                     </select>
-                   </div>
-                   <div className="sm:col-span-2">
-                     <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Họ và tên</label>
-                     <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm" />
-                   </div>
-                 </div>
-                 <div className="sm:col-span-2">
-                   <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Vai trò</label>
-                   <div className="flex gap-4">
-                     <label className="flex gap-2 cursor-pointer"><input type="radio" checked={role === "system_manager"} onChange={() => setRole("system_manager")} /> Quản lý hệ thống</label>
-                     <label className="flex gap-2 cursor-pointer"><input type="radio" checked={role === "editor"} onChange={() => setRole("editor")} /> Biên tập viên</label>
-                   </div>
-                 </div>
-               </div>
-               <button type="submit" disabled={busy} className="bg-[#1d4ed8] text-white px-6 py-2.5 rounded-xl text-sm font-extrabold">Lưu tài khoản</button>
-             </form>
-           </div>
+            <div className="rounded-[2rem] border border-slate-200/60 bg-white/70 p-6 sm:p-8 backdrop-blur-xl shadow-sm">
+              <h3 className="mb-6 text-lg font-extrabold text-slate-900">Tạo tài khoản mới</h3>
+              <form onSubmit={handleCreate} className="space-y-5">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Tên đăng nhập</label>
+                    <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Mật khẩu</label>
+                    <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm" />
+                  </div>
+                  <div className="sm:col-span-2 grid gap-5 sm:grid-cols-3">
+                    <div className="sm:col-span-1">
+                      <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Danh xưng</label>
+                      <select value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm appearance-none">
+                        <option value="Thầy">Thầy</option>
+                        <option value="Cô">Cô</option>
+                        <option value="Anh">Anh</option>
+                        <option value="Chị">Chị</option>
+                        <option value="Bạn">Bạn</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Họ và tên</label>
+                      <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm" />
+                    </div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="mb-1.5 block text-[13px] font-extrabold uppercase text-slate-500">Vai trò</label>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <input type="radio" checked={role === "system_manager"} onChange={() => setRole("system_manager")} />
+                        Quản lý hệ thống
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <input type="radio" checked={role === "editor"} onChange={() => setRole("editor")} />
+                        Biên tập viên
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <input type="radio" checked={role === "shirt_staff"} onChange={() => setRole("shirt_staff")} />
+                        Bộ phận trao áo
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <input type="radio" checked={role === "checkin_staff"} onChange={() => setRole("checkin_staff")} />
+                        Bộ phận check-in
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" disabled={busy} className="bg-[#1d4ed8] text-white px-6 py-2.5 rounded-xl text-sm font-extrabold hover:bg-blue-700 transition-colors">
+                  Lưu tài khoản
+                </button>
+              </form>
+            </div>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -278,7 +310,9 @@ export default function AdminAccounts({
                 <div>
                   <h4 className="text-base font-extrabold text-slate-900">{acc.title} {acc.fullName}</h4>
                   <p className="text-[13px] text-slate-500">@{acc.username}</p>
-                  <span className="inline-block mt-2 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-bold">{getRoleLabel(acc.role)}</span>
+                  <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-extrabold ${getRoleBadgeStyle(acc.role)}`}>
+                    {getRoleLabel(acc.role)}
+                  </span>
                 </div>
                 <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end items-center">
                   <button onClick={() => handleDelete(acc.id, acc.fullName)} className="text-sm font-bold text-rose-500 hover:text-rose-700">

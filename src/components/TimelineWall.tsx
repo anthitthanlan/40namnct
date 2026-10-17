@@ -117,21 +117,7 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
     setLightboxIndex(null);
   }, [activeYear]);
 
-  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!loadMoreRef.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && visibleCount < currentItems.length) {
-          setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
-        }
-      },
-      { threshold: 0.1, rootMargin: "200px" }
-    );
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [visibleCount, currentItems.length]);
 
   const visibleItems = currentItems.slice(0, visibleCount);
 
@@ -301,11 +287,26 @@ export default function TimelineWall({ memories, posts = [] }: Props) {
               })}
             </div>
             {/* Lazy Load Observer */}
-            {visibleCount < currentItems.length && (
-              <div ref={loadMoreRef} className="h-20 w-full flex items-center justify-center mt-4">
-                <span className="text-slate-400 font-medium">Đang tải thêm...</span>
+            {/* Nút Xem Thêm Khoảnh Khắc */}
+            {visibleCount < currentItems.length ? (
+              <div className="mt-10 mb-6 flex flex-col items-center justify-center gap-3">
+                <p className="text-xs text-slate-500 font-medium">
+                  Đang hiển thị <strong className="text-slate-800">{visibleItems.length}</strong> / <strong className="text-slate-800">{currentItems.length}</strong> khoảnh khắc
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+                  className="btn-lightship inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white font-black text-sm px-8 py-3.5 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5"
+                >
+                  <span className="material-symbols-rounded text-lg">add_photo_alternate</span>
+                  <span>Xem thêm khoảnh khắc</span>
+                </button>
               </div>
-            )}
+            ) : currentItems.length > ITEMS_PER_PAGE ? (
+              <div className="mt-10 mb-6 text-center text-xs text-slate-400 font-medium">
+                Đã hiển thị toàn bộ {currentItems.length} khoảnh khắc trong năm này.
+              </div>
+            ) : null}
           </>
         )}
       </div>

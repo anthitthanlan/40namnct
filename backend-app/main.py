@@ -35,6 +35,8 @@ def ensure_database_schema(engine_obj):
                     conn.execute(text("ALTER TABLE invitations ADD COLUMN email_sent BOOLEAN DEFAULT 0"))
                 if "email_sent_at" not in columns:
                     conn.execute(text("ALTER TABLE invitations ADD COLUMN email_sent_at VARCHAR(64)"))
+                if "checkin_entries" not in columns:
+                    conn.execute(text("ALTER TABLE invitations ADD COLUMN checkin_entries JSON DEFAULT '[]'"))
                 
                 if "action_logs" in tables:
                     conn.execute(text("""
@@ -68,6 +70,35 @@ def ensure_database_schema(engine_obj):
                     conn.execute(
                         text("UPDATE media SET title = :t WHERE (title IS NULL OR title = '') AND file LIKE :p"),
                         {"t": title_val, "p": pattern}
+                    )
+
+            if "categories" in tables:
+                cat = conn.execute(text("SELECT id FROM categories WHERE slug = 'cau-chuyen-thanh-xuan' OR name = 'Câu chuyện thanh xuân'")).first()
+                cat_id = None
+                if not cat:
+                    import uuid
+                    from datetime import datetime, timezone
+                    cat_id = str(uuid.uuid4())
+                    now_iso = datetime.now(timezone.utc).isoformat()
+                    conn.execute(
+                        text("INSERT INTO categories (id, slug, name, description, `order`, created_at, updated_at) VALUES (:id, :slug, :name, :description, :order, :created_at, :updated_at)"),
+                        {
+                            "id": cat_id,
+                            "slug": "cau-chuyen-thanh-xuan",
+                            "name": "Câu chuyện thanh xuân",
+                            "description": "Nơi lưu giữ những câu chuyện, ký ức và dòng hồi tưởng thanh xuân của các thế hệ Thầy và Trò Nguyễn Công Trứ.",
+                            "order": 1,
+                            "created_at": now_iso,
+                            "updated_at": now_iso
+                        }
+                    )
+                else:
+                    cat_id = cat[0]
+
+                if "posts" in tables and cat_id:
+                    conn.execute(
+                        text("UPDATE posts SET category_id = :cat_id WHERE (category_id IS NULL OR category_id = '') AND source = 'user'"),
+                        {"cat_id": cat_id}
                     )
     except Exception as e:
         print(f"Warning: ensure_database_schema encountered an issue: {e}")

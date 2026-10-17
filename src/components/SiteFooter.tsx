@@ -98,11 +98,11 @@ export default function SiteFooter() {
               {[
                 { href: "/", label: "Trang chủ" },
                 { href: "/thu-ngo", label: "Thư ngỏ" },
-                { href: "/dang-ky", label: "Đăng ký tham dự" },
-                { href: "/tra-cuu", label: "Tra cứu" },
-                { href: "/cau-chuyen", label: "Bài viết" },
+                { href: "/dang-ky", label: 'Đăng ký tham dự "Ngày trở về"' },
+                { href: "/tra-cuu", label: "Tra cứu thông tin" },
+                { href: "/cau-chuyen", label: "Câu chuyện thanh xuân" },
                 { href: "/gui-bai", label: "Gửi gắm kỷ niệm" },
-                { href: "/khoanh-khac", label: "Lược sử 40 năm" },
+                { href: "/khoanh-khac", label: "Khoảnh khắc kí ức" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link

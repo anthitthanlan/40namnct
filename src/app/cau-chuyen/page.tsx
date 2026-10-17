@@ -71,8 +71,17 @@ export default async function BaiVietPage() {
     updatedAt: new Date().toISOString(),
   } as const;
 
+  const thanhXuanCat = categories.find(
+    (c) => c.slug === "cau-chuyen-thanh-xuan" || c.name.toLowerCase().includes("thanh xuân")
+  );
+
   const adminPosts = [syntheticMotionPost as any, ...rest.filter((p) => p.source === "admin" && !p.pinned)];
-  const communityPosts = rest.filter((p) => p.source !== "admin" && !p.pinned);
+  const communityPosts = rest.filter(
+    (p) => !p.pinned && (
+      (thanhXuanCat && p.categoryId === thanhXuanCat.id) ||
+      p.source !== "admin"
+    )
+  );
 
   const allMedia = await listApprovedMediaChronological();
   const validMoments = (allMedia || []).filter(
@@ -248,23 +257,32 @@ export default async function BaiVietPage() {
             </section>
           )}
 
-          {/* ══════════ SECTION: CÂU CHUYỆN CỘNG ĐỒNG ══════════ */}
+          {/* ══════════ SECTION: CÂU CHUYỆN THANH XUÂN ══════════ */}
           {communityPosts.length > 0 && (
             <section className="border-t border-slate-200 bg-emerald-50/40 py-10">
               <div className="mx-auto max-w-6xl px-6">
                 <Reveal>
-                  <div className="mb-7 flex items-center gap-4">
-                    <div className="h-7 w-1 shrink-0 rounded-full bg-emerald-600" />
-                    <h2 className="shrink-0 text-[11px] font-extrabold uppercase tracking-[0.18em] text-emerald-700">
-                      🗣 Câu chuyện cộng đồng
-                    </h2>
-                    <div className="flex-1 border-t border-emerald-200" />
+                  <div className="mb-7 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-7 w-1 shrink-0 rounded-full bg-emerald-600" />
+                      <h2 className="shrink-0 text-[11px] font-extrabold uppercase tracking-[0.18em] text-emerald-700">
+                        🌿 Danh mục: Câu chuyện thanh xuân
+                      </h2>
+                    </div>
+                    {thanhXuanCat && (
+                      <Link
+                        href={`/cau-chuyen/danh-muc/${thanhXuanCat.slug}`}
+                        className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline shrink-0"
+                      >
+                        Xem tất cả ({communityPosts.length}) →
+                      </Link>
+                    )}
                   </div>
                 </Reveal>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {communityPosts.map((post, i) => (
                     <Reveal key={post.id} delay={(i % 3) * 80} className="h-full">
-                      <PostCard post={post} categoryName={post.categoryId ? catMap[post.categoryId] : undefined} />
+                      <PostCard post={post} categoryName={post.categoryId ? catMap[post.categoryId] : (thanhXuanCat?.name || "Câu chuyện thanh xuân")} />
                     </Reveal>
                   ))}
                 </div>

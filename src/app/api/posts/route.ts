@@ -52,6 +52,16 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  let categoryId: string | undefined = undefined;
+  try {
+    const { listCategories } = await import("@/lib/categories");
+    const categories = await listCategories();
+    const txCat = categories.find(
+      (c) => c.slug === "cau-chuyen-thanh-xuan" || c.name.toLowerCase().includes("thanh xuân")
+    );
+    if (txCat) categoryId = txCat.id;
+  } catch {}
+
   const post = await createPost({
     title,
     excerpt: "",
@@ -62,6 +72,7 @@ export async function POST(req: NextRequest) {
     status: "pending",
     pinned: false,
     cover: null,
+    categoryId: categoryId || "cau-chuyen-thanh-xuan",
   });
 
   return NextResponse.json(

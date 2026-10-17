@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FormEvent } from "react";
 import type { Post, PostStatus } from "@/lib/posts";
-import type { AdminRole } from "@/lib/admin";
+import { type AdminRole, isScannerOnlyRole, roleLabel } from "@/lib/admin";
 import AdminRegistrations from "./AdminRegistrations";
 import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
@@ -175,13 +175,19 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
         const res = await fetch("/api/admin/me", { cache: "no-store" });
         const data = await res.json();
         if (data.authenticated) {
+          const role = data.admin?.role || "editor";
           setAdminInfo({
             fullName: data.admin?.fullName || "Admin",
-            role: data.admin?.role || "editor",
+            role: role,
             username: data.admin?.username || "",
           });
+          if (isScannerOnlyRole(role)) {
+            setTab("scanner");
+          }
           setView("admin");
-          await loadPosts();
+          if (!isScannerOnlyRole(role)) {
+            await loadPosts();
+          }
         } else {
           setView((prev) => (prev === "checking" ? "anon" : prev));
         }
@@ -210,14 +216,21 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
       }
       setUsername("");
       setPassword("");
+      const role = data.admin?.role || "editor";
       setAdminInfo({
         fullName: data.admin?.fullName || "Admin",
-        role: data.admin?.role || "editor",
+        role: role,
         username: data.admin?.username || "",
       });
-      setTab("posts"); // Reset tab
+      if (isScannerOnlyRole(role)) {
+        setTab("scanner");
+      } else {
+        setTab("posts");
+      }
       setView("admin");
-      await loadPosts();
+      if (!isScannerOnlyRole(role)) {
+        await loadPosts();
+      }
     } finally {
       setBusy(false);
     }
@@ -491,31 +504,39 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
           : posts;
 
   const isSuperAdmin = adminInfo?.role === "super_admin";
+  const isScannerOnly = isScannerOnlyRole(adminInfo?.role || "editor");
 
-  const menuGroups = [
-    {
-      title: "Nội dung & Truyền thông",
-      items: [
-        { key: "posts", label: "Quản lý bài viết" },
-        ...(!isEditor ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
-      ],
-    },
-    {
-      title: "Quản lý sự kiện",
-      items: [
-        ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
-        ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
-        ...(!isEditor ? [{ key: "email", label: "Gửi Email" } as const] : []),
-      ],
-    },
-    {
-      title: "Hệ thống",
-      items: [
-        { key: "accounts", label: "Quản lý hệ thống" },
-        ...(!isEditor ? [{ key: "logs", label: "Nhật ký hệ thống" } as const] : []),
-      ],
-    },
-  ].filter((g) => g.items.length > 0);
+  const menuGroups = isScannerOnly
+    ? [
+        {
+          title: "Sự kiện",
+          items: [{ key: "scanner", label: "Quét QR sự kiện" } as const],
+        },
+      ]
+    : [
+        {
+          title: "Nội dung & Truyền thông",
+          items: [
+            { key: "posts", label: "Quản lý bài viết" },
+            ...(!isEditor ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
+          ],
+        },
+        {
+          title: "Quản lý sự kiện",
+          items: [
+            ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
+            ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
+            ...(!isEditor ? [{ key: "email", label: "Gửi Email" } as const] : []),
+          ],
+        },
+        {
+          title: "Hệ thống",
+          items: [
+            { key: "accounts", label: "Quản lý hệ thống" },
+            ...(!isEditor ? [{ key: "logs", label: "Nhật ký hệ thống" } as const] : []),
+          ],
+        },
+      ].filter((g) => g.items.length > 0);
 
   const ALL_TABS: Tab[] = ["posts", "invitations", "email", "scanner", "media", "accounts", "logs", "edit"];
   const activeIndex = ALL_TABS.indexOf(tab);
@@ -535,34 +556,37 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
               <p className="mt-2 text-sm text-slate-500 flex flex-wrap items-center gap-2">
                 {adminInfo?.fullName || "Admin"}
                 <span
-                  className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${adminInfo?.role === "super_admin"
-                    ? "bg-red-100 text-red-700"
-                    : adminInfo?.role === "system_manager"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-emerald-100 text-emerald-700"
-                    }`}
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
+                    adminInfo?.role === "super_admin"
+                      ? "bg-red-100 text-red-700"
+                      : adminInfo?.role === "system_manager"
+                        ? "bg-blue-100 text-blue-700"
+                        : adminInfo?.role === "shirt_staff"
+                          ? "bg-orange-100 text-orange-700"
+                          : adminInfo?.role === "checkin_staff"
+                            ? "bg-purple-100 text-purple-700"
+                            : "bg-emerald-100 text-emerald-700"
+                  }`}
                 >
-                  {adminInfo?.role === "super_admin"
-                    ? "Quản trị tối cao"
-                    : adminInfo?.role === "system_manager"
-                      ? "Quản lý hệ thống"
-                      : "Biên tập viên"}
+                  {adminInfo ? roleLabel(adminInfo.role) : "Admin"}
                 </span>
               </p>
             </div>
 
             {/* Mobile & Desktop Action Buttons */}
-            <div className="flex flex-row md:flex-col gap-3 hidden md:flex pt-2">
-              <button
-                type="button"
-                onClick={openNew}
-                className="btn-lightship w-full rounded-2xl bg-[#1d4ed8] px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#1d4ed8]/30 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#1d4ed8]/40"
-              >
-                <span className={tab === "edit" && editPostId === "new" ? "underline underline-offset-4 decoration-2" : ""}>
-                  Viết bài mới
-                </span>
-              </button>
-            </div>
+            {!isScannerOnly && (
+              <div className="flex flex-row md:flex-col gap-3 hidden md:flex pt-2">
+                <button
+                  type="button"
+                  onClick={openNew}
+                  className="btn-lightship w-full rounded-2xl bg-[#1d4ed8] px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#1d4ed8]/30 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#1d4ed8]/40"
+                >
+                  <span className={tab === "edit" && editPostId === "new" ? "underline underline-offset-4 decoration-2" : ""}>
+                    Viết bài mới
+                  </span>
+                </button>
+              </div>
+            )}
 
             {/* Mobile Floating Action Button (+) cho Quản lý bài đăng */}
             {tab === "posts" && (
@@ -628,8 +652,32 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
 
         {/* MAIN CONTENT */}
         <div className="flex-1 min-w-0">
-
-
+          {/* Mobile Header bar for mobile devices */}
+          <div className="md:hidden flex items-center justify-between bg-white rounded-2xl p-4 mb-4 border border-slate-200/80 shadow-xs">
+            <div>
+              <p className="text-sm font-black text-slate-800">{adminInfo?.fullName}</p>
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                adminInfo?.role === "super_admin"
+                  ? "bg-red-100 text-red-700"
+                  : adminInfo?.role === "system_manager"
+                    ? "bg-blue-100 text-blue-700"
+                    : adminInfo?.role === "shirt_staff"
+                      ? "bg-orange-100 text-orange-700"
+                      : adminInfo?.role === "checkin_staff"
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-emerald-100 text-emerald-700"
+              }`}>
+                {adminInfo ? roleLabel(adminInfo.role) : "Admin"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl border border-rose-100 transition-colors"
+            >
+              Đăng xuất
+            </button>
+          </div>
 
           <div className="t-page-slide relative">
             {ALL_TABS.map((k, i) => {
@@ -645,7 +693,7 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
               } else if (k === "media") {
                 content = <AdminMedia onAuthError={() => setView("anon")} />;
               } else if (k === "scanner") {
-                content = <AdminCameraScanner />;
+                content = <AdminCameraScanner adminRole={adminInfo?.role} />;
               } else if (k === "accounts") {
                 content = <AdminAccounts adminInfo={adminInfo!} onAuthError={() => setView("anon")} />;
               } else if (k === "logs") {

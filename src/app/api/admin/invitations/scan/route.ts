@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 /** Ngày sự kiện: 08/11/2026 00:00 ICT (UTC+7) → check-in chỉ mở từ ngày này */
 const EVENT_DATE = new Date("2026-11-08T00:00:00+07:00");
 
-type ScanMode = "checkin" | "shirt" | "info";
+type ScanMode = "checkin" | "shirt" | "info" | "submit";
 
 export async function POST(req: NextRequest) {
   const admin = getAdminFromRequest(req);
@@ -21,10 +21,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { payload, mode: rawMode } = (await req.json()) as {
+    const body = (await req.json()) as {
       payload?: string;
       mode?: string;
+      doCheckIn?: boolean;
+      attendeeName?: string;
+      doShirt?: boolean;
     };
+    const { payload, mode: rawMode, doCheckIn, attendeeName, doShirt } = body;
 
     if (!payload || typeof payload !== "string") {
       return NextResponse.json(
@@ -34,10 +38,30 @@ export async function POST(req: NextRequest) {
     }
 
     const mode: ScanMode =
-      rawMode === "shirt" ? "shirt" : rawMode === "info" ? "info" : "checkin";
+      rawMode === "submit"
+        ? "submit"
+        : rawMode === "shirt"
+          ? "shirt"
+          : rawMode === "info"
+            ? "info"
+            : "checkin";
 
-    // Check-in cổng chỉ mở từ ngày 08/11/2026
-    if (mode === "checkin" && Date.now() < EVENT_DATE.getTime()) {
+    // Phân quyền: role shirt_staff chỉ được quét info và trao áo, không được check-in
+    if (admin.role === "shirt_staff") {
+      if (mode === "checkin" || (mode === "submit" && doCheckIn)) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: "Tài khoản Bộ phận trao áo không có quyền thực hiện Check-in.",
+          },
+          { status: 403 },
+        );
+      }
+    }
+
+    // Check-in cổng chỉ mở từ ngày 08/11/2026 (ngoại trừ vé mock sample)
+    const isMock = payload.includes("000POLN7") || payload.includes("000GROUP");
+    if (!isMock && (mode === "checkin" || (mode === "submit" && doCheckIn)) && Date.now() < EVENT_DATE.getTime()) {
       const eventDateStr = EVENT_DATE.toLocaleDateString("vi-VN", {
         day: "2-digit",
         month: "2-digit",
@@ -142,6 +166,141 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // ========== MODE: SUBMIT (CHECK-IN & TRAO ÁO ĐỒNG THỜI HOẶC RIÊNG LẺ) ==========
+    if (mode === "submit") {
+      let currentInv = existingInvitation;
+      const actionsDone: string[] = [];
+
+      // 1. Check-in
+      if (doCheckIn) {
+        if (validInvitationId === "sample" || validInvitationId === "sample-group") {
+          const nowIso = new Date().toISOString();
+          const existingEntries = Array.isArray(currentInv.checkinEntries) ? [...currentInv.checkinEntries] : [];
+          if (currentInv.type === "group") {
+            const maxQty = currentInv.quantity || 1;
+            if (existingEntries.length >= maxQty) {
+              return NextResponse.json(
+                { ok: false, message: `Vé tập thể đã check-in đủ ${existingEntries.length}/${maxQty} suất.`, invitation: currentInv },
+                { status: 400 }
+              );
+            }
+            if (!attendeeName || !attendeeName.trim()) {
+              return NextResponse.json(
+                { ok: false, message: "Vui lòng nhập họ và tên của người tham dự cho lượt check-in này.", invitation: currentInv },
+                { status: 400 }
+              );
+            }
+            existingEntries.push({
+              name: attendeeName.trim(),
+              time: nowIso,
+              by: admin.fullName || admin.username,
+            });
+            currentInv = {
+              ...currentInv,
+              checkinEntries: existingEntries,
+              checkedIn: existingEntries.length >= maxQty,
+              checkedInAt: nowIso,
+            };
+            actionsDone.push(`Check-in: ${attendeeName.trim()} (${existingEntries.length}/${maxQty})`);
+          } else {
+            // Individual
+            if (!currentInv.checkedIn) {
+              existingEntries.push({
+                name: currentInv.attendeeName,
+                time: nowIso,
+                by: admin.fullName || admin.username,
+              });
+              currentInv = {
+                ...currentInv,
+                checkedIn: true,
+                checkedInAt: nowIso,
+                checkinEntries: existingEntries,
+              };
+              actionsDone.push("Check-in vào cổng");
+            }
+          }
+        } else {
+          // Real ticket
+          const checkInResult = await checkInInvitation(validInvitationId, {
+            attendeeName: attendeeName?.trim(),
+            adminName: admin.fullName || admin.username,
+            token,
+          });
+          if (!checkInResult.ok) {
+            return NextResponse.json(
+              {
+                ok: false,
+                mode: "submit",
+                invitation: currentInv,
+                message: checkInResult.message,
+              },
+              { status: 400 }
+            );
+          }
+          currentInv = checkInResult.invitation || currentInv;
+          actionsDone.push(checkInResult.message || "Check-in");
+        }
+
+        await logAction(
+          "checkin",
+          "registrations",
+          validInvitationId,
+          admin.fullName || admin.username,
+          admin.username,
+          admin.role,
+          `Check-in cổng: ${currentInv.attendeeName || currentInv.code}${attendeeName ? ` - ${attendeeName}` : ""}`,
+        );
+      }
+
+      // 2. Trao áo
+      if (doShirt && !currentInv.shirtReceived) {
+        if (validInvitationId === "sample" || validInvitationId === "sample-group") {
+          currentInv = {
+            ...currentInv,
+            shirtReceived: true,
+            shirtReceivedAt: new Date().toISOString(),
+          };
+          actionsDone.push("Đã trao áo");
+        } else {
+          const shirtResult = await shirtCheckInByQr(validInvitationId, token);
+          if (!shirtResult.ok) {
+            return NextResponse.json(
+              {
+                ok: false,
+                mode: "submit",
+                invitation: currentInv,
+                message: shirtResult.message,
+              },
+              { status: 400 }
+            );
+          }
+          currentInv = shirtResult.invitation || currentInv;
+          actionsDone.push("Đã trao áo");
+        }
+
+        await logAction(
+          "shirt_received",
+          "registrations",
+          validInvitationId,
+          admin.fullName || admin.username,
+          admin.username,
+          admin.role,
+          `Trao áo: ${currentInv.attendeeName || currentInv.code}`,
+        );
+      }
+
+      const summaryMessage = actionsDone.length > 0
+        ? actionsDone.join(" · ") + " thành công!"
+        : "Đã hoàn tất kiểm tra thư mời.";
+
+      return NextResponse.json({
+        ok: true,
+        mode: "submit",
+        invitation: currentInv,
+        message: summaryMessage,
+      });
+    }
+
     // ========== MODE: CHECK-IN CỔNG ==========
     if (mode === "checkin") {
       let checkInResult;
@@ -149,7 +308,11 @@ export async function POST(req: NextRequest) {
       if (validInvitationId === "sample" || validInvitationId === "sample-group") {
         checkInResult = { ok: true, invitation: { ...existingInvitation, checkedIn: true } };
       } else {
-        checkInResult = await checkInInvitation(validInvitationId, token);
+        checkInResult = await checkInInvitation(validInvitationId, {
+          attendeeName: attendeeName?.trim(),
+          adminName: admin.fullName || admin.username,
+          token,
+        });
       }
 
       if (!checkInResult.ok) {

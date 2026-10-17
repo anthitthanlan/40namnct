@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { canManageMedia } from "@/lib/admin";
 import { setMediaStatus, updateMediaDetails, deleteMedia } from "@/lib/media";
 import { logAction } from "@/lib/action-logs";
 
@@ -12,6 +13,12 @@ export async function PATCH(
 ) {
   const admin = getAdminFromRequest(req);
   if (!admin) return unauthorized();
+  if (!canManageMedia(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Bạn không có quyền quản lý khoảnh khắc." },
+      { status: 403 }
+    );
+  }
 
   const { id } = await params;
 
@@ -84,6 +91,12 @@ export async function DELETE(
 ) {
   const admin = getAdminFromRequest(req);
   if (!admin) return unauthorized();
+  if (!canManageMedia(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Bạn không có quyền xóa khoảnh khắc." },
+      { status: 403 }
+    );
+  }
 
   const { id } = await params;
 

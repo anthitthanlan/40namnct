@@ -7,7 +7,18 @@ import toast from "react-hot-toast";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FormEvent } from "react";
 import type { Post, PostStatus } from "@/lib/posts";
-import { type AdminRole, isScannerOnlyRole, roleLabel } from "@/lib/admin";
+import {
+  type AdminRole,
+  isScannerOnlyRole,
+  roleLabel,
+  isAllowedTab,
+  getDefaultTabForRole,
+  canManagePosts,
+  canManageMedia,
+  canManageInvitations,
+  canManageEmail,
+  canManageSystem,
+} from "@/lib/admin";
 import AdminRegistrations from "./AdminRegistrations";
 import AdminMedia from "./AdminMedia";
 import AdminAccounts from "./AdminAccounts";
@@ -85,6 +96,11 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
   const pathname = usePathname();
 
   const [view, setView] = useState<View>("checking");
+  const [adminInfo, setAdminInfo] = useState<{
+    fullName: string;
+    role: AdminRole;
+    username: string;
+  } | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { confirm, ConfirmElement } = useConfirm();
@@ -95,9 +111,20 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
 
   useEffect(() => {
     if (urlTab && urlTab !== tab) {
+      if (adminInfo) {
+        if (!isAllowedTab(adminInfo.role, urlTab)) {
+          const fallbackTab = getDefaultTabForRole(adminInfo.role) as Tab;
+          setTab(fallbackTab);
+          const params = new URLSearchParams(searchParams);
+          params.set("tab", fallbackTab);
+          params.delete("edit");
+          router.replace(`${pathname}?${params.toString()}`);
+          return;
+        }
+      }
       setTab(urlTab);
     }
-  }, [urlTab]);
+  }, [urlTab, tab, adminInfo, searchParams, pathname, router]);
 
   const [visited, setVisited] = useState<Set<string>>(new Set([tab]));
   useEffect(() => {
@@ -112,6 +139,10 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
 
   const handleTabChange = (newTab: Tab) => {
     if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) {
+      return;
+    }
+    if (adminInfo && !isAllowedTab(adminInfo.role, newTab)) {
+      toast.error("Bạn không có quyền truy cập chức năng này.");
       return;
     }
     setTab(newTab);
@@ -131,11 +162,6 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
   const [postTab, setPostTab] = useState<"pending" | "published" | "draft" | "all" | "categories">("pending");
   const [isPostMenuOpen, setIsPostMenuOpen] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [adminInfo, setAdminInfo] = useState<{
-    fullName: string;
-    role: AdminRole;
-    username: string;
-  } | null>(null);
 
   const flash = useCallback((ok: boolean, text: string) => {
     if (ok) {
@@ -181,11 +207,18 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
             role: role,
             username: data.admin?.username || "",
           });
-          if (isScannerOnlyRole(role)) {
-            setTab("scanner");
+          window.dispatchEvent(new CustomEvent("nct_admin_auth_changed", { detail: { authenticated: true, role } }));
+
+          if (!isAllowedTab(role, tab)) {
+            const fallbackTab = getDefaultTabForRole(role) as Tab;
+            setTab(fallbackTab);
+            const params = new URLSearchParams(searchParams);
+            params.set("tab", fallbackTab);
+            params.delete("edit");
+            router.replace(`${pathname}?${params.toString()}`);
           }
           setView("admin");
-          if (!isScannerOnlyRole(role)) {
+          if (canManagePosts(role)) {
             await loadPosts();
           }
         } else {
@@ -197,7 +230,7 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
       }
     }
     check();
-  }, [loadPosts]);
+  }, [loadPosts, tab, searchParams, pathname, router]);
 
   async function login(e: FormEvent) {
     e.preventDefault();
@@ -222,13 +255,15 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
         role: role,
         username: data.admin?.username || "",
       });
-      if (isScannerOnlyRole(role)) {
-        setTab("scanner");
-      } else {
-        setTab("posts");
-      }
+      window.dispatchEvent(new CustomEvent("nct_admin_auth_changed", { detail: { authenticated: true, role } }));
+      const initialAllowedTab = getDefaultTabForRole(role) as Tab;
+      setTab(initialAllowedTab);
+      const params = new URLSearchParams(searchParams);
+      params.set("tab", initialAllowedTab);
+      params.delete("edit");
+      router.replace(`${pathname}?${params.toString()}`);
       setView("admin");
-      if (!isScannerOnlyRole(role)) {
+      if (canManagePosts(role)) {
         await loadPosts();
       }
     } finally {
@@ -238,6 +273,7 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
+    window.dispatchEvent(new CustomEvent("nct_admin_auth_changed", { detail: { authenticated: false } }));
     setPosts([]);
     setDraft(null);
     setAdminInfo(null);
@@ -249,6 +285,7 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
   const isEditor = adminInfo?.role === "editor";
 
   function openEdit(post: Post) {
+    if (adminInfo && !canManagePosts(adminInfo.role)) return;
     if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
     const params = new URLSearchParams(searchParams);
     params.set("edit", post.id);
@@ -256,6 +293,7 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
   }
 
   function openNew() {
+    if (adminInfo && !canManagePosts(adminInfo.role)) return;
     if (window.__isDirty && !window.confirm("Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?")) return;
     const params = new URLSearchParams(searchParams);
     params.set("edit", "new");
@@ -503,8 +541,13 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
           ? posts.filter((p) => p.status === "draft")
           : posts;
 
-  const isSuperAdmin = adminInfo?.role === "super_admin";
-  const isScannerOnly = isScannerOnlyRole(adminInfo?.role || "editor");
+  const userRole = adminInfo?.role || "editor";
+  const hasPostsAccess = canManagePosts(userRole);
+  const hasMediaAccess = canManageMedia(userRole);
+  const hasInvitationsAccess = canManageInvitations(userRole);
+  const hasEmailAccess = canManageEmail(userRole);
+  const hasSystemAccess = canManageSystem(userRole);
+  const isScannerOnly = isScannerOnlyRole(userRole);
 
   const menuGroups = isScannerOnly
     ? [
@@ -517,23 +560,23 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
         {
           title: "Nội dung & Truyền thông",
           items: [
-            { key: "posts", label: "Quản lý bài viết" },
-            ...(!isEditor ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
+            ...(hasPostsAccess ? [{ key: "posts", label: "Quản lý bài viết" } as const] : []),
+            ...(hasMediaAccess ? [{ key: "media", label: "Feed Khoảnh khắc" } as const] : []),
           ],
         },
         {
           title: "Quản lý sự kiện",
           items: [
-            ...(!isEditor ? [{ key: "invitations", label: "Thư mời" } as const] : []),
-            ...(!isEditor ? [{ key: "scanner", label: "Quét QR sự kiện" } as const] : []),
-            ...(!isEditor ? [{ key: "email", label: "Gửi Email" } as const] : []),
+            ...(hasInvitationsAccess ? [{ key: "invitations", label: "Thư mời" } as const] : []),
+            { key: "scanner", label: "Quét QR sự kiện" } as const,
+            ...(hasEmailAccess ? [{ key: "email", label: "Gửi Email" } as const] : []),
           ],
         },
         {
           title: "Hệ thống",
           items: [
-            { key: "accounts", label: "Quản lý hệ thống" },
-            ...(!isEditor ? [{ key: "logs", label: "Nhật ký hệ thống" } as const] : []),
+            ...(hasSystemAccess ? [{ key: "accounts", label: "Quản lý hệ thống" } as const] : []),
+            ...(hasSystemAccess ? [{ key: "logs", label: "Nhật ký hệ thống" } as const] : []),
           ],
         },
       ].filter((g) => g.items.length > 0);
@@ -682,6 +725,7 @@ export default function AdminApp({ initialTab = "posts" }: { initialTab?: Tab })
           <div className="t-page-slide relative">
             {ALL_TABS.map((k, i) => {
               if (!visited.has(k)) return null;
+              if (adminInfo && !isAllowedTab(adminInfo.role, k)) return null;
               const isActive = tab === k;
               const fromX = i < activeIndex ? "calc(var(--page-slide-distance) * -1)" : "var(--page-slide-distance)";
 

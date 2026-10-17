@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
+import { type AdminRole, isScannerOnlyRole } from "@/lib/admin";
+
 const links = [
   { href: "/", label: "Giới thiệu" },
   { href: "/thu-ngo", label: "Thư ngỏ" },
@@ -22,38 +24,100 @@ export default function MobileNavMorph() {
   const pathname = usePathname();
   const navRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [adminRole, setAdminRole] = useState<AdminRole | null>(null);
 
   const resolveHref = (href: string) => 
     href.startsWith("#") && pathname !== "/" && !pathname.startsWith("/admin") ? `/#${href.slice(1)}` : href;
 
   const isAdmin = pathname.startsWith("/admin");
-  const adminGroups = [
-    {
-      title: "Nội dung & Truyền thông",
-      items: [
-        { href: "/admin?tab=posts", label: "Quản lý bài viết" },
-        { href: "/admin?tab=media", label: "Feed Khoảnh khắc" },
-      ],
-    },
-    {
-      title: "Quản lý sự kiện",
-      items: [
-        { href: "/admin?tab=invitations", label: "Thư mời" },
-        { href: "/admin?tab=scanner", label: "Quét QR sự kiện" },
-        { href: "/admin?tab=email", label: "Gửi Email" },
-      ],
-    },
-    {
-      title: "Hệ thống",
-      items: [
-        { href: "/admin?tab=accounts", label: "Quản lý hệ thống" },
-        { href: "/admin?tab=logs", label: "Nhật ký hệ thống" },
-      ],
-    },
-  ];
 
-  const handleLogout = () => {
+  useEffect(() => {
+    if (!isAdmin) {
+      setAdminRole(null);
+      return;
+    }
+
+    const fetchAdmin = () => {
+      fetch("/api/admin/me", { cache: "no-store" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.authenticated && data?.admin?.role) {
+            setAdminRole(data.admin.role);
+          } else {
+            setAdminRole(null);
+          }
+        })
+        .catch(() => setAdminRole(null));
+    };
+
+    fetchAdmin();
+
+    const handleAuthChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ role?: AdminRole; authenticated?: boolean }>;
+      if (customEvent.detail?.role) {
+        setAdminRole(customEvent.detail.role);
+      } else {
+        fetchAdmin();
+      }
+    };
+
+    window.addEventListener("nct_admin_auth_changed", handleAuthChange);
+    return () => {
+      window.removeEventListener("nct_admin_auth_changed", handleAuthChange);
+    };
+  }, [isAdmin, pathname]);
+
+  const isScannerOnly = isScannerOnlyRole(adminRole || "editor");
+  const isEditor = adminRole === "editor";
+
+  // Phân quyền chặt chẽ menu mobile theo Role
+  const adminGroups = !adminRole
+    ? []
+    : isScannerOnly
+      ? [
+          {
+            title: "Sự kiện",
+            items: [{ href: "/admin?tab=scanner", label: "Quét QR sự kiện" }],
+          },
+        ]
+      : isEditor
+        ? [
+            {
+              title: "Nội dung & Truyền thông",
+              items: [{ href: "/admin?tab=posts", label: "Quản lý bài viết" }],
+            },
+          ]
+        : [
+            {
+              title: "Nội dung & Truyền thông",
+              items: [
+                { href: "/admin?tab=posts", label: "Quản lý bài viết" },
+                { href: "/admin?tab=media", label: "Feed Khoảnh khắc" },
+              ],
+            },
+            {
+              title: "Quản lý sự kiện",
+              items: [
+                { href: "/admin?tab=invitations", label: "Thư mời" },
+                { href: "/admin?tab=scanner", label: "Quét QR sự kiện" },
+                { href: "/admin?tab=email", label: "Gửi Email" },
+              ],
+            },
+            {
+              title: "Hệ thống",
+              items: [
+                { href: "/admin?tab=accounts", label: "Quản lý hệ thống" },
+                { href: "/admin?tab=logs", label: "Nhật ký hệ thống" },
+              ],
+            },
+          ];
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch {}
     document.cookie = "nct_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.dispatchEvent(new CustomEvent("nct_admin_auth_changed", { detail: { authenticated: false } }));
     window.location.reload();
   };
 
@@ -225,41 +289,51 @@ export default function MobileNavMorph() {
               })
             ) : (
               <div className="flex flex-col gap-6">
-                {adminGroups.map((group) => (
-                  <div key={group.title} className="flex flex-col gap-3">
-                    <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                      {group.title}
-                    </h3>
-                    <div className="flex flex-col gap-3">
-                      {group.items.map((link) => {
-                        const isCurrent = typeof window !== "undefined" && window.location.search.includes(link.href.split("?")[1]);
-                        return (
-                          <Link 
-                            key={link.href} 
-                            href={link.href}
-                            onClick={() => setIsOpen(false)}
-                            className={`group relative w-fit text-[15px] font-extrabold transition-colors flex items-center gap-2 ${
-                              isCurrent ? "text-[#1d4ed8]" : "text-slate-700 hover:text-slate-900"
-                            }`}
-                          >
-                            <span>{link.label}</span>
-                            <span
-                              className={`absolute -bottom-1 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
-                                isCurrent
-                                  ? "opacity-100 scale-x-100"
-                                  : "opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-75"
+                {adminGroups.length > 0 ? (
+                  adminGroups.map((group) => (
+                    <div key={group.title} className="flex flex-col gap-3">
+                      <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                        {group.title}
+                      </h3>
+                      <div className="flex flex-col gap-3">
+                        {group.items.map((link) => {
+                          const isCurrent = typeof window !== "undefined" && window.location.search.includes(link.href.split("?")[1]);
+                          return (
+                            <Link 
+                              key={link.href} 
+                              href={link.href}
+                              onClick={() => setIsOpen(false)}
+                              className={`group relative w-fit text-[15px] font-extrabold transition-colors flex items-center gap-2 ${
+                                isCurrent ? "text-[#1d4ed8]" : "text-slate-700 hover:text-slate-900"
                               }`}
-                            />
-                          </Link>
-                        );
-                      })}
+                            >
+                              <span>{link.label}</span>
+                              <span
+                                className={`absolute -bottom-1 left-0 right-0 h-[2.5px] rounded-full bg-[#1d4ed8] transition-all duration-[var(--duration-fast)] ease-[var(--ease-smooth-out)] ${
+                                  isCurrent
+                                    ? "opacity-100 scale-x-100"
+                                    : "opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-75"
+                                }`}
+                              />
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <Link
+                    href="/"
+                    onClick={() => setIsOpen(false)}
+                    className="group relative w-fit text-[15px] font-extrabold text-slate-700 hover:text-slate-900 transition-colors flex items-center gap-2"
+                  >
+                    <span>Về trang chủ</span>
+                  </Link>
+                )}
               </div>
             )}
             
-            {isAdmin && (
+            {isAdmin && adminRole && (
               <div className="mt-2 pt-4 border-t border-slate-200">
                 <button
                   type="button"

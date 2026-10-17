@@ -125,12 +125,20 @@ async def upload_media(
         "filename": media_record.file
     }
 
+def require_media_manager(current_admin: dict = Depends(get_current_admin)) -> dict:
+    if current_admin.get("role") not in ["super_admin", "system_manager"]:
+        raise HTTPException(
+            status_code=403,
+            detail="Bạn không có quyền quản lý khoảnh khắc"
+        )
+    return current_admin
+
 @router.patch("/{id}/status")
 def update_media_status(
     id: str,
     status: str = Form(...),
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin = Depends(require_media_manager)
 ):
     item = db.query(MediaItem).filter(MediaItem.id == id).first()
     if not item:
@@ -144,7 +152,7 @@ def update_media_details(
     id: str,
     payload: MediaUpdate,
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin)
+    admin = Depends(require_media_manager)
 ):
     item = db.query(MediaItem).filter(MediaItem.id == id).first()
     if not item:
@@ -185,7 +193,7 @@ def update_media_details(
 async def delete_media_item(
     id: str,
     db: Session = Depends(get_db),
-    admin = Depends(require_super_admin)
+    admin = Depends(require_media_manager)
 ):
     item = db.query(MediaItem).filter(MediaItem.id == id).first()
     if not item:

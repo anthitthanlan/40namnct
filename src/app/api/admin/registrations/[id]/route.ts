@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { canManageInvitations } from "@/lib/admin";
 import { deleteInvitation } from "@/lib/members";
 import { logAction } from "@/lib/action-logs";
 import { sendInvitationEmail } from "@/lib/email";
@@ -12,7 +13,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const admin = getAdminFromRequest(req);
-  if (!admin || admin.role === "editor") return unauthorized();
+  if (!admin) return unauthorized();
+  if (!canManageInvitations(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền quản lý thư mời." },
+      { status: 403 },
+    );
+  }
 
   const { id } = await params;
 
@@ -50,7 +57,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const admin = getAdminFromRequest(req);
-  if (!admin || admin.role === "editor") return unauthorized();
+  if (!admin) return unauthorized();
+  if (!canManageInvitations(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền quản lý thư mời." },
+      { status: 403 },
+    );
+  }
 
   const { id } = await params;
 

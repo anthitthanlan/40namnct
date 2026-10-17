@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { canManagePosts } from "@/lib/admin";
 import { updatePost, deletePost } from "@/lib/posts";
 import { logAction } from "@/lib/action-logs";
 
@@ -17,6 +18,12 @@ export async function PATCH(
 ) {
   const admin = getAdminFromRequest(req);
   if (!admin) return unauthorized();
+  if (!canManagePosts(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền chỉnh sửa bài viết." },
+      { status: 403 },
+    );
+  }
 
   const { id } = await params;
 
@@ -121,6 +128,12 @@ export async function DELETE(
 ) {
   const admin = getAdminFromRequest(req);
   if (!admin) return unauthorized();
+  if (!canManagePosts(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền xóa bài viết." },
+      { status: 403 },
+    );
+  }
 
   const { id } = await params;
 

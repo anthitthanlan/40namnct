@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { canManageEmail } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.nctitc.io.vn";
@@ -13,7 +14,7 @@ function getHeaders(token?: string) {
 
 export async function GET(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin) return unauthorized();
+  if (!admin || !canManageEmail(admin.role)) return unauthorized();
 
   const token = req.cookies.get("nct_admin")?.value;
   try {
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin) return unauthorized();
+  if (!admin || !canManageEmail(admin.role)) return unauthorized();
 
   const token = req.cookies.get("nct_admin")?.value;
   try {
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin) return unauthorized();
+  if (!admin || !canManageEmail(admin.role)) return unauthorized();
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ ok: false, message: "Thiếu ID" }, { status: 400 });
@@ -68,7 +69,7 @@ export async function PUT(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin) return unauthorized();
+  if (!admin || !canManageEmail(admin.role)) return unauthorized();
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ ok: false, message: "Thiếu ID" }, { status: 400 });

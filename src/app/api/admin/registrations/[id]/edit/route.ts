@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { canManageInvitations } from "@/lib/admin";
 import { findInvitationById, updateInvitationDetails } from "@/lib/members";
 import { logAction } from "@/lib/action-logs";
 
@@ -11,7 +12,13 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const admin = getAdminFromRequest(req);
-  if (!admin || admin.role === "editor") return unauthorized();
+  if (!admin) return unauthorized();
+  if (!canManageInvitations(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền chỉnh sửa thư mời." },
+      { status: 403 },
+    );
+  }
 
   const { id } = await params;
   if (!id) {

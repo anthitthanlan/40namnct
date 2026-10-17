@@ -125,6 +125,41 @@ export function canDistributeShirt(role: AdminRole): boolean {
   return role === "super_admin" || role === "system_manager" || role === "checkin_staff" || role === "shirt_staff";
 }
 
+export function canManageMedia(role: AdminRole): boolean {
+  return role === "super_admin" || role === "system_manager";
+}
+
+export function canManageInvitations(role: AdminRole): boolean {
+  return role === "super_admin" || role === "system_manager";
+}
+
+export function canManageEmail(role: AdminRole): boolean {
+  return role === "super_admin" || role === "system_manager";
+}
+
+export type AdminTab = "posts" | "invitations" | "email" | "media" | "accounts" | "logs" | "scanner" | "edit";
+
+export function getAllowedTabsForRole(role: AdminRole): AdminTab[] {
+  if (role === "shirt_staff" || role === "checkin_staff") {
+    return ["scanner"];
+  }
+  if (role === "editor") {
+    return ["posts", "edit"];
+  }
+  return ["posts", "invitations", "email", "scanner", "media", "accounts", "logs", "edit"];
+}
+
+export function isAllowedTab(role: AdminRole, tab: string): boolean {
+  return getAllowedTabsForRole(role).includes(tab as AdminTab);
+}
+
+export function getDefaultTabForRole(role: AdminRole): AdminTab {
+  if (role === "shirt_staff" || role === "checkin_staff") {
+    return "scanner";
+  }
+  return "posts";
+}
+
 export function roleLabel(role: AdminRole): string {
   switch (role) {
     case "super_admin":

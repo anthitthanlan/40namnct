@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized, COOKIE_NAME } from "@/lib/auth";
+import { canManageInvitations } from "@/lib/admin";
 import {
   listMembers,
   listInvitations,
@@ -17,7 +18,13 @@ export const dynamic = "force-dynamic";
 /** Admin: danh sách thành viên + toàn bộ thư mời + logs */
 export async function GET(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin || admin.role === "editor") return unauthorized();
+  if (!admin) return unauthorized();
+  if (!canManageInvitations(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền quản lý thư mời." },
+      { status: 403 },
+    );
+  }
 
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const [members, invitations] = await Promise.all([listMembers(token), listInvitations(token)]);
@@ -100,7 +107,13 @@ const ALLOWED: InvitationStatus[] = [
 /** Admin: đổi trạng thái vé - xác nhận đã nhận tiền / hủy */
 export async function PATCH(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin || admin.role === "editor") return unauthorized();
+  if (!admin) return unauthorized();
+  if (!canManageInvitations(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền quản lý thư mời." },
+      { status: 403 },
+    );
+  }
 
   let body: Body;
   try {

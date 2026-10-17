@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized } from "@/lib/auth";
+import { canManagePosts } from "@/lib/admin";
 import { createPost, listAll, sortAdmin } from "@/lib/posts";
 import { logAction } from "@/lib/action-logs";
 
@@ -10,6 +11,12 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const admin = getAdminFromRequest(req);
   if (!admin) return unauthorized();
+  if (!canManagePosts(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền quản lý bài viết." },
+      { status: 403 },
+    );
+  }
   const posts = await listAll();
   return NextResponse.json({ ok: true, posts: sortAdmin(posts) });
 }
@@ -22,6 +29,12 @@ function str(v: unknown, max: number): string {
 export async function POST(req: NextRequest) {
   const admin = getAdminFromRequest(req);
   if (!admin) return unauthorized();
+  if (!canManagePosts(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền tạo bài viết." },
+      { status: 403 },
+    );
+  }
 
   let body: Record<string, unknown>;
   try {

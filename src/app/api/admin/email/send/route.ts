@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getAdminFromRequest, unauthorized, COOKIE_NAME } from "@/lib/auth";
+import { canManageEmail } from "@/lib/admin";
 import { logAction } from "@/lib/action-logs";
 import { Resend } from "resend";
 
@@ -128,7 +129,13 @@ function formatEmailHtml(content: string, recipient: Recipient): string {
 
 export async function POST(req: NextRequest) {
   const admin = getAdminFromRequest(req);
-  if (!admin || admin.role === "editor") return unauthorized();
+  if (!admin) return unauthorized();
+  if (!canManageEmail(admin.role)) {
+    return NextResponse.json(
+      { ok: false, message: "Không có quyền gửi email." },
+      { status: 403 },
+    );
+  }
 
   const token = req.cookies.get(COOKIE_NAME)?.value;
 

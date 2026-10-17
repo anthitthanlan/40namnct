@@ -99,12 +99,18 @@ export function normalizePhone(input: string): string | null {
 }
 
 export async function listMembers(token?: string): Promise<Member[]> {
-  const res = await fetch(`${API_URL}/api/members`, {
-    headers: getHeaders(token),
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  return await res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/members`, {
+      headers: getHeaders(token),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Failed to list members:", err);
+    return [];
+  }
 }
 
 export async function findMemberByPhone(
@@ -149,12 +155,18 @@ export async function getMemberById(id: string): Promise<Member | null> {
 }
 
 export async function listInvitations(token?: string): Promise<Invitation[]> {
-  const res = await fetch(`${API_URL}/api/invitations`, {
-    headers: getHeaders(token),
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
-  return await res.json();
+  try {
+    const res = await fetch(`${API_URL}/api/invitations`, {
+      headers: getHeaders(token),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error("Failed to list invitations:", err);
+    return [];
+  }
 }
 
 export type PublicStats = {

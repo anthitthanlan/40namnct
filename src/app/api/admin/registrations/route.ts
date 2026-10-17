@@ -17,81 +17,92 @@ export const dynamic = "force-dynamic";
 
 /** Admin: danh sách thành viên + toàn bộ thư mời + logs */
 export async function GET(req: NextRequest) {
-  const admin = getAdminFromRequest(req);
-  if (!admin) return unauthorized();
-  if (!canManageInvitations(admin.role)) {
-    return NextResponse.json(
-      { ok: false, message: "Không có quyền quản lý thư mời." },
-      { status: 403 },
-    );
-  }
-
-  const token = req.cookies.get(COOKIE_NAME)?.value;
-  const [members, invitations] = await Promise.all([listMembers(token), listInvitations(token)]);
-  const byId = new Map(members.map((m) => [m.id, m]));
-
-  const logs = await listActionLogs(token, { all: true });
-
-  const emailLogsByEntity = new Map<string, number>();
-  for (const l of logs) {
-    if (
-      l.entityId &&
-      (l.action === "send_email" ||
-        l.details?.toLowerCase().includes("gửi email") ||
-        l.details?.toLowerCase().includes("email thư mời") ||
-        l.details?.toLowerCase().includes("thư mời qua email"))
-    ) {
-      emailLogsByEntity.set(l.entityId, (emailLogsByEntity.get(l.entityId) || 0) + 1);
+  try {
+    const admin = getAdminFromRequest(req);
+    if (!admin) return unauthorized();
+    if (!canManageInvitations(admin.role)) {
+      return NextResponse.json(
+        { ok: false, message: "Không có quyền quản lý thư mời." },
+        { status: 403 },
+      );
     }
-  }
 
-  const invitationViews = invitations
-    .slice()
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((t) => {
-      const m = byId.get(t.memberId);
-      const unifiedName = t.attendeeName || m?.name || "(đã xoá)";
-      const countFromLogs = emailLogsByEntity.get(t.id) || 0;
-      const finalEmailCount = Math.max(countFromLogs, t.emailSent ? 1 : 0);
+    const token = req.cookies.get(COOKIE_NAME)?.value;
+    const [rawMembers, rawInvitations] = await Promise.all([listMembers(token), listInvitations(token)]);
+    const members = Array.isArray(rawMembers) ? rawMembers : [];
+    const invitations = Array.isArray(rawInvitations) ? rawInvitations : [];
+    const byId = new Map(members.map((m) => [m.id, m]));
+
+    const logs = await listActionLogs(token, { all: true });
+    const logsList = Array.isArray(logs) ? logs : [];
+
+    const emailLogsByEntity = new Map<string, number>();
+    for (const l of logsList) {
+      if (
+        l.entityId &&
+        (l.action === "send_email" ||
+          l.details?.toLowerCase().includes("gửi email") ||
+          l.details?.toLowerCase().includes("email thư mời") ||
+          l.details?.toLowerCase().includes("thư mời qua email"))
+      ) {
+        emailLogsByEntity.set(l.entityId, (emailLogsByEntity.get(l.entityId) || 0) + 1);
+      }
+    }
+
+    const invitationViews = invitations
+      .slice()
+      .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+      .map((t) => {
+        const m = byId.get(t.memberId);
+        const unifiedName = t.attendeeName || m?.name || "(đã xoá)";
+        const countFromLogs = emailLogsByEntity.get(t.id) || 0;
+        const finalEmailCount = Math.max(countFromLogs, t.emailSent ? 1 : 0);
+        return {
+          ...t,
+          attendeeName: unifiedName,
+          memberName: unifiedName,
+          memberPhone: m?.phone ?? "",
+          memberEmail: m?.email ?? "",
+          emailSent: finalEmailCount > 0,
+          emailSentCount: finalEmailCount,
+        };
+      });
+
+    const memberViews = members.map((m) => {
+      const mine = invitations.filter(
+        (t) => t.memberId === m.id && t.status !== "cancelled",
+      );
       return {
-        ...t,
-        attendeeName: unifiedName,
-        memberName: unifiedName,
-        memberPhone: m?.phone ?? "",
-        memberEmail: m?.email ?? "",
-        emailSent: finalEmailCount > 0,
-        emailSentCount: finalEmailCount,
+        id: m.id,
+        name: m.name,
+        phone: m.phone,
+        email: m.email ?? "",
+        createdAt: m.createdAt || "",
+        invitationCount: mine.length,
+        peopleCount: mine.reduce((sum, t) => sum + (t.quantity || 1), 0),
+        confirmedAmount: mine
+          .filter((t) => t.status === "confirmed")
+          .reduce((sum, t) => sum + (t.amount || 0), 0),
+        pendingAmount: mine
+          .filter((t) => t.status === "pending")
+          .reduce((sum, t) => sum + (t.amount || 0), 0),
       };
     });
 
-  const memberViews = members.map((m) => {
-    const mine = invitations.filter(
-      (t) => t.memberId === m.id && t.status !== "cancelled",
+    return NextResponse.json({ 
+      ok: true, 
+      role: admin.role,
+      members: memberViews, 
+      invitations: invitationViews,
+      logs: logsList 
+    });
+  } catch (error: any) {
+    console.error("[api/admin/registrations GET] Error:", error);
+    return NextResponse.json(
+      { ok: false, message: error?.message || "Lỗi xử lý danh sách đăng ký trên máy chủ." },
+      { status: 500 }
     );
-    return {
-      id: m.id,
-      name: m.name,
-      phone: m.phone,
-      email: m.email ?? "",
-      createdAt: m.createdAt,
-      invitationCount: mine.length,
-      peopleCount: mine.reduce((sum, t) => sum + (t.quantity || 1), 0),
-      confirmedAmount: mine
-        .filter((t) => t.status === "confirmed")
-        .reduce((sum, t) => sum + (t.amount || 0), 0),
-      pendingAmount: mine
-        .filter((t) => t.status === "pending")
-        .reduce((sum, t) => sum + (t.amount || 0), 0),
-    };
-  });
-
-  return NextResponse.json({ 
-    ok: true, 
-    role: admin.role,
-    members: memberViews, 
-    invitations: invitationViews,
-    logs 
-  });
+  }
 }
 
 type Body = Record<string, unknown>;

@@ -852,6 +852,9 @@ export default function RegisterForm() {
                   <p className="mt-1.5 text-blue-800/80 text-sm">
                     Toàn bộ kinh phí sẽ được sử dụng cho công tác tổ chức sự kiện.
                   </p>
+                  <p className="mt-1.5 text-blue-900 text-sm leading-relaxed">
+                    * Sự kiện <strong>Ngày trở về (08/11/2026)</strong> là buổi gặp mặt riêng biệt, còn <strong>Lễ kỷ niệm 40 năm</strong> chính thức sẽ diễn ra vào ngày <strong>15/11/2026</strong>.
+                  </p>
                   <p className="mt-2 text-red-600 font-semibold text-sm flex items-center gap-1">
                     <span className="material-symbols-rounded text-base">warning</span>
                     <span>Lưu ý quan trọng: Nếu quý khách đang truy cập từ Zalo, Facebook hoặc Messenger, vui lòng mở liên kết bằng trình duyệt mặc định của hệ thống (Safari, Chrome...) để quá trình đăng ký không bị lỗi.</span>
